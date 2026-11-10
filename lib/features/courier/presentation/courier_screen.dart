@@ -347,6 +347,10 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
 
   /// Barra de Perfil e Cockpit do Condutor (Ergonômica, Compacta e Visual Tático)
   Widget _buildDriverProfileBar(CourierTrackingState trackingState) {
+    final authUser = ref.watch(authProvider).user;
+    final vehicleModel = authUser?.vehicleModel ?? 'Honda Fan 160';
+    final vehiclePlate = authUser?.vehiclePlate ?? 'BRA-2024';
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -440,24 +444,30 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                   ],
                 ),
                 const SizedBox(height: 3),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 12),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        _isUsingRealGps ? 'Honda Fan 160 • GPS Real' : 'Honda Fan 160 • BRA-2024',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                InkWell(
+                  onTap: () => _openEditVehicleModal(context, vehicleModel, vehiclePlate),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 12),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          _isUsingRealGps ? '$vehicleModel • GPS Real' : '$vehicleModel • $vehiclePlate',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF94A3B8),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      const Icon(Icons.edit_outlined, color: Color(0xFF64748B), size: 11),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1175,6 +1185,11 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
 
   /// ABA 3: PERFIL, GANHOS E TELEMETRIA
   Widget _buildDriverWalletTab(CourierTrackingState trackingState) {
+    final authUser = ref.watch(authProvider).user;
+    final vehicleModel = authUser?.vehicleModel ?? 'Honda Fan 160';
+    final vehiclePlate = authUser?.vehiclePlate ?? 'BRA-2024';
+    final driverName = authUser?.name ?? 'Marcos Oliveira';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       child: Column(
@@ -1205,27 +1220,79 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                   child: const Icon(Icons.person, color: Colors.white, size: 30),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Marcos Oliveira (Condutor)',
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+                        '$driverName (Condutor)',
+                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 14),
-                          SizedBox(width: 4),
+                          const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 14),
+                          const SizedBox(width: 4),
                           Text(
-                            'Honda Fan 160 • Placa BRA-2024',
-                            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                            '$vehicleModel • Placa $vehiclePlate',
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
                           ),
                         ],
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Card de Gestão do Veículo & Frota
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF334155)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.two_wheeler_rounded, color: Color(0xFFFF6B00), size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Veículo de Entrega (Frota)',
+                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$vehicleModel • $vehiclePlate',
+                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFFF6B00),
+                    side: const BorderSide(color: Color(0xFFFF6B00)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () => _openEditVehicleModal(context, vehicleModel, vehiclePlate),
+                  icon: const Icon(Icons.edit, size: 14),
+                  label: const Text('Editar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
@@ -1334,6 +1401,138 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
           ),
         ],
       ),
+    );
+  }
+
+  /// Modal Ergonômico de Edição do Veículo de Entrega (Persistido no Banco de Dados)
+  void _openEditVehicleModal(BuildContext context, String currentModel, String currentPlate) {
+    final modelController = TextEditingController(text: currentModel);
+    final plateController = TextEditingController(text: currentPlate);
+    final formKey = GlobalKey<FormState>();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 24,
+            top: 20,
+            left: 20,
+            right: 20,
+          ),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F172A),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF334155),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const Row(
+                  children: [
+                    Icon(Icons.two_wheeler_rounded, color: Color(0xFFFF6B00), size: 22),
+                    SizedBox(width: 8),
+                    Text(
+                      'Atualizar Veículo de Entrega',
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Essas informações são salvas no banco de dados e exibidas aos clientes durante o rastreamento da entrega.',
+                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                const Text('Modelo do Veículo', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: modelController,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Ex: Honda CG 160 Fan, Yamaha Factor',
+                    hintStyle: const TextStyle(color: Color(0xFF475569)),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF334155))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF334155))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFFF6B00), width: 1.5)),
+                  ),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Informe o modelo do veículo' : null,
+                ),
+                const SizedBox(height: 12),
+                const Text('Placa do Veículo (Padrão Mercosul ou Tradicional)', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: plateController,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: InputDecoration(
+                    hintText: 'Ex: BRA-2024 ou ABC-1234',
+                    hintStyle: const TextStyle(color: Color(0xFF475569)),
+                    filled: true,
+                    fillColor: const Color(0xFF1E293B),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF334155))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF334155))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFFF6B00), width: 1.5)),
+                  ),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Informe a placa do veículo' : null,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B00),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () async {
+                      if (!formKey.currentState!.validate()) return;
+                      final newModel = modelController.text.trim();
+                      final newPlate = plateController.text.trim().toUpperCase();
+
+                      await ref.read(authProvider.notifier).updateVehicleInfo(
+                            vehicleModel: newModel,
+                            vehiclePlate: newPlate,
+                          );
+
+                      if (modalCtx.mounted) Navigator.pop(modalCtx);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Veículo $newModel ($newPlate) salvo com sucesso!'),
+                            backgroundColor: const Color(0xFF10B981),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text('Salvar Veículo', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

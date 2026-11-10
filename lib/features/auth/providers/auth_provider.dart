@@ -10,6 +10,8 @@ class UserProfile {
   final String email;
   final UserRole role;
   final String? storeId; // Preenchido para lojistas e entregadores vinculados
+  final String? vehicleModel; // Modelo da moto/veículo (ex: Honda CG 160)
+  final String? vehiclePlate; // Placa do veículo (ex: BRA-2024)
 
   const UserProfile({
     required this.id,
@@ -18,6 +20,8 @@ class UserProfile {
     required this.email,
     required this.role,
     this.storeId,
+    this.vehicleModel,
+    this.vehiclePlate,
   });
 
   UserProfile copyWith({
@@ -27,6 +31,8 @@ class UserProfile {
     String? email,
     UserRole? role,
     String? storeId,
+    String? vehicleModel,
+    String? vehiclePlate,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -35,6 +41,8 @@ class UserProfile {
       email: email ?? this.email,
       role: role ?? this.role,
       storeId: storeId ?? this.storeId,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
+      vehiclePlate: vehiclePlate ?? this.vehiclePlate,
     );
   }
 }
@@ -148,14 +156,42 @@ class AuthNotifier extends Notifier<AuthState> {
       isAuthenticated: true,
       user: UserProfile(
         id: 'courier-01',
-        name: 'Marcos Oliveira (Entregador)',
+        name: 'Marcos Oliveira',
         phone: '(11) 97722-1199',
         email: email,
         role: UserRole.courier,
         storeId: 'store-1',
+        vehicleModel: 'Honda Fan 160',
+        vehiclePlate: 'BRA-2024',
       ),
       isLoading: false,
     );
+    return true;
+  }
+
+  Future<bool> updateVehicleInfo({
+    required String vehicleModel,
+    required String vehiclePlate,
+  }) async {
+    if (state.user == null) return false;
+
+    state = state.copyWith(
+      user: state.user!.copyWith(
+        vehicleModel: vehicleModel,
+        vehiclePlate: vehiclePlate,
+      ),
+    );
+
+    // Persiste no Supabase caso online
+    if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+      try {
+        await SupabaseService.client.from('profiles').update({
+          'vehicle_model': vehicleModel,
+          'license_plate': vehiclePlate,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', state.user!.id);
+      } catch (_) {}
+    }
     return true;
   }
 
@@ -203,11 +239,13 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(
         user: const UserProfile(
           id: 'courier-01',
-          name: 'Marcos Oliveira (Entregador)',
+          name: 'Marcos Oliveira',
           phone: '(11) 97722-1199',
           email: 'entregador@boragas.app',
           role: UserRole.courier,
           storeId: 'store-1',
+          vehicleModel: 'Honda Fan 160',
+          vehiclePlate: 'BRA-2024',
         ),
       );
     } else {

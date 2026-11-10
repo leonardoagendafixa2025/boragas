@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     full_name TEXT NOT NULL,
     phone TEXT,
     avatar_url TEXT,
+    vehicle_model TEXT DEFAULT 'Honda Fan 160',
+    license_plate TEXT DEFAULT 'BRA-2024',
+    store_id UUID REFERENCES public.stores(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
