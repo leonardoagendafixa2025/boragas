@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { getSupabase, db, StorePaymentConfig } from '../services/supabase.service.js';
 import { paymentService } from '../services/payment.service.js';
+import { whatsappService } from '../services/whatsapp.service.js';
 import { config } from '../config/env.js';
 
 const CheckoutItemSchema = z.object({
@@ -17,6 +18,7 @@ const CheckoutPayloadSchema = z.object({
   store_id: z.string().uuid(),
   customer_name: z.string().default('Cliente BoraGás'),
   customer_email: z.string().email().default('cliente@boragas.com'),
+  customer_phone: z.string().default('(11) 98122-3344'),
   delivery_address: z.object({
     street: z.string(),
     number: z.string(),
@@ -135,6 +137,27 @@ export async function createCheckout(req: Request, res: Response) {
       // Pedido pago diretamente na entrega: registra comissão imediata no Ledger
       await db.recordCommission(createdOrder);
     }
+
+    // 7. Notificar Cliente e Distribuidora via WhatsApp (Baileys)
+    try {
+      const itemsText = parsed.items
+        .map((i) => `• ${i.quantity}x ${i.product_name} - R$ ${(i.unit_price * i.quantity).toFixed(2)}`)
+        .join('\n');
+      const addressText = `${parsed.delivery_address.street}, ${parsed.delivery_address.number} - ${parsed.delivery_address.neighborhood}`;
+
+      // Dispara em background sem travar a resposta HTTP
+      whatsappService.notifyOrderCreated({
+        customerPhone: parsed.customer_phone,
+        customerName: parsed.customer_name,
+        orderNumber: createdOrder.order_number,
+        storeName: 'Distribuidora Autorizada BoraGás',
+        itemsSummary: itemsText,
+        totalAmount: createdOrder.total_amount,
+        deliveryAddress: addressText,
+        confirmationCode: createdOrder.delivery_confirmation_code,
+        orderId: createdOrder.id,
+      }).catch((err) => console.warn('[WhatsApp Notice Error]', err.message));
+    } catch (_) {}
 
     return res.status(201).json({
       success: true,

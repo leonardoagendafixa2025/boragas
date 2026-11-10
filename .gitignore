@@ -58,3 +58,8 @@ app.*.map.json
 node_modules/
 backend/dist/
 backend/.env
+
+# WhatsApp Sessions (Baileys)
+backend/sessions/
+backend/.baileys_auth/
+*.baileys*

@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { config } from './config/env.js';
 import { apiRouter } from './routes/index.js';
 import { healthCheck } from './controllers/health.controller.js';
+import { whatsappService } from './services/whatsapp.service.js';
 
 const app = express();
 
@@ -31,11 +32,13 @@ app.get('/', (req, res) => {
     service: 'BoraGás Backend API',
     status: 'online',
     portal: config.frontendUrl,
+    whatsapp: '/whatsapp',
     docs: '/api/v1/health',
   });
 });
 
 app.get('/health', healthCheck);
+app.get('/whatsapp', (req, res) => res.redirect('/api/v1/whatsapp/qr'));
 
 // Rotas da API v1
 app.use('/api/v1', apiRouter);
@@ -60,7 +63,13 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 const server = app.listen(config.port, '0.0.0.0', () => {
   console.log(`🚀 BoraGás Backend rodando na porta ${config.port} [${config.nodeEnv}]`);
   console.log(`🔗 Healthcheck: http://localhost:${config.port}/health`);
+  console.log(`📱 WhatsApp QR: http://localhost:${config.port}/whatsapp`);
   console.log(`📡 Conectado ao Supabase: ${config.supabase.url}`);
+
+  // Inicia o socket do Baileys para WhatsApp
+  whatsappService.initialize().catch((err) => {
+    console.error('Falha ao inicializar Baileys WhatsApp:', err);
+  });
 });
 
 export { app, server };
