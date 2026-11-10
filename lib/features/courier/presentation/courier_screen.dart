@@ -348,8 +348,8 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
   /// Barra de Perfil e Cockpit do Condutor (Ergonômica, Compacta e Visual Tático)
   Widget _buildDriverProfileBar(CourierTrackingState trackingState) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF161F30),
         borderRadius: BorderRadius.circular(16),
@@ -362,126 +362,110 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Avatar
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(color: Colors.white24, width: 1.5),
-            ),
-            child: const Center(
-              child: Icon(Icons.person, color: Colors.white, size: 20),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Nome e Moto
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Marcos Oliveira',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13.5,
-                    letterSpacing: -0.2,
+          // Linha 1: Avatar + Nome do Motorista + ONLINE + Valor dos Ganhos
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  border: Border.all(color: Colors.white24, width: 1.5),
                 ),
-                SizedBox(height: 2),
-                Row(
+                child: const Center(
+                  child: Icon(Icons.person, color: Colors.white, size: 18),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Marcos Oliveira',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 12),
-                    SizedBox(width: 4),
-                    Text(
-                      'Honda Fan 160 • Placa BRA-2024',
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'ONLINE',
                       style: TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF34D399),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const Spacer(),
+              const Text(
+                'R\$ 148,00',
+                style: TextStyle(
+                  color: Color(0xFF34D399),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 4),
 
-          // ONLINE Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
+          // Linha 2: Veículo/Placa + Telemetria à esquerda, Rótulo Ganhos Hoje (Taxas) à direita
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 13),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Honda Fan 160 • Placa BRA-2024${_isUsingRealGps ? ' (GPS Real)' : ''}',
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
+                ],
+              ),
+              const Text(
+                'Ganhos Hoje (Taxas)',
+                style: TextStyle(
+                  color: Color(0xFF6EE7B7),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 4),
-                const Text(
-                  'ONLINE',
-                  style: TextStyle(
-                    color: Color(0xFF34D399),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Ganhos Hoje (Taxas)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Ganhos Hoje (Taxas)',
-                  style: TextStyle(
-                    color: Color(0xFF6EE7B7),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 1),
-                Text(
-                  'R\$ 148,00',
-                  style: TextStyle(
-                    color: Color(0xFF34D399),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -573,8 +557,8 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
   /// Barra de Abas Tática (Sem Rolagem Caótica)
   Widget _buildTacticalTabBar(bool hasActiveDelivery, int queuedCount) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-      padding: const EdgeInsets.all(4),
+      margin: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(14),
@@ -701,120 +685,43 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
 
     return Column(
       children: [
-        // 1. MAPA INTERATIVO HERO (Sem bordas grosseiras, com controles táticos flutuantes)
+        // 1. MAPA INTERATIVO HERO (Com telemetria nativa dinâmica do BoraGasInteractiveMap)
         Expanded(
-          flex: 5,
-          child: Stack(
-            children: [
-              BoraGasInteractiveMap(
-                destination: _destinationCoords,
-                initialCourierPosition: _courierStartCoords,
-                initialRoute: _activeRoute,
-                courierName: 'Sua Moto (Honda 160)',
-              ),
-
-              // Floating Pill: Telemetria da Rota (Tempo e Distância)
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.timer_outlined, color: Color(0xFF38BDF8), size: 16),
-                      const SizedBox(width: 6),
-                      const Text(
-                        '6 min',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '(3.6 km)',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Floating Pill: Status do GPS Real / Simulado
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A).withValues(alpha: 0.9),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _isUsingRealGps
-                          ? const Color(0xFF10B981)
-                          : Colors.white.withValues(alpha: 0.15),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _isUsingRealGps ? Icons.my_location_rounded : Icons.location_searching_rounded,
-                        color: _isUsingRealGps ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isUsingRealGps ? 'GPS Ativo' : 'GPS Rota',
-                        style: TextStyle(
-                          color: _isUsingRealGps ? const Color(0xFF34D399) : Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          flex: 4,
+          child: BoraGasInteractiveMap(
+            destination: _destinationCoords,
+            initialCourierPosition: _courierStartCoords,
+            initialRoute: _activeRoute,
+            courierName: 'Sua Moto (Honda 160)',
           ),
         ),
 
-        // 2. PAINEL DE MISSÃO INFERIOR (HUD TÁTICO BRANCO MODERNO)
+        // 2. PAINEL DE MISSÃO INFERIOR (HUD TÁTICO BRANCO MODERNO - SEM OVERFLOW)
         Expanded(
-          flex: 6,
+          flex: 7,
           child: Container(
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black26,
-                  blurRadius: 20,
-                  offset: Offset(0, -6),
+                  blurRadius: 16,
+                  offset: Offset(0, -4),
                 ),
               ],
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Puxador central ergonômico
                   Center(
                     child: Container(
-                      width: 36,
+                      width: 32,
                       height: 4,
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFCBD5E1),
                         borderRadius: BorderRadius.circular(2),
@@ -822,58 +729,58 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                     ),
                   ),
 
-                  // Header da Entrega: Número do Pedido + Loja + Status
+                  // Header da Entrega: Número do Pedido + Loja (com ellipsis) + Status (nunca cortado)
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              order.orderNumber,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          order.orderNumber,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                            letterSpacing: 0.5,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            order.storeName,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF0284C7),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          order.storeName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0284C7),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       StatusBadge.fromOrderStatus(order.status),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
 
-                  // Endereço de Entrega (Visual Destacado)
+                  // Endereço de Destino (Visual Destacado e Limpo)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
                           color: const Color(0xFF0284C7).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.place_rounded, color: Color(0xFF0284C7), size: 20),
+                        child: const Icon(Icons.place_rounded, color: Color(0xFF0284C7), size: 18),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,20 +788,22 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                             const Text(
                               'DESTINO DE ENTREGA',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 9.5,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF64748B),
                                 letterSpacing: 0.5,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 1),
                             Text(
                               order.deliveryAddress,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w900,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w800,
                                 color: Color(0xFF0F172A),
-                                height: 1.25,
+                                height: 1.2,
                               ),
                             ),
                           ],
@@ -903,35 +812,37 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
 
-                  // Card de Contato do Cliente (WhatsApp e Chamada com 1 toque)
+                  // Card de Contato do Cliente (WhatsApp e Chamada de 1 toque com ícones visíveis)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(7),
+                          padding: const EdgeInsets.all(6),
                           decoration: const BoxDecoration(
                             color: Color(0xFFE2E8F0),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.person, size: 18, color: Color(0xFF475569)),
+                          child: const Icon(Icons.person, size: 16, color: Color(0xFF475569)),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 order.customerName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontSize: 13,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.w800,
                                   color: Color(0xFF0F172A),
                                 ),
@@ -939,7 +850,7 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                               Text(
                                 order.customerPhone,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 11,
                                   color: Color(0xFF64748B),
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -947,38 +858,44 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                             ],
                           ),
                         ),
-                        // Botão WhatsApp com cor sólida e contraste perfeito
+                        // Botão WhatsApp Oficial
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF25D366),
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                            minimumSize: const Size(0, 34),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                           onPressed: () => _whatsappCustomer(order.customerPhone),
-                          icon: const Icon(Icons.chat_rounded, size: 15),
+                          icon: const Icon(Icons.chat_rounded, size: 14),
                           label: const Text('WhatsApp', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                         ),
                         const SizedBox(width: 6),
-                        // Botão Ligar
-                        IconButton(
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.12),
-                            foregroundColor: const Color(0xFF0284C7),
-                            padding: const EdgeInsets.all(8),
+                        // Botão Ligar (Sólido azul com ícone de telefone branco e nítido)
+                        InkWell(
+                          onTap: () => _callCustomer(order.customerPhone),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0284C7),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Icon(Icons.phone, size: 16, color: Colors.white),
+                            ),
                           ),
-                          icon: const Icon(Icons.call_rounded, size: 18),
-                          tooltip: 'Ligar para o Cliente',
-                          onPressed: () => _callCustomer(order.customerPhone),
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
 
-                  // NAVEGAÇÃO GPS EXTERNA (Waze e Google Maps em Linha Estilizada)
+                  // NAVEGAÇÃO GPS EXTERNA (Waze e Google Maps lado a lado)
                   Row(
                     children: [
                       Expanded(
@@ -986,9 +903,10 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF0284C7),
                             backgroundColor: const Color(0xFFF0F9FF),
-                            side: const BorderSide(color: Color(0xFFBAE6FD), width: 1.5),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: const BorderSide(color: Color(0xFFBAE6FD), width: 1.2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            minimumSize: const Size(0, 38),
                           ),
                           onPressed: () {
                             ExternalNavigationService.openWaze(
@@ -996,19 +914,20 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                               longitude: _destinationCoords.longitude,
                             );
                           },
-                          icon: const Icon(Icons.near_me_rounded, size: 16),
-                          label: const Text('Abrir Waze', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                          icon: const Icon(Icons.near_me_rounded, size: 15),
+                          label: const Text('Abrir Waze', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF166534),
                             backgroundColor: const Color(0xFFF0FDF4),
-                            side: const BorderSide(color: Color(0xFFBBF7D0), width: 1.5),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side: const BorderSide(color: Color(0xFFBBF7D0), width: 1.2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            minimumSize: const Size(0, 38),
                           ),
                           onPressed: () {
                             ExternalNavigationService.openGoogleMaps(
@@ -1016,16 +935,16 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                               longitude: _destinationCoords.longitude,
                             );
                           },
-                          icon: const Icon(Icons.map_rounded, size: 16),
-                          label: const Text('Google Maps', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                          icon: const Icon(Icons.map_rounded, size: 15),
+                          label: const Text('Google Maps', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
 
-                  // AÇÕES DA ENTREGA: AVISAR CHEGADA & VALIDAR PIN
+                  // AÇÕES DA ENTREGA: CHEGUEI NO LOCAL & VALIDAR PIN (SEMPRE VISÍVEIS)
                   Row(
                     children: [
                       Expanded(
@@ -1034,31 +953,33 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF0F172A),
                             side: const BorderSide(color: Color(0xFF94A3B8), width: 1.5),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            minimumSize: const Size(0, 44),
                           ),
                           onPressed: () => _notifyCustomerArrival(order),
-                          icon: const Icon(Icons.notifications_active_rounded, size: 18, color: Color(0xFFFF6B00)),
-                          label: const Text('Avisei Chegada', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                          icon: const Icon(Icons.notifications_active_rounded, size: 17, color: Color(0xFFFF6B00)),
+                          label: const Text('Cheguei no Local', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5)),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(
                         flex: 6,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6B00),
                             foregroundColor: Colors.white,
-                            elevation: 4,
-                            shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.5),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 3,
+                            shadowColor: const Color(0xFFFF6B00).withValues(alpha: 0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
+                            minimumSize: const Size(0, 44),
                           ),
                           onPressed: () => _openPinValidationDialog(order),
-                          icon: const Icon(Icons.lock_open_rounded, size: 20),
+                          icon: const Icon(Icons.lock_open_rounded, size: 18),
                           label: const Text(
                             'VALIDAR PIN',
-                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.5),
+                            style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, letterSpacing: 0.5),
                           ),
                         ),
                       ),
