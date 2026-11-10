@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/supabase_service.dart';
 
@@ -185,12 +186,18 @@ class AuthNotifier extends Notifier<AuthState> {
     // Persiste no Supabase caso online
     if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
       try {
-        await SupabaseService.client.from('profiles').update({
-          'vehicle_model': vehicleModel,
-          'license_plate': vehiclePlate,
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', state.user!.id);
-      } catch (_) {}
+        final currentUid = SupabaseService.client.auth.currentUser?.id;
+        final targetId = currentUid ?? (state.user!.id.length >= 32 ? state.user!.id : null);
+        if (targetId != null) {
+          await SupabaseService.client.from('profiles').update({
+            'vehicle_model': vehicleModel,
+            'license_plate': vehiclePlate,
+            'updated_at': DateTime.now().toIso8601String(),
+          }).eq('id', targetId);
+        }
+      } catch (e) {
+        debugPrint('Erro ao persistir veículo no Supabase: $e');
+      }
     }
     return true;
   }
