@@ -29,7 +29,10 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
   bool _isSendingTest = false;
   String? _testResult;
 
-  final String _backendBaseUrl = 'http://localhost:10000';
+  String _backendBaseUrl = const String.fromEnvironment(
+    'BACKEND_URL',
+    defaultValue: 'http://localhost:10000',
+  );
 
   @override
   void initState() {
@@ -130,6 +133,97 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
     }
   }
 
+  void _showServerConfigDialog() {
+    final controller = TextEditingController(text: _backendBaseUrl);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Row(
+          children: [
+            Icon(Icons.cloud_sync_rounded, color: Color(0xFF25D366)),
+            SizedBox(width: 8),
+            Text('Servidor do Backend (Render / Local)', style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Informe a URL do serviço Node.js onde o Baileys está rodando:',
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFF0F172A),
+                labelText: 'URL da API',
+                labelStyle: const TextStyle(color: Color(0xFF64748B)),
+                hintText: 'https://boragas-backend.onrender.com',
+                hintStyle: const TextStyle(color: Color(0xFF475569)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Color(0xFF334155)),
+                    ),
+                    onPressed: () => controller.text = 'http://localhost:10000',
+                    child: const Text('Localhost (10000)', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF25D366),
+                      side: const BorderSide(color: Color(0xFF25D366)),
+                    ),
+                    onPressed: () => controller.text = 'https://boragas-backend.onrender.com',
+                    child: const Text('Render (Exemplo)', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () {
+              final newUrl = controller.text.trim().replaceAll(RegExp(r'/+$'), '');
+              if (newUrl.isNotEmpty) {
+                setState(() {
+                  _backendBaseUrl = newUrl;
+                  _isLoading = true;
+                });
+                Navigator.pop(ctx);
+                _fetchWhatsAppStatus();
+              }
+            },
+            child: const Text('Salvar & Conectar', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,6 +236,24 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
           ],
         ),
         actions: [
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
+              side: BorderSide(
+                color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
+                width: 1.2,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: _showServerConfigDialog,
+            icon: const Icon(Icons.cloud_sync_rounded, size: 16),
+            label: Text(
+              _backendBaseUrl.contains('localhost') ? 'API: Localhost' : 'API: Render Nuvem',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Atualizar Status',
@@ -272,6 +384,30 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
                     'Número: +$_connectedPhone',
                     style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
                   ),
+                const SizedBox(height: 4),
+                InkWell(
+                  onTap: _showServerConfigDialog,
+                  borderRadius: BorderRadius.circular(4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.link_rounded,
+                        size: 14,
+                        color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'API: $_backendBaseUrl',
+                        style: TextStyle(
+                          color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
+                          fontSize: 12,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
