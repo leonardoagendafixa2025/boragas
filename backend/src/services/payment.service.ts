@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { AbacatePay } from '@abacatepay/sdk';
 import { StorePaymentConfig, OrderRecord } from './supabase.service.js';
 
 export interface PaymentCreationResult {
@@ -92,7 +91,8 @@ export const paymentService = {
   },
 
   /**
-   * Integração direta AbacatePay (BYOK Pix Instantâneo)
+   * Integração direta AbacatePay (BYOK Pix Instantâneo & Checkout)
+   * API Oficial: https://api.abacatepay.com/v1/billing/create
    */
   async createAbacatePayCharge(
     config: StorePaymentConfig,
@@ -107,45 +107,50 @@ export const paymentService = {
     }
 
     try {
-      const client = AbacatePay({ secret: apiKey });
-      const amountInCents = Math.round(order.total_amount * 100);
+      const priceInCents = Math.round(order.total_amount * 100);
 
-      // 1. Tenta gerar cobrança Pix transparente direta
-      const pix = await (client as any).pix.create({
-        amount: amountInCents,
-        description: `BoraGás Pedido #${order.order_number}`,
-        externalId: order.id,
-      });
-
-      if (pix?.data) {
-        return {
-          success: true,
-          gateway: 'abacatepay',
-          externalPaymentId: pix.data.id,
-          pixCopyPaste: pix.data.brCode,
-          pixQrCodeBase64: pix.data.brCodeBase64,
-          checkoutUrl: pix.data.url || `https://boragas-delta.vercel.app/#/checkout/pix?order_id=${order.id}`,
-        };
-      }
-
-      // 2. Fallback para Checkout AbacatePay
-      const checkout = await client.checkouts.create({
-        items: [
-          {
-            id: order.id,
-            quantity: 1,
+      // Chamada direta à API Oficial do AbacatePay v1
+      const response = await axios.post(
+        'https://api.abacatepay.com/v1/billing/create',
+        {
+          frequency: 'ONE_TIME',
+          methods: ['PIX', 'CARD'],
+          products: [
+            {
+              externalId: order.id,
+              name: `Pedido BoraGás #${order.order_number}`,
+              description: 'Botijão de gás / galão de água',
+              quantity: 1,
+              price: priceInCents,
+            },
+          ],
+          returnUrl: 'https://boragas-delta.vercel.app/#/orders',
+          completionUrl: `https://boragas-delta.vercel.app/#/tracking/${order.id}`,
+          externalId: order.id,
+          metadata: {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            storeId: config.store_id,
           },
-        ],
-        methods: ['PIX', 'CARD'],
-        completionUrl: `https://boragas-delta.vercel.app/#/tracking/${order.id}`,
-      } as any);
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
 
-      const checkoutData = (checkout as any)?.data || checkout;
+      const resData = response.data?.data || response.data;
+
       return {
         success: true,
         gateway: 'abacatepay',
-        externalPaymentId: checkoutData?.id || `abc-chk-${order.id}`,
-        checkoutUrl: checkoutData?.url || `https://boragas-delta.vercel.app/#/checkout/pix?order_id=${order.id}`,
+        externalPaymentId: resData?.id,
+        checkoutUrl: resData?.url,
+        pixCopyPaste: resData?.pix?.code || resData?.brCode,
+        pixQrCodeBase64: resData?.pix?.qrCodeBase64 || resData?.brCodeBase64,
       };
     } catch (err: any) {
       console.warn(`[AbacatePay BYOK Warning] Falha na API: ${err.message}. Ativando fallback.`);
