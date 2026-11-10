@@ -83,11 +83,11 @@ INSERT INTO public.store_payment_configs (
     ),
     (
         'e2222222-2222-2222-2222-222222222222',
-        'asaas',
-        'PUB_ASAAS_98213',
-        'SEC_ASAAS_TOKEN_LIVE',
-        'PagBank Moderninha Smart',
-        'PAG-MOD-44120',
+        'abacatepay',
+        'abc_dev_pub_mock_98213',
+        'abc_dev_sec_mock_token_live',
+        'Mercado Pago Point Smart',
+        'MP-POINT-44120',
         true, true, true, true
     )
 ON CONFLICT (store_id) DO NOTHING;

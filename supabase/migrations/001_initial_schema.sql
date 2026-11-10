@@ -118,7 +118,7 @@ CREATE POLICY "Admin tem controle total de lojas"
 -- ---------------------------------------------------------------------
 -- 4. STORE_PAYMENT_CONFIGS (BYOK - Bring Your Own Key & Smart POS)
 -- ---------------------------------------------------------------------
-CREATE TYPE gateway_provider AS ENUM ('mercadopago', 'asaas', 'pagbank', 'stripe');
+CREATE TYPE gateway_provider AS ENUM ('mercadopago', 'abacatepay');
 
 CREATE TABLE IF NOT EXISTS public.store_payment_configs (
     store_id UUID PRIMARY KEY REFERENCES public.stores(id) ON DELETE CASCADE,

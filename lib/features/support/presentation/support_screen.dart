@@ -154,7 +154,7 @@ class SupportScreen extends ConsumerWidget {
             _buildFaqTile(
               question: 'Como o pagamento vai direto para a distribuidora?',
               answer:
-                  'Utilizamos o modelo BYOK (Bring Your Own Key). A distribuidora integra a própria chave da API do Mercado Pago/Asaas ou maquininha Smart POS. O valor cai direto na conta bancária dela, sem intermediação do BoraGás.',
+                  'Utilizamos o modelo BYOK (Bring Your Own Key). A distribuidora integra a própria chave da API do Mercado Pago ou AbacatePay (Pix) ou maquininha Smart POS. O valor cai direto na conta bancária dela, sem intermediação do BoraGás.',
             ),
             _buildFaqTile(
               question: 'O que é o código de confirmação de entrega?',

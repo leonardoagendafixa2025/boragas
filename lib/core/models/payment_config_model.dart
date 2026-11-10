@@ -1,6 +1,6 @@
 class StorePaymentConfigModel {
   final String storeId;
-  final String gatewayProvider; // 'mercadopago', 'asaas', 'pagbank', 'stripe'
+  final String gatewayProvider; // 'mercadopago', 'abacatepay'
   final String publicKey;
   final String accessToken;
   final String webhookSecret;

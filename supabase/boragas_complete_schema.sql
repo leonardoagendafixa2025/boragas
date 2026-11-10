@@ -144,7 +144,7 @@ CREATE POLICY "Donos de loja atualizam suas lojas"
 -- 5. STORE_PAYMENT_CONFIGS (BYOK - Bring Your Own Key)
 -- ---------------------------------------------------------------------
 DO $$ BEGIN
-    CREATE TYPE gateway_provider AS ENUM ('mercadopago', 'asaas', 'pagbank', 'stripe');
+    CREATE TYPE gateway_provider AS ENUM ('mercadopago', 'abacatepay');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

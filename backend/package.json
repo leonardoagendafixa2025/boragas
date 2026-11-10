@@ -21,6 +21,7 @@
   "author": "BoraGás Team",
   "license": "MIT",
   "dependencies": {
+    "@abacatepay/sdk": "^3.0.0",
     "@supabase/supabase-js": "^2.49.1",
     "@whiskeysockets/baileys": "^7.0.0-rc14",
     "axios": "^1.7.9",

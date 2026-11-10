@@ -18,7 +18,7 @@ export function getSupabase(): SupabaseClient {
 
 export interface StorePaymentConfig {
   store_id: string;
-  gateway_provider: 'mercadopago' | 'asaas' | 'pagbank' | 'stripe';
+  gateway_provider: 'mercadopago' | 'abacatepay';
   public_key?: string | null;
   access_token_encrypted?: string | null;
   webhook_secret?: string | null;

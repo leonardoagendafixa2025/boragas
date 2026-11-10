@@ -58,40 +58,41 @@ export async function handleMercadoPagoWebhook(req: Request, res: Response) {
   }
 }
 
-export async function handleAsaasWebhook(req: Request, res: Response) {
+export async function handleAbacatePayWebhook(req: Request, res: Response) {
   const { storeId } = req.params;
   const body = req.body || {};
 
-  console.log(`[Webhook Asaas] Recebido para Loja ${storeId}:`, body.event);
+  console.log(`[Webhook AbacatePay] Recebido para Loja ${storeId}:`, body.event || body.type);
 
   try {
-    const event = body.event;
-    const payment = body.payment || {};
-    const externalRef = payment.externalReference;
-    const paymentId = payment.id;
+    const event = body.event || body.type;
+    const data = body.data || body;
+    const externalId = data.externalId || data.metadata?.orderId;
+    const paymentId = data.id || data.pixId;
 
-    if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
+    // Eventos de sucesso no AbacatePay
+    if (event === 'billing.paid' || event === 'pix.paid' || data.status === 'PAID') {
       const supabase = getSupabase();
       let order = null;
 
-      if (externalRef) {
-        const { data } = await supabase.from('orders').select('*').eq('id', externalRef).maybeSingle();
-        order = data;
+      if (externalId) {
+        const { data: orderData } = await supabase.from('orders').select('*').eq('id', externalId).maybeSingle();
+        order = orderData;
       } else if (paymentId) {
-        const { data } = await supabase.from('orders').select('*').eq('external_payment_id', paymentId).maybeSingle();
-        order = data;
+        const { data: orderData } = await supabase.from('orders').select('*').eq('external_payment_id', paymentId).maybeSingle();
+        order = orderData;
       }
 
       if (order) {
         await db.updateOrderPaymentStatus(order.id, 'paid_directly_to_store', paymentId);
         await db.recordCommission(order);
-        console.log(`[Webhook Asaas] Pedido #${order.order_number} confirmado!`);
+        console.log(`[Webhook AbacatePay] Pedido #${order.order_number} confirmado com sucesso via Pix!`);
       }
     }
 
     return res.status(200).json({ status: 'received' });
   } catch (err: any) {
-    console.error('[Webhook Asaas] Erro:', err);
+    console.error('[Webhook AbacatePay] Erro:', err);
     return res.status(200).json({ status: 'error_logged' });
   }
 }

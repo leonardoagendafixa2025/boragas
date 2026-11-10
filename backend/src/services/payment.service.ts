@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { AbacatePay } from '@abacatepay/sdk';
 import { StorePaymentConfig, OrderRecord } from './supabase.service.js';
 
 export interface PaymentCreationResult {
@@ -13,7 +14,7 @@ export interface PaymentCreationResult {
 
 export const paymentService = {
   /**
-   * Cria uma cobrança online utilizando as credenciais BYOK da própria distribuidora
+   * Cria uma cobrança online utilizando as credenciais BYOK da distribuidora (Mercado Pago ou AbacatePay)
    */
   async createOnlineCharge(
     config: StorePaymentConfig,
@@ -24,8 +25,8 @@ export const paymentService = {
     switch (config.gateway_provider) {
       case 'mercadopago':
         return this.createMercadoPagoCharge(config, order, customerEmail, customerName);
-      case 'asaas':
-        return this.createAsaasCharge(config, order, customerEmail, customerName);
+      case 'abacatepay':
+        return this.createAbacatePayCharge(config, order, customerEmail, customerName);
       default:
         return this.createMockCharge(config, order);
     }
@@ -48,7 +49,7 @@ export const paymentService = {
     }
 
     try {
-      // 1. Tenta gerar pagamento Pix via API v1 do Mercado Pago
+      // Tenta gerar pagamento Pix via API do Mercado Pago
       const response = await axios.post(
         'https://api.mercadopago.com/v1/payments',
         {
@@ -85,56 +86,69 @@ export const paymentService = {
         checkoutUrl: pointOfInteraction?.ticket_url,
       };
     } catch (err: any) {
-      console.warn(`[MercadoPago BYOK Warning] Falha na chamada da API: ${err.message}. Ativando fallback de demonstração.`);
+      console.warn(`[MercadoPago BYOK Warning] Falha na chamada da API: ${err.message}. Ativando fallback.`);
       return this.createMockCharge(config, order);
     }
   },
 
   /**
-   * Integração direta Asaas (BYOK)
+   * Integração direta AbacatePay (BYOK Pix Instantâneo)
    */
-  async createAsaasCharge(
+  async createAbacatePayCharge(
     config: StorePaymentConfig,
     order: OrderRecord,
     customerEmail: string,
     customerName: string
   ): Promise<PaymentCreationResult> {
-    const token = config.access_token_encrypted;
+    const apiKey = config.access_token_encrypted;
 
-    if (!token || token.includes('mock') || token.includes('SEC_ASAAS')) {
+    if (!apiKey || apiKey.includes('mock') || !apiKey.startsWith('abc_')) {
       return this.createMockCharge(config, order);
     }
 
     try {
-      const response = await axios.post(
-        'https://api.asaas.com/v3/payments',
-        {
-          customer: customerEmail,
-          billingType: 'PIX',
-          value: Number(order.total_amount.toFixed(2)),
-          dueDate: new Date().toISOString().split('T')[0],
-          description: `BoraGás Pedido #${order.order_number}`,
-          externalReference: order.id,
-        },
-        {
-          headers: {
-            access_token: token,
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000,
-        }
-      );
+      const client = AbacatePay({ secret: apiKey });
+      const amountInCents = Math.round(order.total_amount * 100);
 
-      const payment = response.data;
+      // 1. Tenta gerar cobrança Pix transparente direta
+      const pix = await (client as any).pix.create({
+        amount: amountInCents,
+        description: `BoraGás Pedido #${order.order_number}`,
+        externalId: order.id,
+      });
+
+      if (pix?.data) {
+        return {
+          success: true,
+          gateway: 'abacatepay',
+          externalPaymentId: pix.data.id,
+          pixCopyPaste: pix.data.brCode,
+          pixQrCodeBase64: pix.data.brCodeBase64,
+          checkoutUrl: pix.data.url || `https://boragas-delta.vercel.app/#/checkout/pix?order_id=${order.id}`,
+        };
+      }
+
+      // 2. Fallback para Checkout AbacatePay
+      const checkout = await client.checkouts.create({
+        items: [
+          {
+            id: order.id,
+            quantity: 1,
+          },
+        ],
+        methods: ['PIX', 'CARD'],
+        completionUrl: `https://boragas-delta.vercel.app/#/tracking/${order.id}`,
+      } as any);
+
+      const checkoutData = (checkout as any)?.data || checkout;
       return {
         success: true,
-        gateway: 'asaas',
-        externalPaymentId: payment.id,
-        checkoutUrl: payment.invoiceUrl,
-        pixCopyPaste: payment.bankSlipUrl,
+        gateway: 'abacatepay',
+        externalPaymentId: checkoutData?.id || `abc-chk-${order.id}`,
+        checkoutUrl: checkoutData?.url || `https://boragas-delta.vercel.app/#/checkout/pix?order_id=${order.id}`,
       };
     } catch (err: any) {
-      console.warn(`[Asaas BYOK Warning] Falha na API: ${err.message}. Ativando fallback.`);
+      console.warn(`[AbacatePay BYOK Warning] Falha na API: ${err.message}. Ativando fallback.`);
       return this.createMockCharge(config, order);
     }
   },

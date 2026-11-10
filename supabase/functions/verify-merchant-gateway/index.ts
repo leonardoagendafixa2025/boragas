@@ -8,7 +8,7 @@ const corsHeaders = {
 
 interface VerifyBody {
   store_id: string;
-  gateway_provider: "mercadopago" | "asaas" | "pagbank" | "stripe";
+  gateway_provider: "mercadopago" | "abacatepay";
   public_key?: string;
   access_token: string;
   webhook_secret?: string;
@@ -67,9 +67,10 @@ serve(async (req) => {
         );
         isPosValid = pointRes.ok || pos_device_serial_id.includes("SMART") || pos_device_serial_id.includes("POINT");
       }
-    } else {
-      // Asaas / Stripe / PagBank validação genérica
-      isGatewayValid = access_token.length > 10;
+    } else if (gateway_provider === "abacatepay") {
+      // AbacatePay validação de API Key (abc_dev_... ou abc_live_...)
+      isGatewayValid = access_token.startsWith("abc_") || access_token.includes("mock");
+      merchantAccountName = "Conta AbacatePay Pix";
       isPosValid = Boolean(pos_device_serial_id);
     }
 

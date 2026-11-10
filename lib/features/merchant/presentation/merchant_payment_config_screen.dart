@@ -144,10 +144,8 @@ class _MerchantPaymentConfigScreenState
                     initialValue: _selectedGateway,
                     decoration: const InputDecoration(labelText: 'Provedor de Pagamento'),
                     items: const [
-                      DropdownMenuItem(value: 'mercadopago', child: Text('Mercado Pago (Recomendado)')),
-                      DropdownMenuItem(value: 'asaas', child: Text('Asaas Pagamentos')),
-                      DropdownMenuItem(value: 'pagbank', child: Text('PagBank / PagSeguro')),
-                      DropdownMenuItem(value: 'stripe', child: Text('Stripe Brasil')),
+                      DropdownMenuItem(value: 'mercadopago', child: Text('Mercado Pago (Pix & Cartão)')),
+                      DropdownMenuItem(value: 'abacatepay', child: Text('AbacatePay (Pix Instantâneo)')),
                     ],
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedGateway = val);
