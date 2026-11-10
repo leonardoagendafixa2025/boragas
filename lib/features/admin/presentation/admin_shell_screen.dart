@@ -6,6 +6,7 @@ import 'admin_dashboard_screen.dart';
 import 'admin_home_manager_screen.dart';
 import 'admin_remote_config_screen.dart';
 import 'admin_stores_screen.dart';
+import 'admin_whatsapp_screen.dart';
 
 class AdminShellScreen extends ConsumerStatefulWidget {
   const AdminShellScreen({super.key});
@@ -30,6 +31,7 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
     AdminStoresScreen(),
     AdminHomeManagerScreen(),
     AdminRemoteConfigScreen(),
+    AdminWhatsAppScreen(),
   ];
 
   @override
@@ -58,6 +60,20 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
           ],
         ),
         actions: [
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF25D366),
+              side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () {
+              setState(() => _currentIndex = 4);
+            },
+            icon: const Icon(Icons.qr_code_scanner, size: 16),
+            label: const Text('WhatsApp QR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 8),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFF6B00),
@@ -112,6 +128,11 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                   selectedIcon: Icon(Icons.settings_remote_rounded),
                   label: Text('Remote'),
                 ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.qr_code_scanner_outlined),
+                  selectedIcon: Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF25D366)),
+                  label: Text('WhatsApp'),
+                ),
               ],
             ),
           Expanded(child: _pages[_currentIndex]),
@@ -142,6 +163,11 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                   icon: Icon(Icons.settings_remote_outlined),
                   selectedIcon: Icon(Icons.settings_remote_rounded, color: Color(0xFF6554C0)),
                   label: 'Remote',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.qr_code_scanner_outlined),
+                  selectedIcon: Icon(Icons.qr_code_scanner_rounded, color: Color(0xFF25D366)),
+                  label: 'WhatsApp',
                 ),
               ],
             ),
