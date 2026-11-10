@@ -17,6 +17,14 @@ class AdminShellScreen extends ConsumerStatefulWidget {
 class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
+    });
+  }
+
   final List<Widget> _pages = const [
     AdminDashboardScreen(),
     AdminStoresScreen(),

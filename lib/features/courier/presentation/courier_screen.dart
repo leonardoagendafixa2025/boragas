@@ -33,6 +33,9 @@ class _CourierScreenState extends ConsumerState<CourierScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
+    });
     _initRouteAndTracking();
     _tryDetectRealLocation();
   }

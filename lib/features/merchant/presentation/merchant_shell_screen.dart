@@ -20,6 +20,14 @@ class MerchantShellScreen extends ConsumerStatefulWidget {
 class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
+    });
+  }
+
   final List<Widget> _pages = const [
     MerchantKanbanScreen(),
     MerchantCatalogScreen(),
