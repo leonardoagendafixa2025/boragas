@@ -41,12 +41,23 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
+-- Função de checagem de Admin com SECURITY DEFINER (evita recursão infinita no RLS)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
 DROP POLICY IF EXISTS "Perfis visíveis para o próprio usuário e Admins" ON public.profiles;
 CREATE POLICY "Perfis visíveis para o próprio usuário e Admins"
     ON public.profiles FOR SELECT
-    USING (auth.uid() = id OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-    ));
+    USING (auth.uid() = id OR public.is_admin());
 
 DROP POLICY IF EXISTS "Usuários podem atualizar seus próprios perfis" ON public.profiles;
 CREATE POLICY "Usuários podem atualizar seus próprios perfis"
@@ -122,16 +133,12 @@ ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Lojas ativas são visíveis para qualquer usuário" ON public.stores;
 CREATE POLICY "Lojas ativas são visíveis para qualquer usuário"
     ON public.stores FOR SELECT
-    USING (status = 'active' OR auth.uid() = owner_id OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-    ));
+    USING (status = 'active' OR auth.uid() = owner_id OR public.is_admin());
 
 DROP POLICY IF EXISTS "Donos de loja atualizam suas lojas" ON public.stores;
 CREATE POLICY "Donos de loja atualizam suas lojas"
     ON public.stores FOR UPDATE
-    USING (auth.uid() = owner_id OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-    ));
+    USING (auth.uid() = owner_id OR public.is_admin());
 
 -- ---------------------------------------------------------------------
 -- 5. STORE_PAYMENT_CONFIGS (BYOK - Bring Your Own Key)
@@ -163,9 +170,7 @@ DROP POLICY IF EXISTS "Apenas o dono da loja e Admin leem as chaves de API" ON p
 CREATE POLICY "Apenas o dono da loja e Admin leem as chaves de API"
     ON public.store_payment_configs FOR SELECT
     USING (EXISTS (
-        SELECT 1 FROM public.stores s WHERE s.id = store_id AND (s.owner_id = auth.uid() OR EXISTS (
-            SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-        ))
+        SELECT 1 FROM public.stores s WHERE s.id = store_id AND (s.owner_id = auth.uid() OR public.is_admin())
     ));
 
 DROP POLICY IF EXISTS "Dono da loja gerencia suas chaves" ON public.store_payment_configs;
@@ -303,9 +308,7 @@ CREATE POLICY "Clientes veem apenas seus próprios pedidos"
     ON public.orders FOR SELECT
     USING (auth.uid() = customer_id OR EXISTS (
         SELECT 1 FROM public.stores s WHERE s.id = store_id AND s.owner_id = auth.uid()
-    ) OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-    ));
+    ) OR public.is_admin());
 
 DROP POLICY IF EXISTS "Clientes criam novos pedidos" ON public.orders;
 CREATE POLICY "Clientes criam novos pedidos"
@@ -317,9 +320,7 @@ CREATE POLICY "Lojas atualizam status de seus pedidos"
     ON public.orders FOR UPDATE
     USING (EXISTS (
         SELECT 1 FROM public.stores s WHERE s.id = store_id AND s.owner_id = auth.uid()
-    ) OR EXISTS (
-        SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-    ));
+    ) OR public.is_admin());
 
 DROP POLICY IF EXISTS "Itens de pedidos visíveis para os participantes do pedido" ON public.order_items;
 CREATE POLICY "Itens de pedidos visíveis para os participantes do pedido"
@@ -328,9 +329,7 @@ CREATE POLICY "Itens de pedidos visíveis para os participantes do pedido"
         SELECT 1 FROM public.orders o WHERE o.id = order_id AND (
             o.customer_id = auth.uid() OR EXISTS (
                 SELECT 1 FROM public.stores s WHERE s.id = o.store_id AND s.owner_id = auth.uid()
-            ) OR EXISTS (
-                SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-            )
+            ) OR public.is_admin()
         )
     ));
 
@@ -376,9 +375,7 @@ DROP POLICY IF EXISTS "Lojas veem seus próprios registros no Ledger" ON public.
 CREATE POLICY "Lojas veem seus próprios registros no Ledger"
     ON public.commission_ledger FOR SELECT
     USING (EXISTS (
-        SELECT 1 FROM public.stores s WHERE s.id = store_id AND (s.owner_id = auth.uid() OR EXISTS (
-            SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'
-        ))
+        SELECT 1 FROM public.stores s WHERE s.id = store_id AND (s.owner_id = auth.uid() OR public.is_admin())
     ));
 
 -- ---------------------------------------------------------------------
