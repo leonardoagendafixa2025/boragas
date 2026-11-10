@@ -362,110 +362,140 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Linha 1: Avatar + Nome do Motorista + ONLINE + Valor dos Ganhos
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(color: Colors.white24, width: 1.5),
-                ),
-                child: const Center(
-                  child: Icon(Icons.person, color: Colors.white, size: 18),
-                ),
+          // Avatar do Condutor
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'Marcos Oliveira',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
-                ),
-                child: Row(
+              border: Border.all(color: Colors.white24, width: 1.5),
+            ),
+            child: const Center(
+              child: Icon(Icons.person, color: Colors.white, size: 18),
+            ),
+          ),
+          const SizedBox(width: 10),
+
+          // Coluna Esquerda: Nome + ONLINE + Moto/Placa (Restrita por Expanded para NUNCA atropelar)
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
-                        shape: BoxShape.circle,
+                    const Flexible(
+                      child: Text(
+                        'Marcos Oliveira',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                          letterSpacing: -0.2,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      'ONLINE',
-                      style: TextStyle(
-                        color: Color(0xFF34D399),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.3,
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          const Text(
+                            'ONLINE',
+                            style: TextStyle(
+                              color: Color(0xFF34D399),
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              const Spacer(),
-              const Text(
-                'R\$ 148,00',
-                style: TextStyle(
-                  color: Color(0xFF34D399),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-
-          // Linha 2: Veículo/Placa + Telemetria à esquerda, Rótulo Ganhos Hoje (Taxas) à direita
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 13),
-                  const SizedBox(width: 5),
-                  Text(
-                    'Honda Fan 160 • Placa BRA-2024${_isUsingRealGps ? ' (GPS Real)' : ''}',
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                const SizedBox(height: 3),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 12),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        _isUsingRealGps ? 'Honda Fan 160 • GPS Real' : 'Honda Fan 160 • BRA-2024',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF94A3B8),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const Text(
-                'Ganhos Hoje (Taxas)',
-                style: TextStyle(
-                  color: Color(0xFF6EE7B7),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 10),
+
+          // Coluna Direita: Caixa Isolada com Ganhos (Alinhada à direita, NUNCA sobreposta)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'R\$ 148,00',
+                  style: TextStyle(
+                    color: Color(0xFF34D399),
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 1),
+                Text(
+                  'Ganhos Hoje (Taxas)',
+                  style: TextStyle(
+                    color: Color(0xFF6EE7B7),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -873,21 +903,19 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                           label: const Text('WhatsApp', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
                         ),
                         const SizedBox(width: 6),
-                        // Botão Ligar (Sólido azul com ícone de telefone branco e nítido)
-                        InkWell(
-                          onTap: () => _callCustomer(order.customerPhone),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0284C7),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(
-                              child: Icon(Icons.phone, size: 16, color: Colors.white),
-                            ),
+                        // Botão Ligar Oficial com Ícone e Rótulo
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0284C7),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                            minimumSize: const Size(0, 34),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
+                          onPressed: () => _callCustomer(order.customerPhone),
+                          icon: const Icon(Icons.phone, size: 14, color: Colors.white),
+                          label: const Text('Ligar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
                         ),
                       ],
                     ),
@@ -1051,36 +1079,36 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF6B00),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          order.orderNumber,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 13,
-                          ),
-                        ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6B00),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      order.orderNumber,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        order.storeName,
-                        style: const TextStyle(
-                          color: Color(0xFF38BDF8),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      order.storeName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Color(0xFF38BDF8),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   StatusBadge.fromOrderStatus(order.status),
                 ],
               ),
@@ -1103,9 +1131,13 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                 children: [
                   const Icon(Icons.person_outline, color: Color(0xFF64748B), size: 16),
                   const SizedBox(width: 6),
-                  Text(
-                    '${order.customerName} • ${order.customerPhone}',
-                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                  Expanded(
+                    child: Text(
+                      '${order.customerName} • ${order.customerPhone}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                    ),
                   ),
                 ],
               ),
