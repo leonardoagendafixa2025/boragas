@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_home_manager_screen.dart';
-import 'admin_orders_screen.dart';
-import 'admin_products_screen.dart';
 import 'admin_remote_config_screen.dart';
 import 'admin_stores_screen.dart';
 
@@ -19,8 +17,6 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
 
   final List<Widget> _pages = const [
     AdminDashboardScreen(),
-    AdminOrdersScreen(),
-    AdminProductsScreen(),
     AdminStoresScreen(),
     AdminHomeManagerScreen(),
     AdminRemoteConfigScreen(),
@@ -52,12 +48,18 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
           ],
         ),
         actions: [
-          TextButton.icon(
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF6B00),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             onPressed: () => context.go('/merchant'),
-            icon: const Icon(Icons.storefront_rounded, color: Colors.white, size: 16),
-            label: const Text('Portal Lojista', style: TextStyle(color: Colors.white, fontSize: 12)),
+            icon: const Icon(Icons.storefront_rounded, size: 16),
+            label: const Text('Portal do Lojista', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           TextButton.icon(
             onPressed: () => context.go('/home'),
             icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),
@@ -78,16 +80,6 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
                   icon: Icon(Icons.analytics_outlined),
                   selectedIcon: Icon(Icons.analytics_rounded),
                   label: Text('Comissões'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long_rounded),
-                  label: Text('Pedidos'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.inventory_2_outlined),
-                  selectedIcon: Icon(Icons.inventory_2_rounded),
-                  label: Text('Produtos'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.store_mall_directory_outlined),
@@ -119,16 +111,6 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
                   icon: Icon(Icons.analytics_outlined),
                   selectedIcon: Icon(Icons.analytics_rounded, color: Color(0xFF6554C0)),
                   label: 'Comissões',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long_rounded, color: Color(0xFF6554C0)),
-                  label: 'Pedidos',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.inventory_2_outlined),
-                  selectedIcon: Icon(Icons.inventory_2_rounded, color: Color(0xFF6554C0)),
-                  label: 'Produtos',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.store_mall_directory_outlined),

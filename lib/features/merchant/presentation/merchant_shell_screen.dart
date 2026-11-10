@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../customer/providers/customer_providers.dart';
+import '../providers/merchant_providers.dart';
 import 'merchant_catalog_screen.dart';
 import 'merchant_finances_screen.dart';
 import 'merchant_kanban_screen.dart';
 import 'merchant_payment_config_screen.dart';
 
-class MerchantShellScreen extends StatefulWidget {
+class MerchantShellScreen extends ConsumerStatefulWidget {
   const MerchantShellScreen({super.key});
 
   @override
-  State<MerchantShellScreen> createState() => _MerchantShellScreenState();
+  ConsumerState<MerchantShellScreen> createState() => _MerchantShellScreenState();
 }
 
-class _MerchantShellScreenState extends State<MerchantShellScreen> {
+class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
@@ -25,7 +28,9 @@ class _MerchantShellScreenState extends State<MerchantShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 700;
+    final isWide = MediaQuery.of(context).size.width > 750;
+    final currentStore = ref.watch(currentMerchantStoreProvider);
+    final allStores = ref.watch(storesProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -40,20 +45,64 @@ class _MerchantShellScreenState extends State<MerchantShellScreen> {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
-                'LOJISTA',
+                'PORTAL DO LOJISTA',
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
               ),
             ),
-            const SizedBox(width: 8),
-            const Text('Portal do Distribuidor BoraGás', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(width: 12),
+            // Seletor da Distribuidora Ativa
+            if (allStores.length > 1)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: currentStore.id,
+                    dropdownColor: const Color(0xFF1E293B),
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
+                    items: allStores.map((s) {
+                      return DropdownMenuItem(
+                        value: s.id,
+                        child: Text(
+                          s.name,
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newId) {
+                      if (newId != null) {
+                        final found = allStores.firstWhere((s) => s.id == newId);
+                        ref.read(currentMerchantStoreProvider.notifier).set(found);
+                      }
+                    },
+                  ),
+                ),
+              )
+            else
+              Text(
+                currentStore.name,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
           ],
         ),
         actions: [
           TextButton.icon(
-            onPressed: () => context.go('/home'),
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),
-            label: const Text('Voltar ao App Cliente', style: TextStyle(color: Colors.white, fontSize: 12)),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            onPressed: () => context.go('/admin'),
+            icon: const Icon(Icons.admin_panel_settings_rounded, size: 16),
+            label: const Text('Super Admin', style: TextStyle(fontSize: 12)),
           ),
+          const SizedBox(width: 4),
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            onPressed: () => context.go('/home'),
+            icon: const Icon(Icons.arrow_back, size: 16),
+            label: const Text('App do Cliente', style: TextStyle(fontSize: 12)),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Row(
@@ -67,22 +116,22 @@ class _MerchantShellScreenState extends State<MerchantShellScreen> {
                 NavigationRailDestination(
                   icon: Icon(Icons.dashboard_outlined),
                   selectedIcon: Icon(Icons.dashboard_rounded),
-                  label: Text('Kanban'),
+                  label: Text('Pedidos (Kanban)'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.inventory_2_outlined),
                   selectedIcon: Icon(Icons.inventory_2_rounded),
-                  label: Text('Catálogo'),
+                  label: Text('Meus Produtos'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.payment_outlined),
                   selectedIcon: Icon(Icons.payment_rounded),
-                  label: Text('API & POS'),
+                  label: Text('Pagamentos BYOK'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.account_balance_wallet_outlined),
                   selectedIcon: Icon(Icons.account_balance_wallet_rounded),
-                  label: Text('Comissões'),
+                  label: Text('Finanças'),
                 ),
               ],
             ),
@@ -98,22 +147,22 @@ class _MerchantShellScreenState extends State<MerchantShellScreen> {
                 NavigationDestination(
                   icon: Icon(Icons.dashboard_outlined),
                   selectedIcon: Icon(Icons.dashboard_rounded, color: AppColors.primary),
-                  label: 'Kanban',
+                  label: 'Pedidos',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.inventory_2_outlined),
                   selectedIcon: Icon(Icons.inventory_2_rounded, color: AppColors.primary),
-                  label: 'Catálogo',
+                  label: 'Produtos',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.payment_outlined),
                   selectedIcon: Icon(Icons.payment_rounded, color: AppColors.primary),
-                  label: 'API & POS',
+                  label: 'Pagamentos',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.account_balance_wallet_outlined),
                   selectedIcon: Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary),
-                  label: 'Comissões',
+                  label: 'Finanças',
                 ),
               ],
             ),
