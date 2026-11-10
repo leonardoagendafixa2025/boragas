@@ -50,3 +50,6 @@ app.*.map.json
 # Environment files
 .env
 .env*.local
+
+# GitHub workflows (avoids PAT workflow scope error)
+.github/

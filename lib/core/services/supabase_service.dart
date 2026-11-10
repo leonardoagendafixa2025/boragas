@@ -4,12 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseService {
   static const String defaultUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://boragas-placeholder.supabase.co',
+    defaultValue: 'https://elkelrotleuyszmtkbye.supabase.co',
   );
 
   static const String defaultAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-key',
+    defaultValue: 'sb_publishable_2ic-HESrCJHYoCk_XNyN2Q_j5zuxKDc',
   );
 
   static bool _isInitialized = false;
