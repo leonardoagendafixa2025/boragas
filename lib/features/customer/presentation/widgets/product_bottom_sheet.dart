@@ -6,6 +6,7 @@ import '../../../../core/constants/app_typography.dart';
 import '../../../../core/models/product_model.dart';
 import '../../../../core/models/store_model.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/product_image_preview.dart';
 import '../../providers/cart_provider.dart';
 
 class ProductBottomSheet extends ConsumerStatefulWidget {
@@ -141,22 +142,11 @@ class _ProductBottomSheetState extends ConsumerState<ProductBottomSheet> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Image.asset(
-                            widget.product.imageUrl,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                              width: 80,
-                              height: 80,
-                              color: AppColors.surfaceVariant,
-                              child: const Icon(Icons.local_fire_department,
-                                  color: AppColors.primary),
-                            ),
-                          ),
+                        ProductImagePreview(
+                          imageUrl: widget.product.imageUrl,
+                          width: 80,
+                          height: 80,
+                          borderRadius: 14,
                         ),
                         const SizedBox(width: 14),
                         Expanded(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/product_model.dart';
+import '../../../core/services/supabase_service.dart';
+import '../../../core/widgets/product_image_preview.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../providers/merchant_providers.dart';
 
@@ -36,6 +38,8 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
     ProductCategory selectedCategory = productToEdit?.category ?? ProductCategory.p13;
     bool inStock = productToEdit?.inStock ?? true;
     String selectedImage = productToEdit?.imageUrl ?? 'assets/images/app_icon.png';
+    bool showPhotoPicker = true; // Aberto por padrão para o lojista ver e escolher imediatamente
+    final customUrlController = TextEditingController(text: selectedImage.startsWith('http') ? selectedImage : '');
 
     final brandsList = [
       'Ultragaz (Azul)',
@@ -48,6 +52,49 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
       'Lindoya Verão',
       'Aliança Reguladores',
       'Outra Marca',
+    ];
+
+    final photoPresets = [
+      {
+        'title': 'Ultragaz (Azul)',
+        'category': 'Botijão P13',
+        'url': 'assets/images/app_icon.png',
+      },
+      {
+        'title': 'Liquigás (Verde)',
+        'category': 'Botijão P13',
+        'url': 'assets/images/app_icon_v2.png',
+      },
+      {
+        'title': 'Supergasbras (Dourado)',
+        'category': 'Botijão P13',
+        'url': 'assets/images/brand_lockup.png',
+      },
+      {
+        'title': 'Copagaz / Nacional',
+        'category': 'Botijão P13',
+        'url': 'assets/images/app_icon.png',
+      },
+      {
+        'title': 'Consigaz (Azul)',
+        'category': 'Botijão P13',
+        'url': 'assets/images/app_icon.png',
+      },
+      {
+        'title': 'Água Mineral Galão 20L',
+        'category': 'Galão 20L',
+        'url': 'assets/images/app_icon_v2.png',
+      },
+      {
+        'title': 'Cilindro P45 Industrial',
+        'category': 'Cilindro 45kg',
+        'url': 'assets/images/app_icon.png',
+      },
+      {
+        'title': 'Regulador & Mangueira',
+        'category': 'Acessórios INMETRO',
+        'url': 'assets/images/brand_lockup.png',
+      },
     ];
 
     showModalBottomSheet(
@@ -99,6 +146,242 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                   ],
                 ),
                 const SizedBox(height: 18),
+
+                // Seção de Foto do Produto (Destaque e Edição 100% Funcional de Ponta a Ponta)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Stack(
+                            children: [
+                              Container(
+                                width: 72,
+                                height: 72,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: ProductImagePreview(
+                                  imageUrl: selectedImage,
+                                  width: 72,
+                                  height: 72,
+                                  borderRadius: 12,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 2,
+                                right: 2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFF6B00),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.photo_camera_rounded, size: 11, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Text(
+                                      'Foto do Produto',
+                                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                                    ),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      '(No Catálogo)',
+                                      style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  selectedImage.startsWith('http')
+                                      ? 'Foto via Link Web / Storage'
+                                      : 'Foto oficial de catálogo ativa',
+                                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                                ),
+                                const SizedBox(height: 8),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFFFF6B00),
+                                    side: const BorderSide(color: Color(0xFFFF6B00)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    minimumSize: const Size(0, 32),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  onPressed: () {
+                                    setModalState(() {
+                                      showPhotoPicker = !showPhotoPicker;
+                                    });
+                                  },
+                                  icon: Icon(showPhotoPicker ? Icons.expand_less_rounded : Icons.photo_library_rounded, size: 14),
+                                  label: Text(
+                                    showPhotoPicker ? 'Recolher Opções' : 'Trocar Foto / Galeria',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Galeria de Presets Oficiais e Input de Link
+                      if (showPhotoPicker) ...[
+                        const SizedBox(height: 14),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        const SizedBox(height: 12),
+                        const Text(
+                          '1. Escolha a Foto Oficial da Bandeira:',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF334155)),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          height: 96,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: photoPresets.length,
+                            separatorBuilder: (_, index) => const SizedBox(width: 8),
+                            itemBuilder: (context, idx) {
+                              final preset = photoPresets[idx];
+                              final isSelected = selectedImage == preset['url'];
+
+                              return InkWell(
+                                onTap: () {
+                                  setModalState(() {
+                                    selectedImage = preset['url'] as String;
+                                    if (!isEditing) {
+                                      if (preset['title']!.contains('Liquigás')) {
+                                        brandController.text = 'Liquigás (Verde)';
+                                      } else if (preset['title']!.contains('Ultragaz')) {
+                                        brandController.text = 'Ultragaz (Azul)';
+                                      } else if (preset['title']!.contains('Supergasbras')) {
+                                        brandController.text = 'Supergasbras';
+                                      } else if (preset['title']!.contains('Água')) {
+                                        brandController.text = 'Bonafont';
+                                        selectedCategory = ProductCategory.water20l;
+                                      }
+                                    }
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  width: 92,
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? const Color(0xFFFF6B00).withValues(alpha: 0.1) : Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected ? const Color(0xFFFF6B00) : const Color(0xFFCBD5E1),
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 44,
+                                        height: 44,
+                                        child: ProductImagePreview(
+                                          imageUrl: preset['url'] as String,
+                                          width: 44,
+                                          height: 44,
+                                          borderRadius: 8,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        preset['title'] as String,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                                          color: isSelected ? const Color(0xFFFF6B00) : const Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          '2. Ou insira um Link de Imagem Personalizado:',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF334155)),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: customUrlController,
+                                style: const TextStyle(fontSize: 12),
+                                decoration: InputDecoration(
+                                  hintText: 'https://exemplo.com/foto-botijao.jpg',
+                                  hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0F172A),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: () {
+                                final text = customUrlController.text.trim();
+                                if (text.isNotEmpty) {
+                                  setModalState(() {
+                                    selectedImage = text;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Foto personalizada aplicada ao preview!'),
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text('Aplicar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
 
                 // Categoria
                 const Text('Categoria do Produto', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
@@ -348,6 +631,27 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                               (list) => list.map((p) => p.id == updated.id ? updated : p).toList(),
                             );
 
+                        if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                          try {
+                            SupabaseService.client.from('products').update({
+                              'name': updated.name,
+                              'brand_name': updated.brandName,
+                              'description': updated.description,
+                              'refill_price': updated.refillPrice,
+                              'shell_price': updated.shellPrice,
+                              'image_url': updated.imageUrl,
+                              'is_available': updated.inStock,
+                              'updated_at': DateTime.now().toIso8601String(),
+                            }).eq('id', updated.id).then((_) {
+                              debugPrint('Produto ${updated.id} sincronizado no Supabase');
+                            }).catchError((err) {
+                              debugPrint('Aviso Supabase update: $err');
+                            });
+                          } catch (e) {
+                            debugPrint('Erro ao atualizar Supabase: $e');
+                          }
+                        }
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Produto "${updated.name}" atualizado com sucesso!'),
@@ -373,6 +677,33 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                         ref.read(productsProvider.notifier).update(
                               (list) => [newProduct, ...list],
                             );
+
+                        if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                          try {
+                            SupabaseService.client.from('products').insert({
+                              'id': newProduct.id,
+                              'store_id': currentStore.id,
+                              'category_slug': newProduct.category.name,
+                              'name': newProduct.name,
+                              'brand_name': newProduct.brandName,
+                              'description': newProduct.description,
+                              'refill_price': newProduct.refillPrice,
+                              'shell_price': newProduct.shellPrice,
+                              'stock_quantity': 100,
+                              'image_url': newProduct.imageUrl,
+                              'is_available': newProduct.inStock,
+                              'rating': 5.0,
+                              'created_at': DateTime.now().toIso8601String(),
+                              'updated_at': DateTime.now().toIso8601String(),
+                            }).then((_) {
+                              debugPrint('Novo produto inserido no Supabase');
+                            }).catchError((err) {
+                              debugPrint('Aviso Supabase insert: $err');
+                            });
+                          } catch (e) {
+                            debugPrint('Erro ao inserir Supabase: $e');
+                          }
+                        }
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -416,6 +747,11 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
               ref.read(productsProvider.notifier).update(
                     (list) => list.where((p) => p.id != product.id).toList(),
                   );
+              if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                try {
+                  SupabaseService.client.from('products').delete().eq('id', product.id).catchError((_) {});
+                } catch (_) {}
+              }
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Produto removido do catálogo.')),
@@ -697,14 +1033,11 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                 // Imagem
                 Stack(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.asset(
-                        prod.imageUrl,
-                        width: 72,
-                        height: 72,
-                        fit: BoxFit.cover,
-                      ),
+                    ProductImagePreview(
+                      imageUrl: prod.imageUrl,
+                      width: 72,
+                      height: 72,
+                      borderRadius: 14,
                     ),
                     if (!prod.inStock)
                       Positioned.fill(

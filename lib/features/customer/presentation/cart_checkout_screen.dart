@@ -7,6 +7,7 @@ import '../../../core/constants/app_typography.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/confetti_celebration.dart';
+import '../../../core/widgets/product_image_preview.dart';
 import '../../../core/widgets/slide_to_action.dart';
 import '../providers/cart_provider.dart';
 import '../providers/customer_providers.dart';
@@ -292,14 +293,11 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                 ),
                 child: Row(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        item.product.imageUrl,
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover,
-                      ),
+                    ProductImagePreview(
+                      imageUrl: item.product.imageUrl,
+                      width: 50,
+                      height: 50,
+                      borderRadius: 10,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

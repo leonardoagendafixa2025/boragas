@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/widgets/product_image_preview.dart';
 import '../../providers/customer_providers.dart';
 import 'product_bottom_sheet.dart';
 
@@ -83,17 +84,11 @@ class PriceComparisonCard extends ConsumerWidget {
                         color: AppColors.surfaceVariant,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: Image.asset(
-                          prod.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.local_fire_department_rounded,
-                            color: AppColors.primary,
-                            size: 36,
-                          ),
-                        ),
+                      child: ProductImagePreview(
+                        imageUrl: prod.imageUrl,
+                        width: 72,
+                        height: 72,
+                        borderRadius: 14,
                       ),
                     ),
                     Positioned(
