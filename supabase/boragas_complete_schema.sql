@@ -519,17 +519,17 @@ INSERT INTO public.stores (
     lat, lng, delivery_radius_km, base_delivery_fee, estimated_time_min, 
     rating, reviews_count, is_open, is_verified, status, commission_rate_percent
 ) VALUES
-    ('s1111111-1111-1111-1111-111111111111', 'a0000000-0000-0000-0000-000000000002', 'Ultragaz Paulistana Express', '12.345.678/0001-90', '(11) 98711-2233', 'assets/images/app_icon.png', 'assets/images/brand_lockup.png', 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP', -23.561414, -46.655881, 10.00, 0.00, 22, 4.90, 384, true, true, 'active', 8.00),
-    ('s2222222-2222-2222-2222-222222222222', 'a0000000-0000-0000-0000-000000000003', 'Liquigás Central do Gás', '98.765.432/0001-11', '(11) 97654-3210', 'assets/images/app_icon_v2.png', 'assets/images/brand_lockup.png', 'Rua Augusta, 850 - Consolação, São Paulo - SP', -23.553210, -46.652190, 12.00, 5.00, 28, 4.80, 219, true, true, 'active', 8.00)
+    ('e1111111-1111-1111-1111-111111111111', 'a0000000-0000-0000-0000-000000000002', 'Ultragaz Paulistana Express', '12.345.678/0001-90', '(11) 98711-2233', 'assets/images/app_icon.png', 'assets/images/brand_lockup.png', 'Av. Paulista, 1200 - Bela Vista, São Paulo - SP', -23.561414, -46.655881, 10.00, 0.00, 22, 4.90, 384, true, true, 'active', 8.00),
+    ('e2222222-2222-2222-2222-222222222222', 'a0000000-0000-0000-0000-000000000003', 'Liquigás Central do Gás', '98.765.432/0001-11', '(11) 97654-3210', 'assets/images/app_icon_v2.png', 'assets/images/brand_lockup.png', 'Rua Augusta, 850 - Consolação, São Paulo - SP', -23.553210, -46.652190, 12.00, 5.00, 28, 4.80, 219, true, true, 'active', 8.00)
 ON CONFLICT (cnpj) DO NOTHING;
 
 INSERT INTO public.products (
     id, store_id, category_slug, name, brand_name, description, 
     image_url, refill_price, shell_price, stock_quantity, is_available, rating
 ) VALUES
-    ('p1111111-1111-1111-1111-111111111111', 's1111111-1111-1111-1111-111111111111', 'p13', 'Botijão de Gás P13 (13kg)', 'Ultragaz (Azul)', 'Botijão de cozinha tradicional com lacre de segurança e pesagem aferida.', 'assets/images/app_icon.png', 104.90, 289.00, 150, true, 4.90),
-    ('p2222222-2222-2222-2222-222222222222', 's1111111-1111-1111-1111-111111111111', 'water20l', 'Água Mineral Galão 20L', 'Bonafont', 'Galão de 20 litros retornável com pH neutro e lacre inviolável.', 'assets/images/app_icon_v2.png', 14.90, 42.00, 80, true, 4.95),
-    ('p3333333-3333-3333-3333-333333333333', 's2222222-2222-2222-2222-222222222222', 'p13', 'Botijão de Gás P13 (13kg)', 'Liquigás (Verde)', 'Botijão residencial com chama azul de alto rendimento.', 'assets/images/app_icon.png', 99.90, 279.00, 120, true, 4.85)
+    ('d1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111111', 'p13', 'Botijão de Gás P13 (13kg)', 'Ultragaz (Azul)', 'Botijão de cozinha tradicional com lacre de segurança e pesagem aferida.', 'assets/images/app_icon.png', 104.90, 289.00, 150, true, 4.90),
+    ('d2222222-2222-2222-2222-222222222222', 'e1111111-1111-1111-1111-111111111111', 'water20l', 'Água Mineral Galão 20L', 'Bonafont', 'Galão de 20 litros retornável com pH neutro e lacre inviolável.', 'assets/images/app_icon_v2.png', 14.90, 42.00, 80, true, 4.95),
+    ('d3333333-3333-3333-3333-333333333333', 'e2222222-2222-2222-2222-222222222222', 'p13', 'Botijão de Gás P13 (13kg)', 'Liquigás (Verde)', 'Botijão residencial com chama azul de alto rendimento.', 'assets/images/app_icon.png', 99.90, 279.00, 120, true, 4.85)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.remote_configs (key, value, description)

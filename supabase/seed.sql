@@ -41,7 +41,7 @@ INSERT INTO public.stores (
     rating, reviews_count, is_open, is_verified, status, commission_rate_percent
 ) VALUES
     (
-        's1111111-1111-1111-1111-111111111111',
+        'e1111111-1111-1111-1111-111111111111',
         'a0000000-0000-0000-0000-000000000002',
         'Ultragaz Paulistana Express',
         '12.345.678/0001-90',
@@ -53,7 +53,7 @@ INSERT INTO public.stores (
         10.00, 0.00, 22, 4.90, 384, true, true, 'active', 8.00
     ),
     (
-        's2222222-2222-2222-2222-222222222222',
+        'e2222222-2222-2222-2222-222222222222',
         'a0000000-0000-0000-0000-000000000003',
         'Liquigás Central do Gás',
         '98.765.432/0001-11',
@@ -73,7 +73,7 @@ INSERT INTO public.store_payment_configs (
     accepts_online_card, accepts_pos_on_delivery, accepts_cash_on_delivery
 ) VALUES
     (
-        's1111111-1111-1111-1111-111111111111',
+        'e1111111-1111-1111-1111-111111111111',
         'mercadopago',
         'APP_USR-782193-mock-key',
         'APP_USR-782193-mock-token-live',
@@ -82,7 +82,7 @@ INSERT INTO public.store_payment_configs (
         true, true, true, true
     ),
     (
-        's2222222-2222-2222-2222-222222222222',
+        'e2222222-2222-2222-2222-222222222222',
         'asaas',
         'PUB_ASAAS_98213',
         'SEC_ASAAS_TOKEN_LIVE',
@@ -97,11 +97,11 @@ INSERT INTO public.products (
     id, store_id, category_slug, name, brand_name, description, 
     image_url, refill_price, shell_price, stock_quantity, is_available, rating
 ) VALUES
-    ('p1111111-1111-1111-1111-111111111111', 's1111111-1111-1111-1111-111111111111', 'p13', 'Botijão de Gás P13 (13kg)', 'Ultragaz (Azul)', 'Botijão de cozinha tradicional com lacre de segurança e pesagem aferida.', 'assets/images/app_icon.png', 104.90, 289.00, 150, true, 4.90),
-    ('p2222222-2222-2222-2222-222222222222', 's1111111-1111-1111-1111-111111111111', 'water20l', 'Galão de Água Mineral 20L', 'Lindoya Verão', 'Galão retornável 20 Litros, pH neutro, água leve e pura.', 'assets/images/app_icon_v2.png', 18.00, 42.00, 80, true, 4.90),
-    ('p3333333-3333-3333-3333-333333333333', 's1111111-1111-1111-1111-111111111111', 'accessories', 'Kit Regulador de Gás + Mangueira INMETRO', 'Aliança', 'Válvula reguladora 1kg/h com mangueira de 1,25m e abraçadeiras certificadas.', 'assets/images/brand_lockup.png', 65.00, 65.00, 50, true, 4.80),
-    ('p4444444-4444-4444-4444-444444444444', 's2222222-2222-2222-2222-222222222222', 'p13', 'Botijão P13 Liquigás (13kg)', 'Liquigás (Verde)', 'Botijão com chama forte e pura, lacre holográfico anti-fraude.', 'assets/images/app_icon.png', 99.90, 279.00, 200, true, 4.80),
-    ('p5555555-5555-5555-5555-555555555555', 's2222222-2222-2222-2222-222222222222', 'p45', 'Cilindro Industrial P45 (45kg)', 'Liquigás Industrial', 'Ideal para condomínios, padarias, restaurantes e aquecimento central.', 'assets/images/app_icon_v2.png', 430.00, 890.00, 30, true, 4.80)
+    ('d1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111111', 'p13', 'Botijão de Gás P13 (13kg)', 'Ultragaz (Azul)', 'Botijão de cozinha tradicional com lacre de segurança e pesagem aferida.', 'assets/images/app_icon.png', 104.90, 289.00, 150, true, 4.90),
+    ('d2222222-2222-2222-2222-222222222222', 'e1111111-1111-1111-1111-111111111111', 'water20l', 'Galão de Água Mineral 20L', 'Lindoya Verão', 'Galão retornável 20 Litros, pH neutro, água leve e pura.', 'assets/images/app_icon_v2.png', 18.00, 42.00, 80, true, 4.90),
+    ('d3333333-3333-3333-3333-333333333333', 'e1111111-1111-1111-1111-111111111111', 'accessories', 'Kit Regulador de Gás + Mangueira INMETRO', 'Aliança', 'Válvula reguladora 1kg/h com mangueira de 1,25m e abraçadeiras certificadas.', 'assets/images/brand_lockup.png', 65.00, 65.00, 50, true, 4.80),
+    ('d4444444-4444-4444-4444-444444444444', 'e2222222-2222-2222-2222-222222222222', 'p13', 'Botijão P13 Liquigás (13kg)', 'Liquigás (Verde)', 'Botijão com chama forte e pura, lacre holográfico anti-fraude.', 'assets/images/app_icon.png', 99.90, 279.00, 200, true, 4.80),
+    ('d5555555-5555-5555-5555-555555555555', 'e2222222-2222-2222-2222-222222222222', 'p45', 'Cilindro Industrial P45 (45kg)', 'Liquigás Industrial', 'Ideal para condomínios, padarias, restaurantes e aquecimento central.', 'assets/images/app_icon_v2.png', 430.00, 890.00, 30, true, 4.80)
 ON CONFLICT (id) DO NOTHING;
 
 -- 7. Inserir Faturas de Exemplo no Ledger de Comissões
@@ -109,6 +109,6 @@ INSERT INTO public.commission_invoices (
     id, store_id, period, total_store_sales, commission_percent, 
     total_commission_due, due_date, status, pix_copy_paste
 ) VALUES
-    ('i1111111-1111-1111-1111-111111111111', 's1111111-1111-1111-1111-111111111111', '01/11 a 07/11 (Semana 44)', 8940.00, 8.00, 715.20, CURRENT_DATE + INTERVAL '3 days', 'open', '00020126580014br.gov.bcb.pix0136boragas-faturas@plataforma.com5204000053039865406715.205802BR5915BoraGas Admin6009Sao Paulo62070503***6304'),
-    ('i2222222-2222-2222-2222-222222222222', 's2222222-2222-2222-2222-222222222222', '25/10 a 31/10 (Semana 43)', 11250.00, 8.00, 900.00, CURRENT_DATE - INTERVAL '2 days', 'paid', 'pix-recibo-pago-892')
+    ('f1111111-1111-1111-1111-111111111111', 'e1111111-1111-1111-1111-111111111111', '01/11 a 07/11 (Semana 44)', 8940.00, 8.00, 715.20, CURRENT_DATE + INTERVAL '3 days', 'open', '00020126580014br.gov.bcb.pix0136boragas-faturas@plataforma.com5204000053039865406715.205802BR5915BoraGas Admin6009Sao Paulo62070503***6304'),
+    ('f2222222-2222-2222-2222-222222222222', 'e2222222-2222-2222-2222-222222222222', '25/10 a 31/10 (Semana 43)', 11250.00, 8.00, 900.00, CURRENT_DATE - INTERVAL '2 days', 'paid', 'pix-recibo-pago-892')
 ON CONFLICT (id) DO NOTHING;
