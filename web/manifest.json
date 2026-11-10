@@ -1,11 +1,11 @@
 {
-    "name": "boragas",
-    "short_name": "boragas",
+    "name": "BoraGás - Delivery de Gás & Água",
+    "short_name": "BoraGás",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F172A",
+    "theme_color": "#FF6B00",
+    "description": "Peça seu botijão de gás e galão de água mineral com entrega rápida e rastreamento em tempo real.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
