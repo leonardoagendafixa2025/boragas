@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: boragas-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_URL
+        value: https://elkelrotleuyszmtkbye.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: sb_publishable_2ic-HESrCJHYoCk_XNyN2Q_j5zuxKDc
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: sb_secret_PVMvIz643FnF9Qe-Z29I0A_6XurN-vO
+      - key: FRONTEND_URL
+        value: https://boragas-delta.vercel.app
+      - key: PLATFORM_COMMISSION_PERCENT
+        value: "8.0"
+      - key: DEFAULT_COMMISSION_RATE
+        value: "8.0"

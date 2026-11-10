@@ -53,3 +53,8 @@ app.*.map.json
 
 # GitHub workflows (avoids PAT workflow scope error)
 .github/
+
+# Node / Backend
+node_modules/
+backend/dist/
+backend/.env

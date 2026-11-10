@@ -1,0 +1,44 @@
+{
+  "name": "boragas-backend",
+  "version": "1.0.0",
+  "description": "BoraGás Marketplace Backend API & Payment Webhooks (Render)",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node --use-system-ca dist/server.js",
+    "dev": "tsx --use-system-ca watch src/server.ts",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "boragas",
+    "marketplace",
+    "gas-delivery",
+    "supabase",
+    "render",
+    "mercadopago",
+    "asaas"
+  ],
+  "author": "BoraGás Team",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.13.8",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
