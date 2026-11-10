@@ -75,14 +75,23 @@ class _MerchantPaymentConfigScreenState
     final config = ref.watch(storePaymentConfigProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configuração de Pagamento (BYOK)'),
-      ),
+      backgroundColor: const Color(0xFF0B1120),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Pagamentos BYOK
+            const Text(
+              'Configuração de Pagamento (BYOK)',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 2),
+            const Text(
+              'Configure suas chaves Mercado Pago, AbacatePay e maquininhas de entrega',
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+            ),
+            const SizedBox(height: 14),
             // Informative Notice Banner
             Container(
               padding: const EdgeInsets.all(14),

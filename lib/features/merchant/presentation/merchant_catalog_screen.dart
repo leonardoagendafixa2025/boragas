@@ -449,40 +449,51 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
     final outOfStockCount = allProducts.length - activeCount;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Catálogo & Estoque'),
-            Text(
-              currentStore.name,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilledButton.icon(
-              onPressed: () => _showProductFormDialog(),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Novo Produto', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-              ),
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFF0B1120),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showProductFormDialog(),
-        backgroundColor: AppColors.primary,
+        backgroundColor: const Color(0xFFFF6B00),
         icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
         label: const Text('Adicionar Produto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
       body: CustomScrollView(
         slivers: [
+          // Header Tático de Catálogo
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Catálogo & Estoque • ${currentStore.name}',
+                        style: const TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Gerencie botijões, preços e disponibilidade no depósito',
+                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                  FilledButton.icon(
+                    onPressed: () => _showProductFormDialog(),
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Novo', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6B00),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           // 1. Resumo Métrico do Catálogo
           SliverToBoxAdapter(
             child: Padding(
