@@ -161,26 +161,52 @@ export async function createCheckout(req: Request, res: Response) {
       await db.recordCommission(createdOrder);
     }
 
-    // 7. Notificar Cliente e Distribuidora via WhatsApp (Baileys)
+    // 7. Notificar Cliente e Distribuidora via WhatsApp (Baileys) usando o Número Raiz da Plataforma
     try {
+      // Buscar dados da distribuidora para personalizar a notificação
+      const { data: storeData } = await supabase
+        .from('stores')
+        .select('name, phone, whatsapp_phone')
+        .eq('id', parsed.store_id)
+        .maybeSingle();
+
+      const storeName = storeData?.name || 'Distribuidora Autorizada BoraGás';
+      const storePhone = storeData?.whatsapp_phone || storeData?.phone;
+
       const itemsText = parsed.items
         .map((i) => `• ${i.quantity}x ${i.product_name} - R$ ${(i.unit_price * i.quantity).toFixed(2)}`)
         .join('\n');
       const addressText = `${parsed.delivery_address.street}, ${parsed.delivery_address.number} - ${parsed.delivery_address.neighborhood}`;
 
-      // Dispara em background sem travar a resposta HTTP
+      // A) Notifica o Cliente (Pedido Confirmado + Código PIN + Link de Rastreamento)
       whatsappService.notifyOrderCreated({
         customerPhone: parsed.customer_phone,
         customerName: parsed.customer_name,
         orderNumber: createdOrder.order_number,
-        storeName: 'Distribuidora Autorizada BoraGás',
+        storeName: storeName,
         itemsSummary: itemsText,
         totalAmount: createdOrder.total_amount,
         deliveryAddress: addressText,
         confirmationCode: createdOrder.delivery_confirmation_code,
         orderId: createdOrder.id,
-      }).catch((err) => console.warn('[WhatsApp Notice Error]', err.message));
-    } catch (_) {}
+      }).catch((err) => console.warn('[WhatsApp Notice Cliente Error]', err.message));
+
+      // B) Notifica o Lojista no WhatsApp da Distribuidora (Alerta de Novo Pedido Comercial)
+      if (storePhone) {
+        whatsappService.notifyStoreNewOrder({
+          storePhone: storePhone,
+          storeName: storeName,
+          orderNumber: createdOrder.order_number,
+          itemsSummary: itemsText,
+          totalAmount: createdOrder.total_amount,
+          deliveryAddress: addressText,
+          customerName: parsed.customer_name,
+          customerPhone: parsed.customer_phone,
+        }).catch((err) => console.warn('[WhatsApp Notice Lojista Error]', err.message));
+      }
+    } catch (err: any) {
+      console.warn('[WhatsApp Notification Dispatch Failed]', err?.message);
+    }
 
     return res.status(201).json({
       success: true,
@@ -212,5 +238,102 @@ export async function getOrder(req: Request, res: Response) {
     return res.json({ order, items });
   } catch (err: any) {
     return res.status(500).json({ error: 'Erro ao buscar pedido', message: err.message });
+  }
+}
+
+const UpdateOrderStatusSchema = z.object({
+  status: z.enum(['pending', 'accepted', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']),
+  courier_name: z.string().optional(),
+  courier_phone: z.string().optional(),
+  eta_minutes: z.number().int().optional().default(15),
+});
+
+/**
+ * Atualiza o status do pedido e dispara automaticamente a notificação correspondente via Baileys
+ */
+export async function updateOrderStatus(req: Request, res: Response) {
+  try {
+    const id = req.params.id as string;
+    const parsed = UpdateOrderStatusSchema.parse(req.body);
+    const supabase = getSupabase();
+
+    const order = await db.getOrderById(id);
+    if (!order) {
+      return res.status(404).json({ error: 'Pedido não encontrado' });
+    }
+
+    const updatePayload: Record<string, any> = {
+      status: parsed.status,
+    };
+
+    if (parsed.courier_name) {
+      updatePayload.courier_name = parsed.courier_name;
+    }
+    if (parsed.courier_phone) {
+      updatePayload.courier_phone = parsed.courier_phone;
+    }
+    if (parsed.status === 'delivered') {
+      updatePayload.delivered_at = new Date().toISOString();
+      updatePayload.payment_status = 'paid_directly_to_store';
+    }
+
+    const { data: updatedOrder, error: updateError } = await supabase
+      .from('orders')
+      .update(updatePayload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: 'Falha ao atualizar status', details: updateError.message });
+    }
+
+    // Buscar perfil do cliente e da loja para dados de contato
+    const { data: customerProfile } = await supabase
+      .from('profiles')
+      .select('full_name, phone')
+      .eq('id', order.customer_id)
+      .maybeSingle();
+
+    const { data: storeData } = await supabase
+      .from('stores')
+      .select('name, phone')
+      .eq('id', order.store_id)
+      .maybeSingle();
+
+    const customerPhone = customerProfile?.phone || (order.delivery_address_snapshot as any)?.customer_phone || '(11) 98122-3344';
+    const customerName = customerProfile?.full_name || 'Cliente';
+    const storeName = storeData?.name || 'Distribuidora BoraGás';
+
+    // Gatilhos Inteligentes do Baileys
+    if (parsed.status === 'out_for_delivery') {
+      whatsappService.notifyCourierDispatched({
+        customerPhone,
+        customerName,
+        orderNumber: order.order_number,
+        courierName: parsed.courier_name || 'Entregador Flash BoraGás',
+        etaMinutes: parsed.eta_minutes,
+        orderId: order.id,
+      }).catch((err) => console.warn('[WhatsApp Courier Notice Error]', err.message));
+    } else if (parsed.status === 'delivered') {
+      whatsappService.notifyOrderDelivered({
+        customerPhone,
+        customerName,
+        orderNumber: order.order_number,
+        storeName,
+      }).catch((err) => console.warn('[WhatsApp Delivered Notice Error]', err.message));
+    }
+
+    return res.json({
+      success: true,
+      order: updatedOrder,
+      message: `Status atualizado para ${parsed.status} e notificações enviadas!`,
+    });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Dados inválidos', issues: err.issues });
+    }
+    console.error('[Order Controller] Exceção em updateOrderStatus:', err);
+    return res.status(500).json({ error: 'Erro ao atualizar pedido' });
   }
 }

@@ -139,6 +139,8 @@ class WhatsAppService {
     }
   }
 
+  private sendQueue: Promise<any> = Promise.resolve();
+
   /**
    * Resposta inteligente básica a comandos do cliente
    */
@@ -146,20 +148,45 @@ class WhatsAppService {
     const lower = text.toLowerCase();
     console.log(`📩 [WhatsApp Mensagem Recebida de ${senderJid}]: ${text}`);
 
-    if (lower.includes('ajuda') || lower.includes('ola') || lower.includes('olá') || lower.includes('bom dia') || lower.includes('boa tarde')) {
+    if (
+      lower.includes('ajuda') ||
+      lower.includes('ola') ||
+      lower.includes('olá') ||
+      lower.includes('bom dia') ||
+      lower.includes('boa tarde') ||
+      lower.includes('boa noite') ||
+      lower === 'menu' ||
+      lower === 'inicio' ||
+      lower === 'início'
+    ) {
       const reply = 
-        `🔥 *Olá! Sou o assistente virtual do BoraGás.*\n\n` +
-        `Como posso te ajudar hoje?\n\n` +
-        `1️⃣ *Pedir Gás ou Água:* Acesse https://boragas-delta.vercel.app\n` +
-        `2️⃣ *Rastrear Entregador:* Envie o número do seu pedido (ex: BG-1024)\n` +
-        `3️⃣ *Falar com Suporte Humano:* Ligue para nosso SAC 0800-BORAGAS`;
+        `🔥 *Olá! Sou o assistente oficial do BoraGás.*\n\n` +
+        `Nosso canal central conecta você diretamente a todas as distribuidoras parceiras da sua região com entrega rápida!\n\n` +
+        `Como posso te ajudar agora?\n\n` +
+        `1️⃣ *Pedir Gás ou Água Mineral:*\n` +
+        `👉 https://boragas-delta.vercel.app\n\n` +
+        `2️⃣ *Rastrear seu Entregador no Mapa:*\n` +
+        `Envie o número do seu pedido (Exemplo: *BG-1024*)\n\n` +
+        `3️⃣ *Portal de Lojistas e Distribuidoras:*\n` +
+        `👉 https://boragas-delta.vercel.app/#/merchant\n\n` +
+        `4️⃣ *Central de Atendimento Humano:*\n` +
+        `Digite *SUPORTE* para transferir ao atendimento BoraGás.`;
       await this.sock?.sendMessage(senderJid, { text: reply });
-    } else if (lower.startsWith('bg-')) {
+    } else if (lower.startsWith('bg-') || lower.includes('bg-')) {
+      const match = text.match(/bg-\d+/i);
+      const orderCode = match ? match[0].toUpperCase() : text.toUpperCase();
       const reply = 
-        `🔍 *Rastreamento BoraGás:*\n` +
-        `Localizamos o pedido *${text.toUpperCase()}*!\n` +
-        `Acompanhe a moto em tempo real no mapa:\n` +
-        `👉 https://boragas-delta.vercel.app/#/tracking/${text.toLowerCase()}`;
+        `🔍 *Rastreamento BoraGás:* Pedido *${orderCode}*\n\n` +
+        `Seu pedido está sendo preparado ou já em trânsito com um de nossos entregadores autorizados!\n\n` +
+        `🗺️ *Acompanhe a moto em tempo real pelo mapa interativo:*\n` +
+        `👉 https://boragas-delta.vercel.app/#/home\n\n` +
+        `_Dica: Ao receber o botijão, confira o lacre antes de informar o código PIN de 4 dígitos._`;
+      await this.sock?.sendMessage(senderJid, { text: reply });
+    } else if (lower.includes('suporte')) {
+      const reply =
+        `👨‍💼 *Suporte BoraGás*\n\n` +
+        `Um de nossos analistas do BoraGás responderá por aqui em instantes.\n` +
+        `Se for urgente sobre um vazamento de botijão, feche o registro e ligue imediatamente para o Corpo de Bombeiros no 193.`;
       await this.sock?.sendMessage(senderJid, { text: reply });
     }
   }
@@ -179,23 +206,31 @@ class WhatsAppService {
   }
 
   /**
-   * Envia mensagem de texto simples
+   * Envia mensagem de texto com fila sequencial e jitter anti-bloqueio (anti-ban)
    */
   async sendTextMessage(phone: string, text: string): Promise<boolean> {
     if (!this.sock || this.status !== 'connected') {
-      console.warn(`[Baileys WhatsApp] Não conectado. Mensagem para ${phone} enfileirada ou ignorada.`);
+      console.warn(`[Baileys WhatsApp] Não conectado. Mensagem para ${phone} não pôde ser enviada.`);
       return false;
     }
 
-    try {
-      const jid = this.formatJid(phone);
-      await this.sock.sendMessage(jid, { text });
-      console.log(`📤 [Baileys WhatsApp] Mensagem enviada para ${phone}`);
-      return true;
-    } catch (err: any) {
-      console.error(`[Baileys WhatsApp] Falha ao enviar mensagem para ${phone}:`, err.message);
-      return false;
-    }
+    return new Promise((resolve) => {
+      this.sendQueue = this.sendQueue.then(async () => {
+        try {
+          const jid = this.formatJid(phone);
+          // Delay humanizado entre 500ms e 1100ms para evitar trigger de spam
+          const delay = Math.floor(500 + Math.random() * 600);
+          await new Promise((r) => setTimeout(r, delay));
+
+          await this.sock!.sendMessage(jid, { text });
+          console.log(`📤 [Baileys WhatsApp] Mensagem enviada para ${phone}`);
+          resolve(true);
+        } catch (err: any) {
+          console.error(`[Baileys WhatsApp] Falha ao enviar para ${phone}:`, err?.message);
+          resolve(false);
+        }
+      });
+    });
   }
 
   /**
