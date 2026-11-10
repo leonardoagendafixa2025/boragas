@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_home_manager_screen.dart';
+import 'admin_orders_screen.dart';
+import 'admin_products_screen.dart';
 import 'admin_remote_config_screen.dart';
 import 'admin_stores_screen.dart';
 
@@ -18,6 +19,8 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
 
   final List<Widget> _pages = const [
     AdminDashboardScreen(),
+    AdminOrdersScreen(),
+    AdminProductsScreen(),
     AdminStoresScreen(),
     AdminHomeManagerScreen(),
     AdminRemoteConfigScreen(),
@@ -25,7 +28,7 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWide = MediaQuery.of(context).size.width > 700;
+    final isWide = MediaQuery.of(context).size.width > 750;
 
     return Scaffold(
       appBar: AppBar(
@@ -50,10 +53,17 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
         ),
         actions: [
           TextButton.icon(
+            onPressed: () => context.go('/merchant'),
+            icon: const Icon(Icons.storefront_rounded, color: Colors.white, size: 16),
+            label: const Text('Portal Lojista', style: TextStyle(color: Colors.white, fontSize: 12)),
+          ),
+          const SizedBox(width: 6),
+          TextButton.icon(
             onPressed: () => context.go('/home'),
             icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),
             label: const Text('App do Cliente', style: TextStyle(color: Colors.white, fontSize: 12)),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Row(
@@ -68,6 +78,16 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
                   icon: Icon(Icons.analytics_outlined),
                   selectedIcon: Icon(Icons.analytics_rounded),
                   label: Text('Comissões'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long_rounded),
+                  label: Text('Pedidos'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.inventory_2_outlined),
+                  selectedIcon: Icon(Icons.inventory_2_rounded),
+                  label: Text('Produtos'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.store_mall_directory_outlined),
@@ -97,22 +117,32 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
               destinations: const [
                 NavigationDestination(
                   icon: Icon(Icons.analytics_outlined),
-                  selectedIcon: Icon(Icons.analytics_rounded, color: AppColors.primary),
+                  selectedIcon: Icon(Icons.analytics_rounded, color: Color(0xFF6554C0)),
                   label: 'Comissões',
                 ),
                 NavigationDestination(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  selectedIcon: Icon(Icons.receipt_long_rounded, color: Color(0xFF6554C0)),
+                  label: 'Pedidos',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.inventory_2_outlined),
+                  selectedIcon: Icon(Icons.inventory_2_rounded, color: Color(0xFF6554C0)),
+                  label: 'Produtos',
+                ),
+                NavigationDestination(
                   icon: Icon(Icons.store_mall_directory_outlined),
-                  selectedIcon: Icon(Icons.store_mall_directory_rounded, color: AppColors.primary),
+                  selectedIcon: Icon(Icons.store_mall_directory_rounded, color: Color(0xFF6554C0)),
                   label: 'Lojas',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.view_carousel_outlined),
-                  selectedIcon: Icon(Icons.view_carousel_rounded, color: AppColors.primary),
+                  selectedIcon: Icon(Icons.view_carousel_rounded, color: Color(0xFF6554C0)),
                   label: 'Home',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.settings_remote_outlined),
-                  selectedIcon: Icon(Icons.settings_remote_rounded, color: AppColors.primary),
+                  selectedIcon: Icon(Icons.settings_remote_rounded, color: Color(0xFF6554C0)),
                   label: 'Remote',
                 ),
               ],
