@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/supabase_service.dart';
 
-enum UserRole { customer, merchant, admin }
+enum UserRole { customer, merchant, courier, admin }
 
 class UserProfile {
   final String id;
@@ -9,6 +9,7 @@ class UserProfile {
   final String phone;
   final String email;
   final UserRole role;
+  final String? storeId; // Preenchido para lojistas e entregadores vinculados
 
   const UserProfile({
     required this.id,
@@ -16,7 +17,26 @@ class UserProfile {
     required this.phone,
     required this.email,
     required this.role,
+    this.storeId,
   });
+
+  UserProfile copyWith({
+    String? id,
+    String? name,
+    String? phone,
+    String? email,
+    UserRole? role,
+    String? storeId,
+  }) {
+    return UserProfile(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      role: role ?? this.role,
+      storeId: storeId ?? this.storeId,
+    );
+  }
 }
 
 class AuthState {
@@ -109,10 +129,30 @@ class AuthNotifier extends Notifier<AuthState> {
       isAuthenticated: true,
       user: UserProfile(
         id: 'merch-01',
-        name: 'Ultragaz Paulistana Express',
+        name: 'Gerente Ultragaz Paulistana',
         phone: '(11) 98711-2233',
         email: email,
         role: UserRole.merchant,
+        storeId: 'store-1',
+      ),
+      isLoading: false,
+    );
+    return true;
+  }
+
+  Future<bool> loginCourier(String email, String password) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    await Future.delayed(const Duration(milliseconds: 900));
+
+    state = state.copyWith(
+      isAuthenticated: true,
+      user: UserProfile(
+        id: 'courier-01',
+        name: 'Marcos Oliveira (Entregador)',
+        phone: '(11) 97722-1199',
+        email: email,
+        role: UserRole.courier,
+        storeId: 'store-1',
       ),
       isLoading: false,
     );
@@ -151,11 +191,23 @@ class AuthNotifier extends Notifier<AuthState> {
     } else if (role == UserRole.merchant) {
       state = state.copyWith(
         user: const UserProfile(
-          id: 'store-1',
-          name: 'Ultragaz Paulistana Express',
+          id: 'merch-01',
+          name: 'Gerente Ultragaz Paulistana',
           phone: '(11) 98711-2233',
           email: 'lojista@boragas.app',
           role: UserRole.merchant,
+          storeId: 'store-1',
+        ),
+      );
+    } else if (role == UserRole.courier) {
+      state = state.copyWith(
+        user: const UserProfile(
+          id: 'courier-01',
+          name: 'Marcos Oliveira (Entregador)',
+          phone: '(11) 97722-1199',
+          email: 'entregador@boragas.app',
+          role: UserRole.courier,
+          storeId: 'store-1',
         ),
       );
     } else {

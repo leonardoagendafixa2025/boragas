@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_home_manager_screen.dart';
 import 'admin_remote_config_screen.dart';
 import 'admin_stores_screen.dart';
 
-class AdminShellScreen extends StatefulWidget {
+class AdminShellScreen extends ConsumerStatefulWidget {
   const AdminShellScreen({super.key});
 
   @override
-  State<AdminShellScreen> createState() => _AdminShellScreenState();
+  ConsumerState<AdminShellScreen> createState() => _AdminShellScreenState();
 }
 
-class _AdminShellScreenState extends State<AdminShellScreen> {
+class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = const [
@@ -55,13 +57,19 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            onPressed: () => context.go('/merchant'),
+            onPressed: () {
+              ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
+              context.go('/merchant');
+            },
             icon: const Icon(Icons.storefront_rounded, size: 16),
             label: const Text('Portal do Lojista', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 8),
           TextButton.icon(
-            onPressed: () => context.go('/home'),
+            onPressed: () {
+              ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
+              context.go('/home');
+            },
             icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),
             label: const Text('App do Cliente', style: TextStyle(color: Colors.white, fontSize: 12)),
           ),

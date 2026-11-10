@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/models/product_model.dart';
 import '../../../core/models/store_model.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'customer_providers.dart';
 
 class CartItem {
@@ -206,12 +207,18 @@ class CartNotifier extends Notifier<CartState> {
     final commissionPercent = store.commissionRate;
     final commissionAmount = state.total * (commissionPercent / 100);
 
+    final auth = ref.read(authProvider);
+    final currentCustomer = auth.user;
+    final customerId = currentCustomer?.id ?? 'usr-001';
+    final customerName = currentCustomer?.name ?? 'Cliente BoraGás';
+    final customerPhone = currentCustomer?.phone ?? '(11) 98122-3344';
+
     final newOrder = OrderModel(
       id: 'ord-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
       orderNumber: '#BG-${(1000 + (DateTime.now().millisecond * 7) % 9000)}',
-      customerId: 'usr-001',
-      customerName: 'Carlos Eduardo Silva',
-      customerPhone: '(11) 98122-3344',
+      customerId: customerId,
+      customerName: customerName,
+      customerPhone: customerPhone,
       storeId: store.id,
       storeName: store.name,
       items: state.items

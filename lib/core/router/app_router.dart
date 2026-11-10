@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/admin/presentation/admin_shell_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
+import '../../features/auth/providers/auth_provider.dart';
 import '../../features/courier/presentation/courier_screen.dart';
 import '../../features/customer/presentation/cart_checkout_screen.dart';
 import '../../features/customer/presentation/customer_shell_screen.dart';
@@ -23,10 +25,8 @@ final GlobalKey<NavigatorState> _rootNavigatorKey =
 final GlobalKey<NavigatorState> _shellNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'shell');
 
-final appRouter = GoRouter(
-  navigatorKey: _rootNavigatorKey,
-  initialLocation: '/',
-  routes: [
+List<RouteBase> _buildAppRoutes() {
+  return [
     GoRoute(
       path: '/',
       builder: (context, state) => const AnimatedSplashScreen(),
@@ -90,16 +90,19 @@ final appRouter = GoRouter(
         return TicketDetailScreen(ticketId: ticketId);
       },
     ),
+    // Painel do Lojista (Protegido por Role Guard)
     GoRoute(
       path: '/merchant',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const MerchantShellScreen(),
     ),
+    // Super Admin (Protegido por Role Guard)
     GoRoute(
       path: '/admin',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AdminShellScreen(),
     ),
+    // App do Entregador (Protegido por Role Guard)
     GoRoute(
       path: '/courier',
       parentNavigatorKey: _rootNavigatorKey,
@@ -120,5 +123,54 @@ final appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const LoyaltyScreen(),
     ),
-  ],
+  ];
+}
+
+/// Provider reativo de rotas com controle de acesso RBAC estrito
+final routerProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
+
+  return GoRouter(
+    navigatorKey: _rootNavigatorKey,
+    initialLocation: '/',
+    redirect: (context, state) {
+      final loc = state.matchedLocation;
+      final user = authState.user;
+      final role = user?.role ?? UserRole.customer;
+
+      // 1. Proteger Super Admin: Apenas UserRole.admin
+      if (loc.startsWith('/admin')) {
+        if (role != UserRole.admin) {
+          debugPrint('⛔ [RBAC Guard] Acesso negado a /admin para role: $role');
+          return '/home';
+        }
+      }
+
+      // 2. Proteger Portal Lojista: Apenas UserRole.merchant e UserRole.admin
+      if (loc.startsWith('/merchant')) {
+        if (role != UserRole.merchant && role != UserRole.admin) {
+          debugPrint('⛔ [RBAC Guard] Acesso negado a /merchant para role: $role');
+          return '/home';
+        }
+      }
+
+      // 3. Proteger App Entregador: Apenas UserRole.courier, UserRole.merchant e UserRole.admin
+      if (loc.startsWith('/courier')) {
+        if (role != UserRole.courier && role != UserRole.merchant && role != UserRole.admin) {
+          debugPrint('⛔ [RBAC Guard] Acesso negado a /courier para role: $role');
+          return '/home';
+        }
+      }
+
+      return null;
+    },
+    routes: _buildAppRoutes(),
+  );
+});
+
+/// Roteador estático legado para retrocompatibilidade
+final appRouter = GoRouter(
+  navigatorKey: _rootNavigatorKey,
+  initialLocation: '/',
+  routes: _buildAppRoutes(),
 );

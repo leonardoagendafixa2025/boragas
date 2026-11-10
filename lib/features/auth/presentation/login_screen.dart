@@ -46,12 +46,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   }
 
   void _loginStaff() async {
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     final pwd = _passwordController.text.trim();
 
     if (email.contains('admin')) {
       await ref.read(authProvider.notifier).loginAdmin(email, pwd);
       if (mounted) context.go('/admin');
+    } else if (email.contains('entregador') || email.contains('courier')) {
+      await ref.read(authProvider.notifier).loginCourier(email, pwd);
+      if (mounted) context.go('/courier');
     } else {
       await ref.read(authProvider.notifier).loginMerchant(email, pwd);
       if (mounted) context.go('/merchant');
@@ -98,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   unselectedLabelColor: AppColors.textSecondary,
                   tabs: const [
                     Tab(text: 'Cliente (Celular)'),
-                    Tab(text: 'Lojista / Admin'),
+                    Tab(text: 'Equipe & Lojas'),
                   ],
                 ),
               ),
@@ -140,15 +143,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                       ],
                     ),
 
-                    // Tab 2: Merchant & Admin
+                    // Tab 2: Merchant, Courier & Admin
                     Column(
                       children: [
                         TextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: const InputDecoration(
-                            labelText: 'E-mail corporativo',
+                            labelText: 'E-mail corporativo / Login',
                             prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
+                            hintText: 'lojista@... / admin@... / entregador@...',
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -162,7 +166,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                         ),
                         const SizedBox(height: 16),
                         AppButton(
-                          label: 'Entrar no Painel',
+                          label: 'Entrar no Painel Correspondente',
                           isLoading: auth.isLoading,
                           onPressed: _loginStaff,
                         ),
@@ -177,7 +181,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
 
               // Quick bypass demo profiles
               const Text(
-                'TESTAR IMEDIATAMENTE (DEMO BYPASS):',
+                'TESTAR IMEDIATAMENTE (DEMO 4 PERFIS):',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -185,37 +189,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   letterSpacing: 0.8,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
 
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
                       onPressed: () {
                         ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
                         context.go('/home');
                       },
-                      child: const Text('Cliente', style: TextStyle(fontSize: 12)),
+                      child: const Text('Cliente', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
                       onPressed: () {
                         ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
                         context.go('/merchant');
                       },
-                      child: const Text('Lojista', style: TextStyle(fontSize: 12)),
+                      child: const Text('Lojista', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      onPressed: () {
+                        ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
+                        context.go('/courier');
+                      },
+                      child: const Text('Entregador', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
                       onPressed: () {
                         ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
                         context.go('/admin');
                       },
-                      child: const Text('Admin', style: TextStyle(fontSize: 12)),
+                      child: const Text('Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

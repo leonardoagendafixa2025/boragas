@@ -13,6 +13,7 @@ import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/map/boragas_interactive_map.dart';
 import '../../../core/widgets/slide_to_action.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 
 class CourierScreen extends ConsumerStatefulWidget {
@@ -255,6 +256,14 @@ class _CourierScreenState extends ConsumerState<CourierScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            tooltip: 'Sair da Conta',
+            icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+            onPressed: () {
+              ref.read(authProvider.notifier).logout();
+              context.go('/login');
+            },
+          ),
           TextButton.icon(
             onPressed: () => context.go('/home'),
             icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),

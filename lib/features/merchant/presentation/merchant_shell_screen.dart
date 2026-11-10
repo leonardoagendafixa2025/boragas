@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../providers/merchant_providers.dart';
 import 'merchant_catalog_screen.dart';
@@ -91,14 +92,20 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
         actions: [
           TextButton.icon(
             style: TextButton.styleFrom(foregroundColor: Colors.white),
-            onPressed: () => context.go('/admin'),
+            onPressed: () {
+              ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
+              context.go('/admin');
+            },
             icon: const Icon(Icons.admin_panel_settings_rounded, size: 16),
             label: const Text('Super Admin', style: TextStyle(fontSize: 12)),
           ),
           const SizedBox(width: 4),
           TextButton.icon(
             style: TextButton.styleFrom(foregroundColor: Colors.white),
-            onPressed: () => context.go('/home'),
+            onPressed: () {
+              ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
+              context.go('/home');
+            },
             icon: const Icon(Icons.arrow_back, size: 16),
             label: const Text('App do Cliente', style: TextStyle(fontSize: 12)),
           ),

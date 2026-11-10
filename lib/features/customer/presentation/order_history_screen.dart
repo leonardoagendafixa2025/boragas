@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/customer_providers.dart';
 
 class OrderHistoryScreen extends ConsumerWidget {
@@ -11,7 +12,10 @@ class OrderHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final orders = ref.watch(ordersProvider);
+    final auth = ref.watch(authProvider);
+    final allOrders = ref.watch(ordersProvider);
+    final currentUserId = auth.user?.id ?? 'usr-001';
+    final orders = allOrders.where((o) => o.customerId == currentUserId).toList();
 
     return Scaffold(
       appBar: AppBar(

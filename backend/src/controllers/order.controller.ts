@@ -46,26 +46,49 @@ const CheckoutPayloadSchema = z.object({
 export async function createCheckout(req: Request, res: Response) {
   try {
     const parsed = CheckoutPayloadSchema.parse(req.body);
+    const supabase = getSupabase();
+    const customerId = req.user?.id || parsed.customer_id;
 
-    // 1. Calcular subtotal e total
-    const subtotal = parsed.items.reduce((acc, item) => acc + item.unit_price * item.quantity, 0);
+    // 1. Validação de Preços e Itens diretamente na tabela products (Anti-adulteração)
+    const productIds = parsed.items.map((i) => i.product_id);
+    const { data: dbProducts } = await supabase
+      .from('products')
+      .select('id, store_id, refill_price, shell_price, is_available')
+      .in('id', productIds);
+
+    const dbProductMap = new Map((dbProducts || []).map((p) => [p.id, p]));
+
+    const validatedItems = parsed.items.map((item) => {
+      const dbProd = dbProductMap.get(item.product_id);
+      let unitPrice = item.unit_price;
+      if (dbProd) {
+        // Sobrescreve com o preço oficial do banco de dados
+        unitPrice = item.is_refill_only ? Number(dbProd.refill_price) : Number(dbProd.shell_price);
+      }
+      return {
+        ...item,
+        unit_price: unitPrice,
+      };
+    });
+
+    // 2. Calcular subtotal e total com valores auditados pelo servidor
+    const subtotal = validatedItems.reduce((acc, item) => acc + item.unit_price * item.quantity, 0);
     const totalAmount = Math.max(0, subtotal + parsed.delivery_fee - parsed.discount);
     const commissionPercent = config.platform.commissionPercent;
     const commissionAmount = Number(((totalAmount * commissionPercent) / 100).toFixed(2));
 
-    // 2. Gerar número de pedido único e código de confirmação
+    // 3. Gerar número de pedido único e código de confirmação PIN
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const orderNumber = `BG-${randomSuffix}`;
     const confirmationCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // 3. Buscar configuração de pagamento BYOK da loja
+    // 4. Buscar configuração de pagamento BYOK da loja
     const storePaymentConfig = await db.getStorePaymentConfig(parsed.store_id);
 
-    // 4. Salvar pedido no Supabase
-    const supabase = getSupabase();
+    // 5. Salvar pedido no Supabase
     const orderInsertPayload = {
       order_number: orderNumber,
-      customer_id: parsed.customer_id,
+      customer_id: customerId,
       store_id: parsed.store_id,
       delivery_address_snapshot: parsed.delivery_address,
       status: 'accepted',

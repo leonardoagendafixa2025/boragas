@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/floating_order_tracker.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 
 class CustomerShellScreen extends ConsumerStatefulWidget {
@@ -86,6 +87,7 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
               trailing: const Icon(Icons.check_circle_rounded, color: AppColors.primary),
               onTap: () {
                 Navigator.pop(context);
+                ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
                 context.go('/home');
               },
             ),
@@ -101,6 +103,7 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.pop(context);
+                ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
                 context.go('/merchant');
               },
             ),
@@ -116,6 +119,7 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.pop(context);
+                ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
                 context.go('/courier');
               },
             ),
@@ -131,6 +135,7 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.pop(context);
+                ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
                 context.go('/admin');
               },
             ),

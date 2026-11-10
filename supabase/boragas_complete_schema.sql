@@ -24,7 +24,7 @@ ON CONFLICT (id) DO NOTHING;
 -- 2. PROFILES (Perfis de Usuários)
 -- ---------------------------------------------------------------------
 DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM ('customer', 'merchant', 'admin');
+    CREATE TYPE user_role AS ENUM ('customer', 'merchant', 'admin', 'courier');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -63,6 +63,25 @@ DROP POLICY IF EXISTS "Usuários podem atualizar seus próprios perfis" ON publi
 CREATE POLICY "Usuários podem atualizar seus próprios perfis"
     ON public.profiles FOR UPDATE
     USING (auth.uid() = id);
+
+-- Trigger de Segurança: Somente admin ou service_role pode alterar role
+CREATE OR REPLACE FUNCTION public.check_profile_role_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+        IF NOT (public.is_admin() OR auth.role() = 'service_role') THEN
+            RAISE EXCEPTION 'Acesso negado: Somente administradores do sistema podem alterar o perfil de acesso (role).';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_protect_profile_role ON public.profiles;
+CREATE TRIGGER trg_protect_profile_role
+    BEFORE UPDATE ON public.profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION public.check_profile_role_update();
 
 -- ---------------------------------------------------------------------
 -- 3. CUSTOMER_ADDRESSES (Endereços Salvos dos Clientes)
@@ -278,6 +297,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
     commission_rate_applied NUMERIC(5, 2) NOT NULL DEFAULT 8.00,
     platform_commission_amount NUMERIC(8, 2) NOT NULL DEFAULT 0.00,
     delivery_confirmation_code VARCHAR(6) NOT NULL,
+    courier_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     courier_name TEXT,
     courier_phone TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
