@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/floating_order_tracker.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 
 class CustomerShellScreen extends ConsumerStatefulWidget {
@@ -41,109 +40,6 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
         context.go('/cart');
         break;
     }
-  }
-
-  void _showRoleSwitcher(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.swap_horiz_rounded, color: AppColors.primary),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Trocar Módulo do Ecossistema',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'O BoraGás possui 4 visões integradas no mesmo app:',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              tileColor: AppColors.primary.withValues(alpha: 0.05),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              leading: const Icon(Icons.person_rounded, color: AppColors.primary),
-              title: const Text('Cliente Final (Consumidor)', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('Comprar gás/água, comparar preços e rastrear entrega'),
-              trailing: const Icon(Icons.check_circle_rounded, color: AppColors.primary),
-              onTap: () {
-                Navigator.pop(context);
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
-                context.go('/home');
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              leading: const Icon(Icons.store_rounded, color: AppColors.accentFlame),
-              title: const Text('Painel da Distribuidora (Lojista)', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('Kanban de pedidos, catálogo, BYOK API & Maquininha'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                Navigator.pop(context);
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
-                context.go('/merchant');
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              leading: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF0D9488)),
-              title: const Text('App do Entregador (Motoboy)', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('Rotas ativas, GPS Waze/Maps e validação de PIN de 4 dígitos'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                Navigator.pop(context);
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
-                context.go('/courier');
-              },
-            ),
-            const SizedBox(height: 10),
-            ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              leading: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF6554C0)),
-              title: const Text('Painel Super Admin', style: TextStyle(fontWeight: FontWeight.w700)),
-              subtitle: const Text('Controle de comissões sem mensalidade, gestão de banners e home'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () {
-                Navigator.pop(context);
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
-                context.go('/admin');
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -301,15 +197,6 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
           Expanded(child: widget.child),
           const FloatingOrderTracker(),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        mini: true,
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primary,
-        tooltip: 'Trocar de Painel',
-        elevation: 3,
-        onPressed: () => _showRoleSwitcher(context),
-        child: const Icon(Icons.swap_horiz_rounded),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,

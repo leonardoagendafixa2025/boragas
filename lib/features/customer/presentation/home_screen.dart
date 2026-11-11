@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/models/order_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/customer_providers.dart';
 import '../../../core/widgets/interactive_scale_button.dart';
@@ -37,6 +38,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final filteredStores = ref.watch(filteredStoresProvider);
     final priceComparisonItems = ref.watch(priceComparisonListProvider);
     final cart = ref.watch(cartProvider);
+    final orders = ref.watch(ordersProvider);
+    final hasActiveOrder = orders.any((o) =>
+        o.status == OrderStatus.outForDelivery ||
+        o.status == OrderStatus.preparing ||
+        o.status == OrderStatus.accepted);
 
     return Scaffold(
       body: SafeArea(
@@ -291,8 +297,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       ),
 
-      // Floating Cart Floating Bar
-      bottomSheet: !cart.isEmpty
+      // Floating Cart Floating Bar (exibido apenas se não houver rastreamento ativo em rota para evitar colisões)
+      bottomSheet: (!cart.isEmpty && !hasActiveOrder)
           ? Container(
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

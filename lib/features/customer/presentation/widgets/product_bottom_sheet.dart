@@ -88,16 +88,28 @@ class _ProductBottomSheetState extends ConsumerState<ProductBottomSheet> {
     }
 
     Navigator.pop(context);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${widget.product.name} adicionado à sacola!'),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: 'Ver Sacola',
-          textColor: Colors.white,
-          onPressed: () => context.push('/cart'),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '${widget.product.name} adicionado à sacola!',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Colors.white),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
+        duration: const Duration(milliseconds: 1800),
+        backgroundColor: const Color(0xFF0F172A),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }

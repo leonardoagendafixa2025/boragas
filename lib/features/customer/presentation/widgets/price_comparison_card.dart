@@ -185,36 +185,47 @@ class PriceComparisonCard extends ConsumerWidget {
 
             // Price & Quick Buy Button
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Troca a partir de',
-                      style: AppTypography.bodySmall.copyWith(fontSize: 11),
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          'R\$ ${prod.refillPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                          style: AppTypography.priceHighlight.copyWith(fontSize: 20),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Total c/ frete: R\$ ${item.totalPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Troca a partir de',
+                        style: AppTypography.bodySmall.copyWith(fontSize: 11),
+                      ),
+                      const SizedBox(height: 2),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 2,
+                        children: [
+                          Text(
+                            'R\$ ${prod.refillPrice.toStringAsFixed(2).replaceAll('.', ',')}',
+                            style: AppTypography.priceHighlight.copyWith(fontSize: 18),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'c/ frete: R\$ ${item.totalPrice.toStringAsFixed(2).replaceAll('.', ',')}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
 
                 ElevatedButton.icon(
                   onPressed: () {
@@ -230,12 +241,12 @@ class PriceComparisonCard extends ConsumerWidget {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.flash_on_rounded, size: 16),
+                  icon: const Icon(Icons.flash_on_rounded, size: 15),
                   label: const Text('Comprar'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accentFlame,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

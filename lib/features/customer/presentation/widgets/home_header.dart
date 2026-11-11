@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/services/remote_config_service.dart';
@@ -136,39 +135,24 @@ class HomeHeader extends ConsumerWidget {
 
               const SizedBox(width: 6),
 
-              // Quick Help Button
-              IconButton(
-                onPressed: () => context.push('/support'),
-                tooltip: 'Suporte & Ajuda',
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceVariant,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              // Switch Profile / Open Drawer Button
+              Builder(
+                builder: (ctx) => IconButton(
+                  onPressed: () {
+                    Scaffold.of(ctx).openDrawer();
+                  },
+                  tooltip: 'Trocar Painel / Módulos',
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                icon: const Icon(
-                  Icons.headset_mic_rounded,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-              ),
-
-              const SizedBox(width: 6),
-
-              // Orders Direct Button
-              IconButton(
-                onPressed: () => context.push('/orders'),
-                tooltip: 'Meus Pedidos',
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surfaceVariant,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  icon: const Icon(
+                    Icons.swap_horiz_rounded,
+                    color: AppColors.primary,
+                    size: 20,
                   ),
-                ),
-                icon: const Icon(
-                  Icons.receipt_long_rounded,
-                  color: AppColors.textPrimary,
-                  size: 20,
                 ),
               ),
             ],
