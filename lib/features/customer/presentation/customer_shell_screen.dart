@@ -202,39 +202,59 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
           const FloatingOrderTracker(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex,
-        onDestinationSelected: (index) => _onItemTapped(index, context),
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
-            label: 'Início',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.15))),
+        ),
+        child: NavigationBarTheme(
+          data: NavigationBarThemeData(
+            height: 66,
+            indicatorColor: AppColors.primary.withValues(alpha: 0.14),
+            indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            labelTextStyle: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return const TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.w800);
+              }
+              return const TextStyle(color: Color(0xFF64748B), fontSize: 10.5, fontWeight: FontWeight.w600);
+            }),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long_rounded, color: AppColors.primary),
-            label: 'Pedidos',
+          child: NavigationBar(
+            selectedIndex: selectedIndex,
+            backgroundColor: Colors.white,
+            elevation: 8,
+            onDestinationSelected: (index) => _onItemTapped(index, context),
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded, color: AppColors.primary),
+                label: 'Início',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.receipt_long_outlined),
+                selectedIcon: Icon(Icons.receipt_long_rounded, color: AppColors.primary),
+                label: 'Pedidos',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.support_agent_outlined),
+                selectedIcon: Icon(Icons.support_agent_rounded, color: AppColors.primary),
+                label: 'Ajuda',
+              ),
+              NavigationDestination(
+                icon: Badge(
+                  isLabelVisible: !cart.isEmpty,
+                  label: Text('${cart.totalItemCount}'),
+                  child: const Icon(Icons.shopping_bag_outlined),
+                ),
+                selectedIcon: Badge(
+                  isLabelVisible: !cart.isEmpty,
+                  label: Text('${cart.totalItemCount}'),
+                  child: const Icon(Icons.shopping_bag_rounded, color: AppColors.primary),
+                ),
+                label: 'Sacola',
+              ),
+            ],
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.support_agent_outlined),
-            selectedIcon: Icon(Icons.support_agent_rounded, color: AppColors.primary),
-            label: 'Ajuda',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible: !cart.isEmpty,
-              label: Text('${cart.totalItemCount}'),
-              child: const Icon(Icons.shopping_bag_outlined),
-            ),
-            selectedIcon: Badge(
-              isLabelVisible: !cart.isEmpty,
-              label: Text('${cart.totalItemCount}'),
-              child: const Icon(Icons.shopping_bag_rounded, color: AppColors.primary),
-            ),
-            label: 'Sacola',
-          ),
-        ],
+        ),
       ),
     );
   }
