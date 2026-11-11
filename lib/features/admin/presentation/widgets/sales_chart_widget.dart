@@ -286,10 +286,14 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
           const SizedBox(height: 10),
 
           // Legend and Summary Insights
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 12,

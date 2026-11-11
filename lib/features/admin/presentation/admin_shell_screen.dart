@@ -30,6 +30,21 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
+    // Bloqueio de segurança em camadas: Se não for admin autenticado, redireciona para login
+    if (GoRouter.maybeOf(context) != null && (!auth.isAuthenticated || auth.user?.role != UserRole.admin)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/login');
+      });
+      return const Scaffold(
+        backgroundColor: Color(0xFF0F172A),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     final isWide = MediaQuery.of(context).size.width > 750;
 
     return Scaffold(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/admin/presentation/admin_shell_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
+import '../../features/auth/providers/auth_provider.dart';
 import '../../features/courier/presentation/courier_screen.dart';
 import '../../features/customer/presentation/cart_checkout_screen.dart';
 import '../../features/customer/presentation/customer_shell_screen.dart';
@@ -26,6 +27,10 @@ final GlobalKey<NavigatorState> _shellNavigatorKey =
 
 List<RouteBase> _buildAppRoutes() {
   return [
+    GoRoute(
+      path: '/',
+      redirect: (context, state) => '/splash',
+    ),
     GoRoute(
       path: '/splash',
       builder: (context, state) => const AnimatedSplashScreen(),
@@ -125,11 +130,92 @@ List<RouteBase> _buildAppRoutes() {
   ];
 }
 
-/// Provider do roteador GoRouter com suporte a acesso direto por URL
+/// Listenable que notifica o GoRouter sempre que o estado de autenticação ou role mudar
+class AuthRouterListenable extends ChangeNotifier {
+  final Ref _ref;
+
+  AuthRouterListenable(this._ref) {
+    _ref.listen<AuthState>(
+      authProvider,
+      (previous, next) {
+        if (previous?.isAuthenticated != next.isAuthenticated ||
+            previous?.user?.role != next.user?.role ||
+            previous?.isSessionChecked != next.isSessionChecked) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
+String homeForRole(UserRole? role) {
+  switch (role) {
+    case UserRole.admin:
+      return '/admin';
+    case UserRole.merchant:
+      return '/merchant';
+    case UserRole.courier:
+      return '/courier';
+    case UserRole.customer:
+    default:
+      return '/home';
+  }
+}
+
+/// Função pura de validação e Route Guard do BoraGás (RBAC Estrito)
+String? evaluateAppRouteRedirect({
+  required AuthState auth,
+  required String location,
+}) {
+  final isAuthenticated = auth.isAuthenticated && auth.user != null;
+  final role = auth.user?.role;
+
+  final isAdminRoute = location == '/admin' || location.startsWith('/admin/');
+  final isMerchantRoute = location == '/merchant' || location.startsWith('/merchant/');
+  final isCourierRoute = location == '/courier' || location.startsWith('/courier/');
+
+  // 1. Proteção estrita de rotas restritas (Admin, Lojista/Logística e Entregador)
+  if (isAdminRoute || isMerchantRoute || isCourierRoute) {
+    if (!isAuthenticated) {
+      // NÃO AUTENTICADO: redirecionamento imediato para login
+      return '/login';
+    }
+
+    // AUTENTICADO: verificação estrita de privilégios (RBAC)
+    if (isAdminRoute && role != UserRole.admin) {
+      return homeForRole(role);
+    }
+    if (isMerchantRoute && role != UserRole.merchant && role != UserRole.admin) {
+      return homeForRole(role);
+    }
+    if (isCourierRoute && role != UserRole.courier && role != UserRole.admin) {
+      return homeForRole(role);
+    }
+  }
+
+  // 2. Se já autenticado e estiver em rotas públicas como /login
+  if (isAuthenticated && location == '/login') {
+    return homeForRole(role);
+  }
+
+  return null;
+}
+
+/// Provider do roteador GoRouter com Route Guards & RBAC Estrito
 final routerProvider = Provider<GoRouter>((ref) {
+  final refreshListenable = AuthRouterListenable(ref);
+  ref.onDispose(refreshListenable.dispose);
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/splash',
+    refreshListenable: refreshListenable,
+    redirect: (context, state) {
+      return evaluateAppRouteRedirect(
+        auth: ref.read(authProvider),
+        location: state.uri.path,
+      );
+    },
     routes: _buildAppRoutes(),
   );
 });

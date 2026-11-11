@@ -296,6 +296,21 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
+    // Bloqueio de segurança em camadas: Se não for entregador ou admin autenticado, redireciona para login
+    if (GoRouter.maybeOf(context) != null && (!auth.isAuthenticated || (auth.user?.role != UserRole.courier && auth.user?.role != UserRole.admin))) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/login');
+      });
+      return const Scaffold(
+        backgroundColor: Color(0xFF0B0F19),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     final orders = ref.watch(ordersProvider);
     final trackingState = ref.watch(courierTrackingNotifierProvider);
 

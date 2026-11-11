@@ -89,12 +89,14 @@ class AuthState {
   final UserProfile? user;
   final bool isLoading;
   final String? errorMessage;
+  final bool isSessionChecked;
 
   const AuthState({
     this.isAuthenticated = false, // Inicia desconectado para requerer login/cadastro real
     this.user,
     this.isLoading = false,
     this.errorMessage,
+    this.isSessionChecked = false,
   });
 
   AuthState copyWith({
@@ -102,12 +104,14 @@ class AuthState {
     UserProfile? user,
     bool? isLoading,
     String? errorMessage,
+    bool? isSessionChecked,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      isSessionChecked: isSessionChecked ?? this.isSessionChecked,
     );
   }
 }
@@ -119,7 +123,7 @@ class AuthNotifier extends Notifier<AuthState> {
   AuthState build() {
     // Carrega a sessão salva de forma assíncrona
     _restoreSavedSession();
-    return const AuthState();
+    return const AuthState(isSessionChecked: false);
   }
 
   Future<void> _restoreSavedSession() async {
@@ -129,7 +133,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final userJson = prefs.getString(_prefKeyUser);
       if (userJson != null && userJson.isNotEmpty) {
         final profile = UserProfile.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
-        state = state.copyWith(isAuthenticated: true, user: profile);
+        state = state.copyWith(isAuthenticated: true, user: profile, isSessionChecked: true);
         debugPrint('✅ Sessão de usuário restaurada com sucesso: ${profile.name} (${profile.role.name})');
         return;
       }
@@ -163,13 +167,16 @@ class AuthNotifier extends Notifier<AuthState> {
             );
 
             await _persistSession(profile);
-            state = state.copyWith(isAuthenticated: true, user: profile);
+            state = state.copyWith(isAuthenticated: true, user: profile, isSessionChecked: true);
+            return;
           }
         }
       }
     } catch (e) {
       debugPrint('Aviso ao restaurar sessão: $e');
     }
+
+    state = state.copyWith(isAuthenticated: false, isSessionChecked: true);
   }
 
   Future<void> _persistSession(UserProfile profile) async {
@@ -431,7 +438,7 @@ class AuthNotifier extends Notifier<AuthState> {
       debugPrint('Aviso ao sair da conta: $e');
     }
 
-    state = const AuthState(isAuthenticated: false, user: null);
+    state = const AuthState(isAuthenticated: false, user: null, isSessionChecked: true);
   }
 
   /// Atualização de Veículo do Entregador
@@ -469,6 +476,7 @@ class AuthNotifier extends Notifier<AuthState> {
     if (role == UserRole.customer) {
       state = state.copyWith(
         isAuthenticated: true,
+        isSessionChecked: true,
         user: const UserProfile(
           id: 'usr-001',
           name: 'Carlos Eduardo Silva',
@@ -480,6 +488,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } else if (role == UserRole.merchant) {
       state = state.copyWith(
         isAuthenticated: true,
+        isSessionChecked: true,
         user: const UserProfile(
           id: 'merch-01',
           name: 'Gerente Ultragaz Paulistana',
@@ -492,6 +501,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } else if (role == UserRole.courier) {
       state = state.copyWith(
         isAuthenticated: true,
+        isSessionChecked: true,
         user: const UserProfile(
           id: 'courier-01',
           name: 'Marcos Oliveira',
@@ -506,6 +516,7 @@ class AuthNotifier extends Notifier<AuthState> {
     } else {
       state = state.copyWith(
         isAuthenticated: true,
+        isSessionChecked: true,
         user: const UserProfile(
           id: 'admin-01',
           name: 'Super Admin Master',

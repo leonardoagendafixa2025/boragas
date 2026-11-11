@@ -9,6 +9,7 @@ class BoraKpiCard extends StatelessWidget {
   final String? subtitle;
   final Color? valueColor;
   final VoidCallback? onTap;
+  final double? width;
 
   const BoraKpiCard({
     super.key,
@@ -19,6 +20,7 @@ class BoraKpiCard extends StatelessWidget {
     this.subtitle,
     this.valueColor,
     this.onTap,
+    this.width = 180,
   });
 
   @override
@@ -26,7 +28,7 @@ class BoraKpiCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 140),
+      width: width,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.merchantCard : Colors.white,

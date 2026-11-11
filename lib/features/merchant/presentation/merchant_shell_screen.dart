@@ -33,6 +33,21 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
+    // Bloqueio de segurança em camadas: Se não for lojista ou admin autenticado, redireciona para login
+    if (GoRouter.maybeOf(context) != null && (!auth.isAuthenticated || (auth.user?.role != UserRole.merchant && auth.user?.role != UserRole.admin))) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/login');
+      });
+      return const Scaffold(
+        backgroundColor: AppColors.merchantCanvas,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
     final isWide = MediaQuery.of(context).size.width > 750;
     final currentStore = ref.watch(currentMerchantStoreProvider);
     final allStores = ref.watch(storesProvider);
