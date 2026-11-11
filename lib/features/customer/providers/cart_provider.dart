@@ -6,6 +6,7 @@ import '../../../core/models/store_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'customer_providers.dart';
+import 'subscription_provider.dart';
 
 class CartItem {
   final ProductModel product;
@@ -41,6 +42,7 @@ class CartState {
   final List<CartItem> items;
   final String? appliedCoupon;
   final double discount;
+  final bool isClubMember;
   final PaymentMode selectedPaymentMode;
   final double? changeForAmount;
   final String? notes;
@@ -50,6 +52,7 @@ class CartState {
     this.items = const [],
     this.appliedCoupon,
     this.discount = 0.0,
+    this.isClubMember = false,
     this.selectedPaymentMode = PaymentMode.onlinePix,
     this.changeForAmount,
     this.notes,
@@ -60,8 +63,13 @@ class CartState {
 
   double get deliveryFee => store?.deliveryFee ?? 0.0;
 
+  /// 5% de desconto garantido para membros ativos do Clube BoraGás
+  double get clubDiscount => isClubMember ? (subtotal * 0.05) : 0.0;
+
+  double get totalDiscount => discount + clubDiscount;
+
   double get total =>
-      (subtotal + deliveryFee - discount).clamp(0.0, double.infinity);
+      (subtotal + deliveryFee - totalDiscount).clamp(0.0, double.infinity);
 
   int get totalItemCount =>
       items.fold(0, (sum, item) => sum + item.quantity);
@@ -73,6 +81,7 @@ class CartState {
     List<CartItem>? items,
     String? appliedCoupon,
     double? discount,
+    bool? isClubMember,
     PaymentMode? selectedPaymentMode,
     double? changeForAmount,
     String? notes,
@@ -83,6 +92,7 @@ class CartState {
       items: items ?? this.items,
       appliedCoupon: clearCoupon ? null : (appliedCoupon ?? this.appliedCoupon),
       discount: clearCoupon ? 0.0 : (discount ?? this.discount),
+      isClubMember: isClubMember ?? this.isClubMember,
       selectedPaymentMode: selectedPaymentMode ?? this.selectedPaymentMode,
       changeForAmount: changeForAmount ?? this.changeForAmount,
       notes: notes ?? this.notes,
@@ -92,7 +102,17 @@ class CartState {
 
 class CartNotifier extends Notifier<CartState> {
   @override
-  CartState build() => const CartState();
+  CartState build() {
+    ref.listen(subscriptionProvider, (previous, next) {
+      final isMember = next?.isActive ?? false;
+      if (state.isClubMember != isMember) {
+        state = state.copyWith(isClubMember: isMember);
+      }
+    });
+
+    final initialSub = ref.read(subscriptionProvider);
+    return CartState(isClubMember: initialSub?.isActive ?? false);
+  }
 
   bool addItem({
     required ProductModel product,
@@ -152,7 +172,7 @@ class CartNotifier extends Notifier<CartState> {
     updatedItems.removeAt(index);
 
     if (updatedItems.isEmpty) {
-      state = const CartState();
+      state = CartState(isClubMember: state.isClubMember);
     } else {
       state = state.copyWith(items: updatedItems);
     }
@@ -193,7 +213,7 @@ class CartNotifier extends Notifier<CartState> {
   }
 
   void clearCart() {
-    state = const CartState();
+    state = CartState(isClubMember: state.isClubMember);
   }
 
   OrderModel checkout(String deliveryAddress) {
@@ -235,7 +255,7 @@ class CartNotifier extends Notifier<CartState> {
       deliveryAddress: deliveryAddress,
       subtotal: state.subtotal,
       deliveryFee: state.deliveryFee,
-      discount: state.discount,
+      discount: state.totalDiscount,
       totalAmount: state.total,
       changeForAmount: state.changeForAmount,
       commissionRatePercent: commissionPercent,

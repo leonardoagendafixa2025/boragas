@@ -8,6 +8,7 @@ import '../../../core/models/order_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/customer_providers.dart';
 import '../providers/marketing_providers.dart';
+import '../providers/subscription_provider.dart';
 import '../../../core/widgets/interactive_scale_button.dart';
 import 'widgets/banner_carousel.dart';
 import 'widgets/category_horizontal_bar.dart';
@@ -54,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final flashDeal = ref.watch(flashDealProvider);
     final selectedSlug = ref.watch(selectedCategorySlugProvider);
     final categories = ref.watch(homeCategoriesProvider);
+    final subscription = ref.watch(subscriptionProvider);
     final hasActiveOrder = orders.any((o) =>
         o.status == OrderStatus.outForDelivery ||
         o.status == OrderStatus.preparing ||
@@ -242,35 +244,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                            gradient: LinearGradient(
+                              colors: (subscription != null && subscription.isActive)
+                                  ? const [Color(0xFF064E3B), Color(0xFF0F172A)]
+                                  : const [Color(0xFF0F172A), Color(0xFF1E293B)],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
                             borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: (subscription != null && subscription.isActive)
+                                  ? const Color(0xFF10B981).withValues(alpha: 0.5)
+                                  : Colors.transparent,
+                            ),
                           ),
                           child: Row(
                             children: [
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: AppColors.accentFlame.withValues(alpha: 0.2),
+                                  color: (subscription != null && subscription.isActive)
+                                      ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                                      : AppColors.accentFlame.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Icon(Icons.loyalty_rounded, color: AppColors.accentFlame, size: 20),
+                                child: Icon(
+                                  (subscription != null && subscription.isActive)
+                                      ? Icons.verified_rounded
+                                      : Icons.loyalty_rounded,
+                                  color: (subscription != null && subscription.isActive)
+                                      ? const Color(0xFF10B981)
+                                      : AppColors.accentFlame,
+                                  size: 20,
+                                ),
                               ),
                               const SizedBox(width: 10),
-                              const Expanded(
+                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Clube BoraGás • Recorrência',
-                                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+                                      (subscription != null && subscription.isActive)
+                                          ? (subscription.isPaused
+                                              ? 'Clube BoraGás (Pausado)'
+                                              : 'Clube BoraGás Ativo • 5% OFF')
+                                          : 'Clube BoraGás • Recorrência',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                     Text(
-                                      'Abastecimento automático com 5% OFF garantido',
-                                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                                      (subscription != null && subscription.isActive)
+                                          ? (subscription.isPaused
+                                              ? 'Assinatura pausada • Toque para gerenciar'
+                                              : (subscription.daysUntilNextDelivery <= 0
+                                                  ? 'Próxima entrega HOJE! • Toque para ver'
+                                                  : 'Próxima entrega em ${subscription.daysUntilNextDelivery} dias • Gerenciar'))
+                                          : 'Abastecimento automático com 5% OFF garantido',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ),

@@ -539,6 +539,10 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                     const SizedBox(height: 8),
                     _buildSummaryRow('Desconto do Cupom', -cart.discount, isDiscount: true),
                   ],
+                  if (cart.clubDiscount > 0) ...[
+                    const SizedBox(height: 8),
+                    _buildSummaryRow('Clube BoraGás (5% OFF)', -cart.clubDiscount, isDiscount: true),
+                  ],
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 10),
                     child: Divider(height: 1, color: AppColors.border),
