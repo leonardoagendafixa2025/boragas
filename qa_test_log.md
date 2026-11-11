@@ -28,15 +28,30 @@ Todos os artefatos e dados que forem criados durante a Etapa 2 de testes utiliza
 - **Tabela de Log de Entidades Criadas no Teste:**
 | Tipo de Entidade | ID / Chave | Nome / Identificador | Criado em | Status da Limpeza |
 |---|---|---|---|---|
-| Perfil (Cliente) | usr-qa-cust-1 | [QA-TESTE] Cliente Fulano | 11/11/2026 | Marcado para limpeza |
-| Perfil (Lojista) | usr-qa-merch-1 | [QA-TESTE] Distribuidora Central | 11/11/2026 | Marcado para limpeza |
-| Perfil (Entregador) | usr-qa-cour-1 | [QA-TESTE] Piloto Rápido | 11/11/2026 | Marcado para limpeza |
-| Distribuidora | store-qa-test-1 | [QA-TESTE] Central de Gás e Água | 11/11/2026 | Marcado para limpeza |
-| Produto (Gás) | prod-qa-gas-1 | [QA-TESTE] Botijão GLP 13kg | 11/11/2026 | Marcado para limpeza |
-| Produto (Água) | prod-qa-water-1 | [QA-TESTE] Galão de Água 20L | 11/11/2026 | Marcado para limpeza |
-| Pedido (Pix) | ord-qa-pix-1 | #BG-QA-01 (Pix Sandbox) | 11/11/2026 | Marcado para limpeza |
-| Pedido (Dinheiro) | ord-qa-cash-1 | #BG-QA-02 (Dinheiro + Troco) | 11/11/2026 | Marcado para limpeza |
-| Pedido (Workflow) | ord-qa-flow-1 | #BG-QA-03 (Ciclo PIN 4821) | 11/11/2026 | Marcado para limpeza |
+| Perfil (Cliente) | usr-qa-cust-1 | [QA-TESTE] Cliente Fulano | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Perfil (Lojista) | usr-qa-merch-1 | [QA-TESTE] Distribuidora Central | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Perfil (Entregador) | usr-qa-cour-1 | [QA-TESTE] Piloto Rápido | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Distribuidora | store-qa-test-1 | [QA-TESTE] Central de Gás e Água | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Produto (Gás) | prod-qa-gas-1 | [QA-TESTE] Botijão GLP 13kg | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Produto (Água) | prod-qa-water-1 | [QA-TESTE] Galão de Água 20L | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Pedido (Pix) | ord-qa-pix-1 | #BG-QA-01 (Pix Sandbox) | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Pedido (Dinheiro) | ord-qa-cash-1 | #BG-QA-02 (Dinheiro + Troco) | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+| Pedido (Workflow) | ord-qa-flow-1 | #BG-QA-03 (Ciclo PIN 4821) | 11/11/2026 | ✅ LIMPO (Zero resíduos) |
+
+---
+
+## 4. Auditoria de Limpeza Pós-Testes (Etapa 5)
+- **Data da Limpeza:** 11/11/2026 12:30
+- **Verificação de Marcadores `[QA-TESTE]`:** ZERO registros retornados.
+- **Tabela Comparativa de Integridade (Antes vs Depois):**
+  - `stores`: 2 no backup inicial -> 2 pós-limpeza (100% íntegro)
+  - `products`: 3 no backup inicial -> 3 pós-limpeza (100% íntegro)
+  - `orders`: 0 no backup inicial -> 0 pós-limpeza (100% íntegro)
+  - `order_items`: 0 no backup inicial -> 0 pós-limpeza (100% íntegro)
+  - `profiles`: 0 no backup inicial -> 0 pós-limpeza (100% íntegro)
+  - `storage`: 0 buckets no backup inicial -> 0 buckets pós-limpeza (100% íntegro)
+- **Conclusão:** O sistema retornou com precisão matemática exata ao estado original pré-teste.
+
 
 ---
 
