@@ -113,7 +113,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       _senha.text = senha;
       _erro = null;
     });
-    _entrar();
+    // Apenas preenche os campos visualmente para demonstração.
+    // O usuário precisa clicar no botão "Entrar" para confirmar o login.
   }
 
   @override

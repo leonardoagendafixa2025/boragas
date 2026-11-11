@@ -185,11 +185,17 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
                 child: const Icon(Icons.storefront_rounded, color: Color(0xFFEA580C), size: 20),
               ),
               title: const Text('Portal da Distribuidora (Lojista)'),
-              subtitle: const Text('Acessar gestão da loja (/merchant)'),
-              onTap: () {
+              subtitle: const Text('Acessar com e-mail e senha (/merchant)'),
+              onTap: () async {
                 Navigator.pop(context);
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
-                context.go('/merchant');
+                if (auth.user?.role == UserRole.merchant || auth.user?.role == UserRole.admin) {
+                  context.go('/merchant');
+                } else {
+                  await ref.read(authProvider.notifier).logout();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                }
               },
             ),
             ListTile(
@@ -202,11 +208,17 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
                 child: const Icon(Icons.shield_rounded, color: Color(0xFF7C3AED), size: 20),
               ),
               title: const Text('Super Admin Master'),
-              subtitle: const Text('Painel geral da plataforma (/admin)'),
-              onTap: () {
+              subtitle: const Text('Acessar com e-mail e senha (/admin)'),
+              onTap: () async {
                 Navigator.pop(context);
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
-                context.go('/admin');
+                if (auth.user?.role == UserRole.admin) {
+                  context.go('/admin');
+                } else {
+                  await ref.read(authProvider.notifier).logout();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                }
               },
             ),
             ListTile(
@@ -219,11 +231,17 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
                 child: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF059669), size: 20),
               ),
               title: const Text('App do Entregador'),
-              subtitle: const Text('Painel de entregas (/courier)'),
-              onTap: () {
+              subtitle: const Text('Acessar com e-mail e senha (/courier)'),
+              onTap: () async {
                 Navigator.pop(context);
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
-                context.go('/courier');
+                if (auth.user?.role == UserRole.courier || auth.user?.role == UserRole.admin) {
+                  context.go('/courier');
+                } else {
+                  await ref.read(authProvider.notifier).logout();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                }
               },
             ),
             ListTile(
@@ -237,9 +255,12 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
               ),
               title: const Text('Entrar / Login Cósmico'),
               subtitle: const Text('Acessar tela de autenticação (/login)'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                context.push('/login');
+                await ref.read(authProvider.notifier).logout();
+                if (context.mounted) {
+                  context.go('/login');
+                }
               },
             ),
             const Divider(),

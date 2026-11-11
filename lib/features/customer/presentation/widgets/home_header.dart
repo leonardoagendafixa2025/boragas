@@ -314,11 +314,18 @@ class HomeHeader extends ConsumerWidget {
                   child: const Icon(Icons.storefront_rounded, color: Color(0xFFEA580C), size: 22),
                 ),
                 title: const Text('Portal da Distribuidora (Lojista)', style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: const Text('Acessar painel de vendas e pedidos (/merchant)'),
-                onTap: () {
+                subtitle: const Text('Acessar painel com e-mail e senha (/merchant)'),
+                onTap: () async {
                   Navigator.pop(ctx);
-                  ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
-                  context.go('/merchant');
+                  if (user?.role == UserRole.merchant || user?.role == UserRole.admin) {
+                    context.go('/merchant');
+                  } else {
+                    // Para acessar como Lojista, desloga a sessão atual para exibir a tela de login
+                    await ref.read(authProvider.notifier).logout();
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
+                  }
                 },
               ),
               ListTile(
@@ -332,11 +339,18 @@ class HomeHeader extends ConsumerWidget {
                   child: const Icon(Icons.shield_rounded, color: Color(0xFF7C3AED), size: 22),
                 ),
                 title: const Text('Super Admin Master Control', style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: const Text('Painel geral da plataforma e WhatsApp (/admin)'),
-                onTap: () {
+                subtitle: const Text('Acessar painel com e-mail e senha (/admin)'),
+                onTap: () async {
                   Navigator.pop(ctx);
-                  ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
-                  context.go('/admin');
+                  if (user?.role == UserRole.admin) {
+                    context.go('/admin');
+                  } else {
+                    // Para acessar como Admin, desloga a sessão atual para exibir a tela de login
+                    await ref.read(authProvider.notifier).logout();
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
+                  }
                 },
               ),
               ListTile(
@@ -350,11 +364,18 @@ class HomeHeader extends ConsumerWidget {
                   child: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF059669), size: 22),
                 ),
                 title: const Text('App do Entregador', style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: const Text('Rotas e mapa de entregas (/courier)'),
-                onTap: () {
+                subtitle: const Text('Acessar painel com e-mail e senha (/courier)'),
+                onTap: () async {
                   Navigator.pop(ctx);
-                  ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
-                  context.go('/courier');
+                  if (user?.role == UserRole.courier || user?.role == UserRole.admin) {
+                    context.go('/courier');
+                  } else {
+                    // Para acessar como Entregador, desloga a sessão atual para exibir a tela de login
+                    await ref.read(authProvider.notifier).logout();
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
+                  }
                 },
               ),
               const Divider(),
