@@ -12,7 +12,7 @@ import 'package:boragas/features/auth/presentation/widgets/morph_button.dart';
 
 void main() {
   group('Design Cósmico & Telas de Autenticação - BoraGás', () {
-    testWidgets('1. LoginScreen renderiza campos com estilo cósmico e botões demo', (tester) async {
+    testWidgets('1. LoginScreen renderiza formulário real de login sem chips demo', (tester) async {
       await tester.pumpWidget(
         const ProviderScope(
           child: MaterialApp(
@@ -33,12 +33,8 @@ void main() {
         find.byWidgetPredicate((w) => w is RichText && w.text.toPlainText().contains('Cadastre-se')),
         findsOneWidget,
       );
-      // Demo chips
-      expect(find.text('Acesso Rápido (Demonstração / Testes):'), findsOneWidget);
-      expect(find.text('Lojista'), findsOneWidget);
-      expect(find.text('Admin'), findsOneWidget);
-      expect(find.text('Entregador'), findsOneWidget);
-      expect(find.text('Cliente'), findsOneWidget);
+      // Garante que não existem chips de demonstração/mock
+      expect(find.text('Acesso Rápido (Demonstração / Testes):'), findsNothing);
     });
 
     testWidgets('2. CadastroScreen renderiza seleção de avatar, chips de perfil e campos animados', (tester) async {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -104,17 +103,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       });
       _shake.currentState?.shake();
     }
-  }
-
-  void _preencherDemo(String email, String senha) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _email.text = email;
-      _senha.text = senha;
-      _erro = null;
-    });
-    // Apenas preenche os campos visualmente para demonstração.
-    // O usuário precisa clicar no botão "Entrar" para confirmar o login.
   }
 
   @override
@@ -248,109 +236,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Chips de Acesso Rápido para Demonstração e QA
-              FadeSlide(
-                controller: _intro,
-                start: 0.56,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.bolt_rounded, size: 14, color: AppCores.laranja),
-                          SizedBox(width: 4),
-                          Text(
-                            'Acesso Rápido (Demonstração / Testes):',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          _buildQuickChip(
-                            label: 'Lojista',
-                            icon: Icons.storefront_rounded,
-                            color: const Color(0xFFEA580C),
-                            onTap: () => _preencherDemo('lojista@boragas.app', '123456'),
-                          ),
-                          _buildQuickChip(
-                            label: 'Admin',
-                            icon: Icons.shield_rounded,
-                            color: const Color(0xFF7C3AED),
-                            onTap: () => _preencherDemo('admin@boragas.app', '123456'),
-                          ),
-                          _buildQuickChip(
-                            label: 'Entregador',
-                            icon: Icons.two_wheeler_rounded,
-                            color: const Color(0xFF059669),
-                            onTap: () => _preencherDemo('entregador@boragas.app', '123456'),
-                          ),
-                          _buildQuickChip(
-                            label: 'Cliente',
-                            icon: Icons.shopping_cart_outlined,
-                            color: const Color(0xFF2563EB),
-                            onTap: () => _preencherDemo('cliente@boragas.app', '123456'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickChip({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 13, color: color),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: color,
                 ),
               ),
             ],
