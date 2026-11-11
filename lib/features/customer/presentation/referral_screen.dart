@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../providers/marketing_providers.dart';
@@ -36,11 +37,24 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
         title: const Row(
           children: [
-            Icon(Icons.share_rounded, color: Color(0xFF25D366), size: 26),
+            Icon(Icons.share_rounded, color: Color(0xFF25D366), size: 24),
             SizedBox(width: 10),
-            Text('Compartilhar no WhatsApp'),
+            Expanded(
+              child: Text(
+                'Compartilhar no WhatsApp',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -75,21 +89,37 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
             onPressed: () => Navigator.pop(context),
             child: const Text('Fechar'),
           ),
-          ElevatedButton(
+          ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF25D366),
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('📱 Abrindo WhatsApp com link de indicação...'),
-                  backgroundColor: Color(0xFF25D366),
-                ),
+              final whatsappUrl = Uri.parse(
+                'https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}',
               );
+              try {
+                if (await canLaunchUrl(whatsappUrl)) {
+                  await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                } else {
+                  await launchUrl(whatsappUrl);
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Mensagem copiada! Abra o WhatsApp e cole para enviar.'),
+                      backgroundColor: Color(0xFF25D366),
+                    ),
+                  );
+                }
+              }
             },
-            child: const Text('Abrir WhatsApp'),
+            icon: const Icon(Icons.send_rounded, size: 16),
+            label: const Text('Abrir WhatsApp', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
