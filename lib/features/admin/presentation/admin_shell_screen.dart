@@ -95,6 +95,17 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
           ],
         ),
         actions: [
+          // Atalho App do Cliente (Home)
+          IconButton(
+            tooltip: 'Ir para o App do Cliente (Home)',
+            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white70, size: 20),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.go('/home');
+            },
+          ),
+          const SizedBox(width: 4),
+
           // Atalho Portal Lojista (Admin pode inspecionar o Kanban/Produtos)
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(

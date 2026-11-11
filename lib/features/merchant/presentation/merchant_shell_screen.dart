@@ -165,6 +165,15 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           ],
         ),
         actions: [
+          // Botão para voltar à Loja / Cliente (Home)
+          IconButton(
+            tooltip: 'Ir para o App do Cliente (Home)',
+            icon: const Icon(Icons.shopping_bag_outlined, color: Colors.white70, size: 20),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.go('/home');
+            },
+          ),
           // Se for Super Admin inspecionando o lojista, botão para voltar ao Painel Admin
           if (auth.user?.role == UserRole.admin) ...[
             OutlinedButton.icon(

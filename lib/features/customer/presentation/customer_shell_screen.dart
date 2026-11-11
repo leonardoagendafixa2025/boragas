@@ -163,6 +163,86 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
               },
             ),
             const Divider(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Text(
+                'PORTAIS & ACESSO RÁPIDO',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF94A3B8),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEA580C).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.storefront_rounded, color: Color(0xFFEA580C), size: 20),
+              ),
+              title: const Text('Portal da Distribuidora (Lojista)'),
+              subtitle: const Text('Acessar gestão da loja (/merchant)'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
+                context.go('/merchant');
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7C3AED).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.shield_rounded, color: Color(0xFF7C3AED), size: 20),
+              ),
+              title: const Text('Super Admin Master'),
+              subtitle: const Text('Painel geral da plataforma (/admin)'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
+                context.go('/admin');
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF059669).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF059669), size: 20),
+              ),
+              title: const Text('App do Entregador'),
+              subtitle: const Text('Painel de entregas (/courier)'),
+              onTap: () {
+                Navigator.pop(context);
+                ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
+                context.go('/courier');
+              },
+            ),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C5CE7).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.login_rounded, color: Color(0xFF6C5CE7), size: 20),
+              ),
+              title: const Text('Entrar / Login Cósmico'),
+              subtitle: const Text('Acessar tela de autenticação (/login)'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/login');
+              },
+            ),
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
               title: const Text('Sair da Conta', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w700)),

@@ -7,9 +7,11 @@ import 'core/router/app_router.dart';
 import 'core/services/backend_config_service.dart';
 import 'core/services/supabase_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/util/url_strategy.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  configureAppUrlStrategy();
   Intl.defaultLocale = 'pt_BR';
 
   // Inicializa configuração persistente da URL do Backend
