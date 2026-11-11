@@ -11,6 +11,7 @@ import '../providers/marketing_providers.dart';
 import '../../../core/widgets/interactive_scale_button.dart';
 import 'widgets/banner_carousel.dart';
 import 'widgets/category_horizontal_bar.dart';
+import 'widgets/customer_drawer.dart';
 import 'widgets/home_header.dart';
 import 'widgets/marketing/flash_deal_card.dart';
 import 'widgets/marketing/loyalty_card_widget.dart';
@@ -26,6 +27,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -58,11 +60,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         o.status == OrderStatus.accepted);
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const CustomerDrawer(),
       body: SafeArea(
         child: Column(
           children: [
             // Smart Header (Address & Fast Actions)
-            const HomeHeader(),
+            HomeHeader(
+              onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            ),
 
             // Main Scrollable Area
             Expanded(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -10,7 +11,8 @@ import '../address_selection_sheet.dart';
 import 'gas_consumption_calculator.dart';
 
 class HomeHeader extends ConsumerWidget {
-  const HomeHeader({super.key});
+  final VoidCallback? onMenuPressed;
+  const HomeHeader({super.key, this.onMenuPressed});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,7 +38,14 @@ class HomeHeader extends ConsumerWidget {
               // Botão do Menu Lateral (Drawer)
               Builder(
                 builder: (ctx) => IconButton(
-                  onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    if (onMenuPressed != null) {
+                      onMenuPressed!();
+                    } else {
+                      Scaffold.of(ctx).openDrawer();
+                    }
+                  },
                   tooltip: 'Menu e Portais',
                   style: IconButton.styleFrom(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
