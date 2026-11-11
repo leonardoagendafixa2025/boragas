@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/commission_model.dart';
-import '../../../core/widgets/ui/bora_button.dart';
 import '../../../core/widgets/ui/bora_card.dart';
 import '../../../core/widgets/ui/bora_empty_state.dart';
 import '../../../core/widgets/ui/bora_kpi_card.dart';
-import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../../merchant/providers/merchant_providers.dart';
 import 'widgets/sales_chart_widget.dart';
@@ -203,50 +200,6 @@ class AdminDashboardScreen extends ConsumerWidget {
                       },
                     ),
                   ),
-
-            const SizedBox(height: 24),
-
-            // Card de Desligar Sessão
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFFECACA)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.shield_outlined, color: Color(0xFFDC2626), size: 26),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sessão Master Ativa',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF991B1B)),
-                        ),
-                        Text(
-                          'Desconecte o acesso de administrador ao finalizar.',
-                          style: TextStyle(fontSize: 11, color: Color(0xFFB91C1C)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  BoraButton.danger(
-                    text: 'Desligar',
-                    icon: Icons.power_settings_new_rounded,
-                    height: 40,
-                    borderRadius: 12,
-                    onPressed: () async {
-                      final router = GoRouter.of(context);
-                      await ref.read(authProvider.notifier).logout();
-                      router.go('/login');
-                    },
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
