@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/admin/presentation/admin_shell_screen.dart';
+import '../../features/auth/presentation/bem_vindo_screen.dart';
+import '../../features/auth/presentation/cadastro_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
+import '../../features/auth/presentation/recuperar_senha_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/courier/presentation/courier_screen.dart';
 import '../../features/customer/presentation/cart_checkout_screen.dart';
@@ -39,6 +42,26 @@ List<RouteBase> _buildAppRoutes() {
       path: '/login',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/cadastro',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const CadastroScreen(),
+    ),
+    GoRoute(
+      path: '/recuperar',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const RecuperarSenhaScreen(),
+    ),
+    GoRoute(
+      path: '/bem-vindo',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final nome = extra?['nome'] as String? ?? '';
+        final primeiroAcesso = extra?['primeiroAcesso'] as bool? ?? false;
+        return BemVindoScreen(nome: nome, primeiroAcesso: primeiroAcesso);
+      },
     ),
     GoRoute(
       path: '/otp',
