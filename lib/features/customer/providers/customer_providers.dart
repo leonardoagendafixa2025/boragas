@@ -136,8 +136,6 @@ class StoresNotifier extends Notifier<List<StoreModel>> {
   static const Set<String> demoStoreIds = {
     'store-1',
     'store-2',
-    'e1111111-1111-1111-1111-111111111111',
-    'e2222222-2222-2222-2222-222222222222',
   };
 
   Future<void> _loadStoresFromSupabase() async {
@@ -192,9 +190,6 @@ class ProductsNotifier extends Notifier<List<ProductModel>> {
 
   static const Set<String> demoProductIds = {
     'prod-1', 'prod-2', 'prod-3', 'prod-4', 'prod-5', 'prod-6',
-    'd1111111-1111-1111-1111-111111111111',
-    'd2222222-2222-2222-2222-222222222222',
-    'd3333333-3333-3333-3333-333333333333',
   };
 
   Future<void> _loadProductsFromSupabase() async {

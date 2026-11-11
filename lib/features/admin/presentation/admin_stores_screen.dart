@@ -634,31 +634,98 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showStoreFormDialog(),
+        icon: const Icon(Icons.add_business_rounded, color: Colors.white, size: 20),
+        label: const Text(
+          'Nova Distribuidora',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+        ),
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+      ),
       body: Column(
         children: [
-          // Header com Título e Botão "Nova Distribuidora" (Fixo no topo, NUNCA sobrepondo cards!)
+          // Header com Título e Botão "Nova Distribuidora" (100% Responsivo Mobile-First)
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             color: Colors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 600;
+                if (isMobile) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Gestão de Distribuidoras',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.textPrimary,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Controle de parceiros, comissões e repasses',
+                                  style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.cleaning_services_rounded, color: Colors.amber, size: 20),
+                            tooltip: 'Zerar Dados Demo',
+                            onPressed: () => _showPurgeDemoDialog(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: BoraButton.flame(
+                          text: 'Cadastrar Nova Distribuidora',
+                          icon: Icons.add_business_rounded,
+                          height: 44,
+                          borderRadius: 12,
+                          onPressed: () => _showStoreFormDialog(),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                // Desktop / Tablet Layout
+                return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Gestão de Distribuidoras',
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.3),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Controle de parceiros, comissões e repasses',
-                          style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
-                        ),
-                      ],
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Gestão de Distribuidoras',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Controle de parceiros, comissões e repasses',
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
                     ),
                     Row(
                       children: [
@@ -667,19 +734,19 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                           tooltip: 'Zerar Dados Demo',
                           onPressed: () => _showPurgeDemoDialog(),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 8),
                         BoraButton.flame(
                           text: 'Nova Loja',
                           icon: Icons.add_business_rounded,
-                          height: 40,
+                          height: 42,
                           borderRadius: 12,
                           onPressed: () => _showStoreFormDialog(),
                         ),
                       ],
                     ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
           ),
           const Divider(height: 1, color: AppColors.border),
@@ -780,11 +847,13 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
           // Stores List
           Expanded(
             child: filtered.isEmpty
-                ? const BoraEmptyState(
+                ? BoraEmptyState(
                     icon: Icons.storefront_rounded,
-                    iconColor: Color(0xFF6554C0),
+                    iconColor: const Color(0xFF6554C0),
                     title: 'Nenhuma distribuidora encontrada',
                     description: 'Tente outro termo na busca ou cadastre uma nova distribuidora parceira.',
+                    buttonText: 'Cadastrar Nova Distribuidora',
+                    onButtonPressed: () => _showStoreFormDialog(),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),

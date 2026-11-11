@@ -509,39 +509,78 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
       color: AppColors.merchantCanvas,
       child: CustomScrollView(
         slivers: [
-          // Header
+          // Header (Responsivo Mobile-First)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 500;
+                  if (isMobile) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          'Catálogo & Depósito',
-                          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Catálogo & Depósito',
+                              style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${currentStore.name} • ${allProducts.length} itens cadastrados',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${currentStore.name} • ${allProducts.length} itens cadastrados',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: BoraButton.flame(
+                            text: 'Adicionar Produto ao Catálogo',
+                            icon: Icons.add_rounded,
+                            height: 44,
+                            borderRadius: 12,
+                            onPressed: () => _showProductFormDialog(),
+                          ),
                         ),
                       ],
-                    ),
-                  ),
-                  BoraButton.flame(
-                    text: 'Novo Item',
-                    icon: Icons.add_rounded,
-                    height: 40,
-                    borderRadius: 12,
-                    onPressed: () => _showProductFormDialog(),
-                  ),
-                ],
+                    );
+                  }
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Catálogo & Depósito',
+                              style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${currentStore.name} • ${allProducts.length} itens cadastrados',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                            ),
+                          ],
+                        ),
+                      ),
+                      BoraButton.flame(
+                        text: 'Novo Item',
+                        icon: Icons.add_rounded,
+                        height: 40,
+                        borderRadius: 12,
+                        onPressed: () => _showProductFormDialog(),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),

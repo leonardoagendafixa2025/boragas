@@ -11,7 +11,7 @@ import '../../customer/providers/customer_providers.dart';
 // Currently logged in merchant store (Vinculada à loja real do comerciante)
 class CurrentMerchantStoreNotifier extends Notifier<StoreModel> {
   String? _selectedStoreId;
-  bool _localIsOpen = false;
+  bool? _overrideIsOpen;
 
   @override
   StoreModel build() {
@@ -21,7 +21,7 @@ class CurrentMerchantStoreNotifier extends Notifier<StoreModel> {
 
     if (stores.isEmpty) {
       return StoreModel(
-        id: userStoreId ?? 'store-merchant-1',
+        id: _selectedStoreId ?? userStoreId ?? 'store-merchant-1',
         name: auth.user?.name.isNotEmpty == true && auth.user?.name != 'Usuário BoraGás'
             ? auth.user!.name
             : 'Minha Distribuidora',
@@ -36,28 +36,35 @@ class CurrentMerchantStoreNotifier extends Notifier<StoreModel> {
         estimatedTimeMin: 25,
         deliveryFee: 0.0,
         isVerified: true,
-        isOpen: _localIsOpen,
+        isOpen: _overrideIsOpen ?? true,
         commissionRate: 8.0,
       );
     }
 
-    final targetId = _selectedStoreId ?? userStoreId;
+    final targetId = _selectedStoreId ?? userStoreId ?? stores.first.id;
+    _selectedStoreId ??= targetId;
+
     final found = stores.firstWhere(
       (s) => s.id == targetId,
       orElse: () => stores.first,
     );
+
+    if (_overrideIsOpen != null) {
+      return found.copyWith(isOpen: _overrideIsOpen!);
+    }
     return found;
   }
 
   void set(StoreModel s) {
     _selectedStoreId = s.id;
-    _localIsOpen = s.isOpen;
+    _overrideIsOpen = s.isOpen;
     state = s;
   }
 
   bool toggleOpen() {
     final newStatus = !state.isOpen;
-    _localIsOpen = newStatus;
+    _overrideIsOpen = newStatus;
+    _selectedStoreId = state.id;
     final updated = state.copyWith(isOpen: newStatus);
     state = updated;
 
@@ -74,11 +81,8 @@ class CurrentMerchantStoreNotifier extends Notifier<StoreModel> {
     if (SupabaseService.isConfigured && SupabaseService.isInitialized && updated.id.isNotEmpty) {
       SupabaseService.client
           .from('stores')
-          .upsert({
-            'id': updated.id,
-            'name': updated.name,
-            'is_open': newStatus,
-          })
+          .update({'is_open': newStatus})
+          .eq('id', updated.id)
           .catchError((_) {});
     }
 

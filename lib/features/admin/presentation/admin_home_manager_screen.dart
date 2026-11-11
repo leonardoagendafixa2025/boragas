@@ -173,37 +173,77 @@ class AdminHomeManagerScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header com Botão "Novo Banner" inline
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            // Header com Botão "Novo Banner" (Responsivo Mobile-First)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 600;
+                if (isMobile) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Gestão de Banners & Vitrine',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textPrimary,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Banners do carrossel e categorias em destaque na Home',
+                        style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: BoraButton.flame(
+                          text: 'Publicar Novo Banner',
+                          icon: Icons.add_photo_alternate_rounded,
+                          height: 44,
+                          borderRadius: 12,
+                          onPressed: () => _showAddBannerDialog(context, ref),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Gestão de Banners & Vitrine',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
-                        letterSpacing: -0.3,
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Gestão de Banners & Vitrine',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textPrimary,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Banners do carrossel e categorias em destaque na Home',
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Banners do carrossel e categorias em destaque na Home',
-                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                    BoraButton.flame(
+                      text: 'Novo Banner',
+                      icon: Icons.add_photo_alternate_rounded,
+                      height: 42,
+                      borderRadius: 12,
+                      onPressed: () => _showAddBannerDialog(context, ref),
                     ),
                   ],
-                ),
-                BoraButton.flame(
-                  text: 'Novo Banner',
-                  icon: Icons.add_photo_alternate_rounded,
-                  height: 40,
-                  borderRadius: 12,
-                  onPressed: () => _showAddBannerDialog(context, ref),
-                ),
-              ],
+                );
+              },
             ),
             const SizedBox(height: 18),
 
@@ -219,11 +259,13 @@ class AdminHomeManagerScreen extends ConsumerWidget {
             const SizedBox(height: 10),
 
             if (banners.isEmpty)
-              const BoraEmptyState(
+              BoraEmptyState(
                 icon: Icons.view_carousel_rounded,
-                iconColor: Color(0xFF6554C0),
+                iconColor: const Color(0xFF6554C0),
                 title: 'Nenhum banner cadastrado',
                 description: 'Crie seu primeiro banner promocional para exibir aos clientes na Home do aplicativo.',
+                buttonText: 'Publicar Primeiro Banner',
+                onButtonPressed: () => _showAddBannerDialog(context, ref),
               )
             else
               ...banners.asMap().entries.map((entry) {
