@@ -133,6 +133,13 @@ class StoresNotifier extends Notifier<List<StoreModel>> {
     return List.from(MockDatabase.initialStores);
   }
 
+  static const Set<String> demoStoreIds = {
+    'store-1',
+    'store-2',
+    'e1111111-1111-1111-1111-111111111111',
+    'e2222222-2222-2222-2222-222222222222',
+  };
+
   Future<void> _loadStoresFromSupabase() async {
     if (!SupabaseService.isConfigured || !SupabaseService.isInitialized) return;
     try {
@@ -142,7 +149,8 @@ class StoresNotifier extends Notifier<List<StoreModel>> {
           .order('created_at', ascending: false);
 
       if (res.isNotEmpty) {
-        final list = res.map((item) => StoreModel(
+        final realStores = res.where((item) => !demoStoreIds.contains(item['id'].toString()));
+        final list = realStores.map((item) => StoreModel(
           id: item['id'].toString(),
           name: item['name'] as String? ?? 'Distribuidora',
           cnpj: item['cnpj'] as String? ?? '00.000.000/0001-00',
@@ -182,12 +190,20 @@ class ProductsNotifier extends Notifier<List<ProductModel>> {
     return List.from(MockDatabase.initialProducts);
   }
 
+  static const Set<String> demoProductIds = {
+    'prod-1', 'prod-2', 'prod-3', 'prod-4', 'prod-5', 'prod-6',
+    'd1111111-1111-1111-1111-111111111111',
+    'd2222222-2222-2222-2222-222222222222',
+    'd3333333-3333-3333-3333-333333333333',
+  };
+
   Future<void> _loadProductsFromSupabase() async {
     if (!SupabaseService.isConfigured || !SupabaseService.isInitialized) return;
     try {
       final res = await SupabaseService.client.from('products').select('*');
       if (res.isNotEmpty) {
-        final list = res.map((item) => ProductModel(
+        final realProducts = res.where((item) => !demoProductIds.contains(item['id'].toString()));
+        final list = realProducts.map((item) => ProductModel(
           id: item['id'].toString(),
           storeId: item['store_id']?.toString() ?? 'store-1',
           storeName: item['store_name'] ?? 'Distribuidora',

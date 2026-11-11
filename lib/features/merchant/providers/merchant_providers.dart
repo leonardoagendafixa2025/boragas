@@ -7,12 +7,31 @@ import '../../../core/services/supabase_service.dart';
 import '../../../data/mock_database.dart';
 import '../../customer/providers/customer_providers.dart';
 
-// Currently logged in merchant store (Defaults to Ultragaz Paulistana store-1)
+// Currently logged in merchant store (Vinculada à loja real do comerciante)
 class CurrentMerchantStoreNotifier extends Notifier<StoreModel> {
   @override
   StoreModel build() {
     final stores = ref.watch(storesProvider);
-    return stores.firstWhere((s) => s.id == 'store-1', orElse: () => stores.first);
+    if (stores.isEmpty) {
+      return const StoreModel(
+        id: '',
+        name: 'Minha Distribuidora',
+        cnpj: '',
+        phone: '',
+        logoUrl: 'assets/images/app_icon.png',
+        coverUrl: 'assets/images/brand_lockup.png',
+        address: 'Nenhum endereço cadastrado',
+        distanceKm: 0.0,
+        rating: 5.0,
+        reviewsCount: 0,
+        estimatedTimeMin: 25,
+        deliveryFee: 0.0,
+        isVerified: false,
+        isOpen: false,
+        commissionRate: 8.0,
+      );
+    }
+    return stores.first;
   }
 
   void set(StoreModel s) => state = s;

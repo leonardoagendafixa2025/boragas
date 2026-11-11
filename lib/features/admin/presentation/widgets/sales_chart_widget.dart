@@ -59,11 +59,79 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
     });
   }
 
+  String _getPeakDayLabel(List<DailyMetric> metrics) {
+    if (widget.orders == null) return 'Pico: Sábado (94 ped.)';
+    if (widget.orders!.isEmpty) return 'Aguardando primeiras vendas';
+
+    DailyMetric? best;
+    for (final m in metrics) {
+      if (best == null || m.ordersCount > best.ordersCount) {
+        best = m;
+      }
+    }
+    if (best == null || best.ordersCount == 0) {
+      return 'Sem vendas registradas';
+    }
+    return 'Pico: ${best.dayName} (${best.ordersCount} ped.)';
+  }
+
+  String _getPeakHoursLabel() {
+    if (widget.orders == null) {
+      return 'Pico 1: 10h45 às 13h15 (Almoço) • Pico 2: 17h30 às 20h00 (Jantar)';
+    }
+    if (widget.orders!.isEmpty) {
+      return 'Aguardando histórico de pedidos para consolidação dos horários de pico.';
+    }
+
+    final hourCounts = <int, int>{};
+    for (final o in widget.orders!) {
+      hourCounts[o.createdAt.hour] = (hourCounts[o.createdAt.hour] ?? 0) + 1;
+    }
+    if (hourCounts.isEmpty) {
+      return 'Aguardando histórico de pedidos para consolidação dos horários de pico.';
+    }
+
+    final sortedHours = hourCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top1 = sortedHours.first.key;
+    if (sortedHours.length > 1 && sortedHours[1].value > 0) {
+      final top2 = sortedHours[1].key;
+      return 'Pico 1: ${top1}h00 às ${top1 + 2}h00 • Pico 2: ${top2}h00 às ${top2 + 2}h00';
+    }
+    return 'Pico de Demanda: ${top1}h00 às ${top1 + 2}h00 (${sortedHours.first.value} pedidos)';
+  }
+
+  String _getTopProductLabel() {
+    if (widget.orders == null) return 'GLP 13kg (68%)';
+    if (widget.orders!.isEmpty) return '0 Vendas';
+
+    final productCounts = <String, int>{};
+    int totalItems = 0;
+    for (final o in widget.orders!) {
+      for (final item in o.items) {
+        productCounts[item.productName] = (productCounts[item.productName] ?? 0) + item.quantity;
+        totalItems += item.quantity;
+      }
+    }
+
+    if (productCounts.isEmpty || totalItems == 0) return '0 Vendas';
+
+    final sortedProducts = productCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = sortedProducts.first;
+    final percent = ((top.value / totalItems) * 100).round();
+    final shortName = top.key.length > 14 ? '${top.key.substring(0, 12)}...' : top.key;
+    return '$shortName ($percent%)';
+  }
+
   @override
   Widget build(BuildContext context) {
     final dailyMetrics = _buildDailyMetrics(widget.orders);
     final maxGmvValue = dailyMetrics.map((d) => d.gmv).fold(0.0, (a, b) => a > b ? a : b);
     final maxGmv = maxGmvValue > 0 ? maxGmvValue : 100.0;
+    final peakDayText = _getPeakDayLabel(dailyMetrics);
+    final peakHoursText = _getPeakHoursLabel();
+    final topProductText = _getTopProductLabel();
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -246,9 +314,9 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
                   const Text('Comissão BoraGás (8%)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                 ],
               ),
-              const Text(
-                'Pico: Sábado (94 ped.)',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.success),
+              Text(
+                peakDayText,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.success),
               ),
             ],
           ),
@@ -275,7 +343,7 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
                       ),
                       Text(
-                        'Pico 1: 10h45 às 13h15 (Almoço) • Pico 2: 17h30 às 20h00 (Jantar)',
+                        peakHoursText,
                         style: AppTypography.bodySmall.copyWith(fontSize: 11),
                       ),
                     ],
@@ -288,9 +356,9 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: const Text(
-                    'GLP 13kg (68%)',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary),
+                  child: Text(
+                    topProductText,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.primary),
                   ),
                 ),
               ],

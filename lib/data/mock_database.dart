@@ -95,7 +95,13 @@ class MockDatabase {
     ),
   ];
 
-  static final List<StoreModel> initialStores = [
+  // Lojas e Produtos reais iniciam vazios em produção (carregados via Supabase)
+  static final List<StoreModel> initialStores = const <StoreModel>[];
+
+  static final List<ProductModel> initialProducts = const <ProductModel>[];
+
+  // Fixtures de amostra exclusivas para testes unitários automatizados
+  static final List<StoreModel> sampleStoresForTesting = [
     const StoreModel(
       id: 'store-1',
       name: 'Ultragaz Paulistana Express',
@@ -132,8 +138,7 @@ class MockDatabase {
     ),
   ];
 
-  static final List<ProductModel> initialProducts = [
-    // Ultragaz
+  static final List<ProductModel> sampleProductsForTesting = [
     const ProductModel(
       id: 'prod-1',
       storeId: 'store-1',
@@ -146,78 +151,6 @@ class MockDatabase {
       shellPrice: 289.00,
       inStock: true,
       imageUrl: 'assets/images/app_icon.png',
-      rating: 4.9,
-    ),
-    const ProductModel(
-      id: 'prod-2',
-      storeId: 'store-1',
-      storeName: 'Ultragaz Paulistana Express',
-      category: ProductCategory.water20l,
-      name: 'Galão de Água Mineral 20L',
-      brandName: 'Lindoya Verão',
-      description: 'Galão retornável 20 Litros, pH neutro, água leve e pura.',
-      refillPrice: 18.00,
-      shellPrice: 42.00,
-      inStock: true,
-      imageUrl: 'assets/images/app_icon_v2.png',
-      rating: 4.9,
-    ),
-    const ProductModel(
-      id: 'prod-3',
-      storeId: 'store-1',
-      storeName: 'Ultragaz Paulistana Express',
-      category: ProductCategory.accessories,
-      name: 'Kit Regulador de Gás + Mangueira INMETRO',
-      brandName: 'Aliança',
-      description: 'Válvula reguladora 1kg/h com mangueira de 1,25m e abraçadeiras certificadas.',
-      refillPrice: 65.00,
-      shellPrice: 65.00,
-      inStock: true,
-      imageUrl: 'assets/images/brand_lockup.png',
-      rating: 4.8,
-    ),
-
-    // Liquigás
-    const ProductModel(
-      id: 'prod-4',
-      storeId: 'store-2',
-      storeName: 'Liquigás Central do Gás',
-      category: ProductCategory.p13,
-      name: 'Botijão P13 Liquigás (13kg)',
-      brandName: 'Liquigás (Verde)',
-      description: 'Botijão com chama forte e pura, lacre holográfico anti-fraude.',
-      refillPrice: 99.90, // Cheapest refill
-      shellPrice: 279.00,
-      inStock: true,
-      imageUrl: 'assets/images/app_icon.png',
-      rating: 4.8,
-    ),
-    const ProductModel(
-      id: 'prod-5',
-      storeId: 'store-2',
-      storeName: 'Liquigás Central do Gás',
-      category: ProductCategory.p45,
-      name: 'Cilindro Industrial P45 (45kg)',
-      brandName: 'Liquigás Industrial',
-      description: 'Ideal para condomínios, padarias, restaurantes e aquecimento central.',
-      refillPrice: 430.00,
-      shellPrice: 890.00,
-      inStock: true,
-      imageUrl: 'assets/images/app_icon_v2.png',
-      rating: 4.8,
-    ),
-    const ProductModel(
-      id: 'prod-6',
-      storeId: 'store-2',
-      storeName: 'Liquigás Central do Gás',
-      category: ProductCategory.water20l,
-      name: 'Galão Água Mineral Bonafont 20L',
-      brandName: 'Bonafont',
-      description: 'Água mineral natural leve com baixo teor de sódio.',
-      refillPrice: 22.00,
-      shellPrice: 48.00,
-      inStock: true,
-      imageUrl: 'assets/images/brand_lockup.png',
       rating: 4.9,
     ),
   ];

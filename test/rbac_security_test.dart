@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:boragas/core/models/order_model.dart';
+import 'package:boragas/core/models/product_model.dart';
+import 'package:boragas/data/mock_database.dart';
 import 'package:boragas/features/auth/providers/auth_provider.dart';
 import 'package:boragas/features/customer/providers/cart_provider.dart';
 import 'package:boragas/features/customer/providers/customer_providers.dart';
@@ -35,6 +37,24 @@ void main() {
 
     test('2. Lojista only manages products from their own store (Multi-Tenant Isolation)', () {
       final container = ProviderContainer();
+      container.read(storesProvider.notifier).set(MockDatabase.sampleStoresForTesting);
+      container.read(productsProvider.notifier).set([
+        ...MockDatabase.sampleProductsForTesting,
+        const ProductModel(
+          id: 'prod-4',
+          storeId: 'store-2',
+          storeName: 'Liquigás Central do Gás',
+          category: ProductCategory.p13,
+          name: 'Botijão P13 Liquigás (13kg)',
+          brandName: 'Liquigás (Verde)',
+          description: 'Botijão com chama forte e pura',
+          refillPrice: 99.90,
+          shellPrice: 279.00,
+          inStock: true,
+          imageUrl: 'assets/images/app_icon.png',
+          rating: 4.8,
+        ),
+      ]);
 
       // Loja Ultragaz (store-1)
       final ultragazProducts = container.read(merchantProductsProvider);
@@ -52,6 +72,8 @@ void main() {
 
     test('3. Checkout automatically binds the authenticated customer ID', () {
       final container = ProviderContainer();
+      container.read(storesProvider.notifier).set(MockDatabase.sampleStoresForTesting);
+      container.read(productsProvider.notifier).set(MockDatabase.sampleProductsForTesting);
       final authNotifier = container.read(authProvider.notifier);
 
       authNotifier.switchDemoRole(UserRole.customer);

@@ -147,67 +147,105 @@ class AdminDashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
 
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: stores.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final store = stores[index];
-                  final storeOrders = orders.where((o) => o.storeId == store.id).toList();
-                  final storeOrdersCount = storeOrders.length;
-                  final storeSales = storeOrders.fold(0.0, (sum, o) => sum + o.totalAmount);
-                  final storeCommission = storeSales * (store.commissionRate / 100);
-
-                  return ListTile(
-                    leading: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: AppColors.surfaceVariant,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.asset(store.logoUrl, fit: BoxFit.cover),
-                      ),
+            stores.isEmpty
+                ? Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
                     ),
-                    title: Text(
-                      store.name,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                    ),
-                    subtitle: Text(
-                      'Taxa: ${store.commissionRate}% • $storeOrdersCount pedidos entregues',
-                      style: AppTypography.bodySmall,
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'R\$ ${storeCommission.toStringAsFixed(2).replaceAll('.', ',')}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF6554C0).withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.storefront_outlined,
+                            size: 32,
+                            color: Color(0xFF6554C0),
                           ),
                         ),
+                        const SizedBox(height: 12),
                         const Text(
-                          'Comissão Admin',
-                          style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                          'Nenhuma Distribuidora Cadastrada',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Cadastre suas primeiras distribuidoras na aba "Lojas" para iniciar as operações reais e repasses de comissões.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.4),
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
+                  )
+                : Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(color: AppColors.border),
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: stores.length,
+                      separatorBuilder: (context, index) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final store = stores[index];
+                        final storeOrders = orders.where((o) => o.storeId == store.id).toList();
+                        final storeOrdersCount = storeOrders.length;
+                        final storeSales = storeOrders.fold(0.0, (sum, o) => sum + o.totalAmount);
+                        final storeCommission = storeSales * (store.commissionRate / 100);
+
+                        return ListTile(
+                          leading: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: AppColors.surfaceVariant,
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.asset(store.logoUrl, fit: BoxFit.cover),
+                            ),
+                          ),
+                          title: Text(
+                            store.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
+                          subtitle: Text(
+                            'Taxa: ${store.commissionRate}% • $storeOrdersCount pedidos entregues',
+                            style: AppTypography.bodySmall,
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'R\$ ${storeCommission.toStringAsFixed(2).replaceAll('.', ',')}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const Text(
+                                'Comissão Admin',
+                                style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
 
             const SizedBox(height: 24),
 

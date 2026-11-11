@@ -16,6 +16,68 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
   String _searchQuery = '';
   String _statusFilter = 'all'; // 'all', 'active', 'suspended'
 
+  void _showPurgeDemoDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Row(
+          children: [
+            Icon(Icons.cleaning_services_rounded, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Reset de Dados Demo', style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Deseja zerar todos os dados demo locais para deixar o sistema 100% limpo para operação comercial?\n\n'
+              'Para limpar também as linhas de teste do seu banco Supabase na nuvem, execute o comando abaixo no SQL Editor do Supabase:',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF334155)),
+              ),
+              child: const SelectableText(
+                'TRUNCATE public.orders, public.products, public.stores, public.store_payment_configs, public.commission_invoices, public.support_tickets CASCADE;',
+                style: TextStyle(color: Color(0xFF38BDF8), fontFamily: 'monospace', fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Fechar', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.white),
+            label: const Text('Zerar em Memória Agora', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            onPressed: () {
+              ref.read(storesProvider.notifier).set([]);
+              ref.read(productsProvider.notifier).set([]);
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Lojas e produtos demo zerados com sucesso!'),
+                  backgroundColor: Color(0xFF10B981),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showStoreFormDialog({StoreModel? storeToEdit}) {
     final isEditing = storeToEdit != null;
 
@@ -579,6 +641,11 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
       appBar: AppBar(
         title: const Text('Gestão de Distribuidoras & Taxas'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.cleaning_services_rounded, color: Colors.amber),
+            tooltip: 'Zerar Dados Demo (Reset Produção)',
+            onPressed: () => _showPurgeDemoDialog(),
+          ),
           IconButton(
             icon: const Icon(Icons.add_business_rounded),
             tooltip: 'Cadastrar Loja',

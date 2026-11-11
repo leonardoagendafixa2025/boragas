@@ -45,25 +45,27 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           children: [
             // Badge Portal do Lojista
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFFFF6B00),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 12),
-                  SizedBox(width: 3),
-                  Text(
-                    'PORTAL LOJISTA',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 0.3,
+                  const Icon(Icons.storefront_rounded, color: Colors.white, size: 12),
+                  if (isWide) ...[
+                    const SizedBox(width: 4),
+                    const Text(
+                      'PORTAL LOJISTA',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -82,7 +84,9 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: currentStore.id,
+                          value: allStores.any((s) => s.id == currentStore.id)
+                              ? currentStore.id
+                              : allStores.first.id,
                           dropdownColor: const Color(0xFF1E293B),
                           isExpanded: true,
                           icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white70, size: 18),

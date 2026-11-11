@@ -133,28 +133,6 @@ class HomeHeader extends ConsumerWidget {
                 ),
               ),
 
-              const SizedBox(width: 6),
-
-              // Switch Profile / Open Drawer Button
-              Builder(
-                builder: (ctx) => IconButton(
-                  onPressed: () {
-                    Scaffold.of(ctx).openDrawer();
-                  },
-                  tooltip: 'Trocar Painel / Módulos',
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(
-                    Icons.swap_horiz_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-              ),
             ],
           ),
 
