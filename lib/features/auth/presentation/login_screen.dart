@@ -680,7 +680,73 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             icon: Icons.login_rounded,
             onPressed: _handleLogin,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
+          // Seção de Perfis Oficiais / Acesso Rápido para Demonstração e QA
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.bolt_rounded, size: 15, color: AppColors.accentFlame),
+                    SizedBox(width: 5),
+                    Text(
+                      'Perfis Oficiais de Demonstração:',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _buildQuickDemoChip(
+                      label: 'Lojista',
+                      icon: Icons.storefront_rounded,
+                      color: const Color(0xFFEA580C),
+                      email: 'lojista@boragas.app',
+                      password: '123456',
+                    ),
+                    _buildQuickDemoChip(
+                      label: 'Admin',
+                      icon: Icons.shield_rounded,
+                      color: const Color(0xFF7C3AED),
+                      email: 'admin@boragas.app',
+                      password: '123456',
+                    ),
+                    _buildQuickDemoChip(
+                      label: 'Entregador',
+                      icon: Icons.two_wheeler_rounded,
+                      color: const Color(0xFF059669),
+                      email: 'entregador@boragas.app',
+                      password: '123456',
+                    ),
+                    _buildQuickDemoChip(
+                      label: 'Cliente',
+                      icon: Icons.shopping_cart_outlined,
+                      color: const Color(0xFF2563EB),
+                      email: 'cliente@boragas.app',
+                      password: '123456',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 13),
@@ -1055,6 +1121,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickDemoChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required String email,
+    required String password,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _loginEmailController.text = email;
+            _loginPasswordController.text = password;
+          });
+          _handleLogin();
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
               ),
             ],
           ),

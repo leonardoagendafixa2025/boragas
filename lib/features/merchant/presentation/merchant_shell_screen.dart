@@ -43,7 +43,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
       return const Scaffold(
         backgroundColor: AppColors.merchantCanvas,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: AppColors.accentFlame),
         ),
       );
     }
@@ -165,6 +165,26 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           ],
         ),
         actions: [
+          // Se for Super Admin inspecionando o lojista, botão para voltar ao Painel Admin
+          if (auth.user?.role == UserRole.admin) ...[
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF8B5CF6),
+                side: const BorderSide(color: Color(0xFF8B5CF6), width: 1.2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                minimumSize: const Size(0, 32),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.shield_rounded, size: 14),
+              label: const Text('Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                context.go('/admin');
+              },
+            ),
+            const SizedBox(width: 4),
+          ],
+
           // Interruptor da Loja (Ligar / Desligar Loja para Pedidos)
           InkWell(
             onTap: () {

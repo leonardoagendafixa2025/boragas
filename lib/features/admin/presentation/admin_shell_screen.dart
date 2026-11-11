@@ -40,7 +40,7 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
       return const Scaffold(
         backgroundColor: Color(0xFF0F172A),
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
         ),
       );
     }
@@ -95,6 +95,24 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
           ],
         ),
         actions: [
+          // Atalho Portal Lojista (Admin pode inspecionar o Kanban/Produtos)
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.accentFlame,
+              side: const BorderSide(color: AppColors.accentFlame, width: 1.2),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              minimumSize: const Size(0, 34),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              context.push('/merchant');
+            },
+            icon: const Icon(Icons.storefront_rounded, size: 14),
+            label: const Text('Lojista', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(width: 6),
+
           // Atalho WhatsApp QR
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(

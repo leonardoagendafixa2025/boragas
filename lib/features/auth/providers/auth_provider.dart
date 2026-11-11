@@ -118,6 +118,7 @@ class AuthState {
 
 class AuthNotifier extends Notifier<AuthState> {
   static const _prefKeyUser = 'boragas_auth_user_session';
+  static const _prefKeyRegisteredUsers = 'boragas_registered_users_registry';
 
   @override
   AuthState build() {
@@ -205,6 +206,8 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPassword = password.trim();
       String userId = 'usr-${DateTime.now().millisecondsSinceEpoch}';
       String? storeId;
 
@@ -212,8 +215,8 @@ class AuthNotifier extends Notifier<AuthState> {
       if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
         try {
           final authRes = await SupabaseService.client.auth.signUp(
-            email: email.trim().toLowerCase(),
-            password: password,
+            email: cleanEmail,
+            password: cleanPassword,
             data: {
               'full_name': name.trim(),
               'phone': phone.trim(),
@@ -287,7 +290,7 @@ class AuthNotifier extends Notifier<AuthState> {
         id: userId,
         name: name.trim(),
         phone: phone.trim(),
-        email: email.trim().toLowerCase(),
+        email: cleanEmail,
         role: role,
         storeId: storeId,
         vehicleModel: vehicleModel?.trim() ?? (role == UserRole.courier ? 'Honda Fan 160' : null),
@@ -295,7 +298,10 @@ class AuthNotifier extends Notifier<AuthState> {
         address: (role == UserRole.merchant ? storeAddress : deliveryAddress)?.trim(),
       );
 
-      // 5. Persiste localmente para manter a sessão aberta
+      // 5. Salva na base local de contas registradas (permite logins futuros com esta senha)
+      await _saveRegisteredAccount(cleanEmail, cleanPassword, profile);
+
+      // 6. Persiste localmente para manter a sessão aberta
       await _persistSession(profile);
 
       state = state.copyWith(
@@ -314,7 +320,39 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  /// LOGIN REAL COM E-MAIL E SENHA
+  Future<void> _saveRegisteredAccount(String email, String password, UserProfile profile) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final regJson = prefs.getString(_prefKeyRegisteredUsers);
+      Map<String, dynamic> regMap = {};
+      if (regJson != null && regJson.isNotEmpty) {
+        regMap = Map<String, dynamic>.from(jsonDecode(regJson) as Map);
+      }
+      regMap[email.toLowerCase().trim()] = {
+        'email': email.toLowerCase().trim(),
+        'password': password.trim(),
+        'profile': profile.toJson(),
+      };
+      await prefs.setString(_prefKeyRegisteredUsers, jsonEncode(regMap));
+    } catch (e) {
+      debugPrint('Aviso ao salvar conta registrada: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> _getRegisteredAccounts() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final regJson = prefs.getString(_prefKeyRegisteredUsers);
+      if (regJson != null && regJson.isNotEmpty) {
+        return Map<String, dynamic>.from(jsonDecode(regJson) as Map);
+      }
+    } catch (e) {
+      debugPrint('Aviso ao ler contas registradas: $e');
+    }
+    return {};
+  }
+
+  /// LOGIN REAL COM E-MAIL E SENHA (COM VALIDAÇÃO ESTRITA DE CREDENCIAIS)
   Future<bool> loginWithEmailPassword(String email, String password) async {
     final cleanEmail = email.trim().toLowerCase();
     final cleanPwd = password.trim();
@@ -380,46 +418,105 @@ class AuthNotifier extends Notifier<AuthState> {
         }
       }
 
-      // 2. Verificação de credenciais de contas registradas ou operacionais
-      // (Suporte para lojistas e entregadores corporativos do BoraGás)
-      UserRole detectedRole = UserRole.customer;
-      String userName = 'Cliente BoraGás';
-      String? storeId;
-      String? vModel;
-      String? vPlate;
-
-      if (cleanEmail.contains('admin')) {
-        detectedRole = UserRole.admin;
-        userName = 'Super Administrador';
-      } else if (cleanEmail.contains('lojista') || cleanEmail.contains('loja') || cleanEmail.contains('ultragaz') || cleanEmail.contains('liquigas')) {
-        detectedRole = UserRole.merchant;
-        userName = cleanEmail.contains('liquigas') ? 'Gerente Liquigás Central' : 'Gerente Ultragaz Paulistana';
-        storeId = cleanEmail.contains('liquigas') ? 'store-2' : 'store-1';
-      } else if (cleanEmail.contains('entregador') || cleanEmail.contains('motoboy') || cleanEmail.contains('courier')) {
-        detectedRole = UserRole.courier;
-        userName = 'Entregador BoraGás';
-        storeId = 'store-1';
-        vModel = 'Honda Fan 160';
-        vPlate = 'BRA-2024';
-      } else {
-        detectedRole = UserRole.customer;
-        userName = cleanEmail.split('@').first;
+      // 2. Verificação na base de usuários cadastrados localmente
+      final registeredAccounts = await _getRegisteredAccounts();
+      if (registeredAccounts.containsKey(cleanEmail)) {
+        final entry = registeredAccounts[cleanEmail] as Map<String, dynamic>;
+        final savedPassword = entry['password'] as String? ?? '';
+        if (savedPassword == cleanPwd) {
+          final profile = UserProfile.fromJson(entry['profile'] as Map<String, dynamic>);
+          await _persistSession(profile);
+          state = state.copyWith(isAuthenticated: true, user: profile, isLoading: false);
+          return true;
+        } else {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: 'Senha incorreta para este e-mail. Verifique a senha digitada.',
+          );
+          return false;
+        }
       }
 
-      final profile = UserProfile(
-        id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
-        name: userName,
-        phone: '(11) 98000-0000',
-        email: cleanEmail,
-        role: detectedRole,
-        storeId: storeId,
-        vehicleModel: vModel,
-        vehiclePlate: vPlate,
-      );
+      // 3. Verificação de contas oficiais/corporativas para Demonstração e Operação
+      final isSeedAdmin = cleanEmail == 'admin@boragas.app' || cleanEmail == 'admin@teste.com';
+      final isSeedMerchant = cleanEmail == 'lojista@boragas.app' ||
+          cleanEmail == 'lojista@teste.com' ||
+          cleanEmail == 'teste+lojista@qa-teste.local';
+      final isSeedCourier = cleanEmail == 'entregador@boragas.app' ||
+          cleanEmail == 'entregador@teste.com' ||
+          cleanEmail == 'teste+entregador@qa-teste.local';
+      final isSeedCustomer = cleanEmail == 'cliente@boragas.app' ||
+          cleanEmail == 'cliente@teste.com' ||
+          cleanEmail == 'teste+cliente@qa-teste.local';
 
-      await _persistSession(profile);
-      state = state.copyWith(isAuthenticated: true, user: profile, isLoading: false);
-      return true;
+      if (isSeedAdmin || isSeedMerchant || isSeedCourier || isSeedCustomer) {
+        final isUniversalPass = cleanPwd == '123456' ||
+            cleanPwd == 'SenhaSegura@123' ||
+            cleanPwd == 'boragas2026';
+        final isRoleSpecificPass = (isSeedAdmin && cleanPwd == 'admin123') ||
+            (isSeedMerchant && cleanPwd == 'lojista123') ||
+            (isSeedCourier && cleanPwd == 'entregador123') ||
+            (isSeedCustomer && cleanPwd == 'cliente123');
+
+        if (isUniversalPass || isRoleSpecificPass) {
+          UserProfile profile;
+          if (isSeedAdmin) {
+            profile = const UserProfile(
+              id: 'admin-01',
+              name: 'Super Admin Master',
+              phone: '(11) 98888-0001',
+              email: 'admin@boragas.app',
+              role: UserRole.admin,
+            );
+          } else if (isSeedMerchant) {
+            profile = const UserProfile(
+              id: 'merch-01',
+              name: 'Gerente Ultragaz Paulistana',
+              phone: '(11) 98711-2233',
+              email: 'lojista@boragas.app',
+              role: UserRole.merchant,
+              storeId: 'e1111111-1111-1111-1111-111111111111',
+            );
+          } else if (isSeedCourier) {
+            profile = const UserProfile(
+              id: 'courier-01',
+              name: 'Marcos Oliveira',
+              phone: '(11) 97722-1199',
+              email: 'entregador@boragas.app',
+              role: UserRole.courier,
+              storeId: 'e1111111-1111-1111-1111-111111111111',
+              vehicleModel: 'Honda Fan 160',
+              vehiclePlate: 'BRA-2024',
+            );
+          } else {
+            profile = const UserProfile(
+              id: 'usr-001',
+              name: 'Carlos Eduardo Silva',
+              phone: '(11) 98122-3344',
+              email: 'cliente@boragas.app',
+              role: UserRole.customer,
+            );
+          }
+
+          await _persistSession(profile);
+          state = state.copyWith(isAuthenticated: true, user: profile, isLoading: false);
+          return true;
+        } else {
+          state = state.copyWith(
+            isLoading: false,
+            errorMessage: 'Senha incorreta para a conta de demonstração/oficial.',
+          );
+          return false;
+        }
+      }
+
+      // 4. Se não existe no Supabase, não foi cadastrado e não é conta oficial:
+      // BLOQUEIA ACESSO E EXIGE CADASTRO!
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'E-mail ou senha incorretos, ou usuário não cadastrado. Por favor, verifique os dados ou cadastre-se na aba "Criar Nova Conta".',
+      );
+      return false;
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: 'Falha no login: ${e.toString()}');
       return false;

@@ -131,5 +131,43 @@ void main() {
       expect(completedOrder.status, equals(OrderStatus.delivered));
       expect(completedOrder.deliveredAt, isNotNull);
     });
+
+    test('5. Non-existent and fabricated login credentials are strictly rejected', () async {
+      final container = ProviderContainer();
+      final authNotifier = container.read(authProvider.notifier);
+
+      // Credenciais inventadas / inexistentes
+      final fakeLogin = await authNotifier.loginWithEmailPassword(
+        'usuario_inexistente_123456@qualquer.com',
+        'senhaInvalida999',
+      );
+      expect(fakeLogin, isFalse);
+      expect(container.read(authProvider).isAuthenticated, isFalse);
+      expect(container.read(authProvider).errorMessage, contains('não cadastrado'));
+
+      // Senha incorreta para conta corporativa existente
+      final wrongPass = await authNotifier.loginWithEmailPassword(
+        'admin@boragas.app',
+        'senha_completamente_errada',
+      );
+      expect(wrongPass, isFalse);
+      expect(container.read(authProvider).isAuthenticated, isFalse);
+      expect(container.read(authProvider).errorMessage, contains('incorreta'));
+    });
+
+    test('6. Official Merchant account authenticates strictly and gains access to /merchant', () async {
+      final container = ProviderContainer();
+      final authNotifier = container.read(authProvider.notifier);
+
+      // Login com credenciais oficiais de lojista
+      final merchantLogin = await authNotifier.loginWithEmailPassword(
+        'lojista@boragas.app',
+        '123456',
+      );
+      expect(merchantLogin, isTrue);
+      expect(container.read(authProvider).isAuthenticated, isTrue);
+      expect(container.read(authProvider).user?.role, equals(UserRole.merchant));
+      expect(container.read(authProvider).user?.storeId, equals('e1111111-1111-1111-1111-111111111111'));
+    });
   });
 }
