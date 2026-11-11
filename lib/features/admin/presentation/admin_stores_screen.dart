@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/store_model.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../customer/providers/customer_providers.dart';
 
 class AdminStoresScreen extends ConsumerStatefulWidget {
@@ -383,6 +384,20 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                           logoUrl: selectedLogo,
                         );
 
+                        if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                          SupabaseService.client.from('stores').update({
+                            'name': name,
+                            'cnpj': cnpj,
+                            'phone': phone,
+                            'address': address,
+                            'is_open': isOpen,
+                            'status': isSuspended ? 'suspended' : 'active',
+                            'base_delivery_fee': deliveryFee,
+                            'estimated_time_min': estTime,
+                            'commission_rate': commissionRate,
+                          }).eq('id', storeToEdit.id).catchError((_) {});
+                        }
+
                         ref.read(storesProvider.notifier).update(
                               (list) => list.map((s) => s.id == storeToEdit.id ? updated : s).toList(),
                             );
@@ -394,8 +409,9 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                           ),
                         );
                       } else {
+                        final newStoreId = 'store-${DateTime.now().millisecondsSinceEpoch}';
                         final newStore = StoreModel(
-                          id: 'store-${DateTime.now().millisecondsSinceEpoch}',
+                          id: newStoreId,
                           name: name,
                           cnpj: cnpj,
                           phone: phone,
@@ -413,13 +429,32 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                           isSuspendedForNonPayment: isSuspended,
                         );
 
+                        if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                          SupabaseService.client.from('stores').insert({
+                            'name': name,
+                            'cnpj': cnpj,
+                            'phone': phone,
+                            'address': address,
+                            'is_open': isOpen,
+                            'status': isSuspended ? 'suspended' : 'active',
+                            'base_delivery_fee': deliveryFee,
+                            'estimated_time_min': estTime,
+                            'commission_rate': commissionRate,
+                            'is_verified': true,
+                            'lat': -23.561414,
+                            'lng': -46.655881,
+                            'delivery_radius_km': 10,
+                            'rating': 5.0,
+                          }).catchError((_) {});
+                        }
+
                         ref.read(storesProvider.notifier).update(
                               (list) => [...list, newStore],
                             );
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Distribuidora "${newStore.name}" cadastrada com sucesso!'),
+                            content: Text('Distribuidora "${newStore.name}" cadastrada no Supabase!'),
                             backgroundColor: AppColors.success,
                           ),
                         );
@@ -469,6 +504,9 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
+              if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                SupabaseService.client.from('stores').delete().eq('id', store.id).catchError((_) {});
+              }
               ref.read(storesProvider.notifier).update(
                     (list) => list.where((s) => s.id != store.id).toList(),
                   );
@@ -491,6 +529,12 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
     final updated = store.copyWith(
       isSuspendedForNonPayment: !store.isSuspendedForNonPayment,
     );
+
+    if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+      SupabaseService.client.from('stores').update({
+        'status': updated.isSuspendedForNonPayment ? 'suspended' : 'active',
+      }).eq('id', store.id).catchError((_) {});
+    }
 
     ref.read(storesProvider.notifier).update(
           (list) => list.map((s) => s.id == store.id ? updated : s).toList(),

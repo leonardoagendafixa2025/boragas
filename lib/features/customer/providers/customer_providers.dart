@@ -3,6 +3,7 @@ import '../../../core/models/banner_model.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/models/product_model.dart';
 import '../../../core/models/store_model.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../data/mock_database.dart';
 
 enum HomeViewMode { stores, items }
@@ -117,10 +118,45 @@ class SearchQueryNotifier extends Notifier<String> {
 final searchQueryProvider =
     NotifierProvider<SearchQueryNotifier, String>(SearchQueryNotifier.new);
 
-// 6. Master Stores
+// 6. Master Stores (Sincronizado em tempo real com o banco Supabase)
 class StoresNotifier extends Notifier<List<StoreModel>> {
   @override
-  List<StoreModel> build() => List.from(MockDatabase.initialStores);
+  List<StoreModel> build() {
+    _loadStoresFromSupabase();
+    return List.from(MockDatabase.initialStores);
+  }
+
+  Future<void> _loadStoresFromSupabase() async {
+    if (!SupabaseService.isConfigured || !SupabaseService.isInitialized) return;
+    try {
+      final res = await SupabaseService.client
+          .from('stores')
+          .select('*')
+          .order('created_at', ascending: false);
+
+      if (res.isNotEmpty) {
+        final list = res.map((item) => StoreModel(
+          id: item['id'].toString(),
+          name: item['name'] as String? ?? 'Distribuidora',
+          cnpj: item['cnpj'] as String? ?? '00.000.000/0001-00',
+          phone: item['phone'] as String? ?? '',
+          logoUrl: item['logo_url'] as String? ?? 'assets/images/app_icon.png',
+          coverUrl: item['cover_url'] as String? ?? 'assets/images/brand_lockup.png',
+          address: item['address'] as String? ?? 'São Paulo - SP',
+          distanceKm: (item['distance_km'] as num?)?.toDouble() ?? 2.5,
+          rating: (item['rating'] as num?)?.toDouble() ?? 5.0,
+          reviewsCount: (item['reviews_count'] as num?)?.toInt() ?? 12,
+          estimatedTimeMin: (item['estimated_time_min'] as num?)?.toInt() ?? 25,
+          deliveryFee: (item['base_delivery_fee'] as num?)?.toDouble() ?? 0.0,
+          isVerified: item['is_verified'] == true,
+          isOpen: item['is_open'] == true,
+          commissionRate: (item['commission_rate'] as num?)?.toDouble() ?? 8.0,
+          isSuspendedForNonPayment: item['status'] == 'suspended',
+        )).toList();
+        state = list;
+      }
+    } catch (_) {}
+  }
 
   void set(List<StoreModel> stores) => state = stores;
   void update(List<StoreModel> Function(List<StoreModel>) fn) => state = fn(state);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'supabase_service.dart';
 
 class RemoteConfigState {
   final bool isMaintenanceMode;
@@ -80,6 +81,19 @@ class RemoteConfigNotifier extends Notifier<RemoteConfigState> {
       supportContactPhone: supportContactPhone,
       allowGuestOrders: allowGuestOrders,
     );
+
+    if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+      SupabaseService.client.from('remote_configs').upsert({
+        'id': 'global',
+        'announcement_banner_text': state.announcementBannerText,
+        'show_announcement_banner': state.showAnnouncementBanner,
+        'default_platform_commission_percent': state.defaultPlatformCommissionPercent,
+        'estimated_average_delivery_minutes': state.estimatedAverageDeliveryMinutes,
+        'support_contact_phone': state.supportContactPhone,
+        'is_maintenance_mode': state.isMaintenanceMode,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).catchError((_) {});
+    }
   }
 
   void toggleMaintenance() {

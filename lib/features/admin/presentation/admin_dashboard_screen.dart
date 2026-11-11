@@ -16,8 +16,11 @@ class AdminDashboardScreen extends ConsumerWidget {
     final orders = ref.watch(ordersProvider);
     final invoices = ref.watch(commissionInvoicesProvider);
 
-    final totalGMV = orders.fold(0.0, (sum, o) => sum + o.totalAmount) + 48200.0;
-    final totalCommissions = totalGMV * 0.08;
+    final totalGMV = orders.fold(0.0, (sum, o) => sum + o.totalAmount);
+    final totalCommissions = orders.fold(
+      0.0,
+      (sum, o) => sum + (o.totalAmount * (o.commissionRatePercent / 100)),
+    );
     final pendingCommissions = invoices
         .where((i) => i.status != InvoiceStatus.paid)
         .fold(0.0, (sum, i) => sum + i.totalCommissionDue);
@@ -112,10 +115,10 @@ class AdminDashboardScreen extends ConsumerWidget {
                 separatorBuilder: (context, index) => const Divider(height: 1),
                 itemBuilder: (context, index) {
                   final store = stores[index];
-                  final storeOrdersCount =
-                      orders.where((o) => o.storeId == store.id).length + (index * 8) + 12;
-                  final estSales = storeOrdersCount * 105.0;
-                  final estCommission = estSales * (store.commissionRate / 100);
+                  final storeOrders = orders.where((o) => o.storeId == store.id).toList();
+                  final storeOrdersCount = storeOrders.length;
+                  final storeSales = storeOrders.fold(0.0, (sum, o) => sum + o.totalAmount);
+                  final storeCommission = storeSales * (store.commissionRate / 100);
 
                   return ListTile(
                     leading: Container(
@@ -143,7 +146,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'R\$ ${estCommission.toStringAsFixed(2).replaceAll('.', ',')}',
+                          'R\$ ${storeCommission.toStringAsFixed(2).replaceAll('.', ',')}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,

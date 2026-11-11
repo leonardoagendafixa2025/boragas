@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/banner_model.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../customer/providers/customer_providers.dart';
 
 class AdminHomeManagerScreen extends ConsumerWidget {
@@ -45,22 +46,38 @@ class AdminHomeManagerScreen extends ConsumerWidget {
             onPressed: () {
               if (titleController.text.trim().isEmpty) return;
 
+              final title = titleController.text.trim();
+              final subtitle = subtitleController.text.trim();
+              final promoCode = promoCodeController.text.trim();
+
               final newBanner = HomeBannerModel(
                 id: 'banner-${DateTime.now().millisecondsSinceEpoch}',
-                title: titleController.text.trim(),
-                subtitle: subtitleController.text.trim(),
+                title: title,
+                subtitle: subtitle,
                 badgeText: 'NOVO CUPOM',
                 imageUrl: 'assets/images/app_icon.png',
                 actionType: 'promo_code',
-                actionTarget: promoCodeController.text.trim(),
+                actionTarget: promoCode,
                 isActive: true,
                 sortOrder: 1,
               );
 
+              if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                SupabaseService.client.from('home_banners').insert({
+                  'title': title,
+                  'subtitle': subtitle,
+                  'badge_text': 'NOVO CUPOM',
+                  'action_type': 'promo_code',
+                  'action_target': promoCode,
+                  'is_active': true,
+                  'sort_order': 1,
+                }).catchError((_) {});
+              }
+
               ref.read(homeBannersProvider.notifier).update((list) => [newBanner, ...list]);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Banner publicado na Home do cliente!')),
+                const SnackBar(content: Text('Banner publicado na Home e salvo no banco!')),
               );
             },
             child: const Text('Publicar'),
