@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/audio_alert_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../providers/merchant_providers.dart';
@@ -119,10 +120,77 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           ],
         ),
         actions: [
+          // Interruptor da Loja (Ligar / Desligar Loja para Pedidos)
+          InkWell(
+            onTap: () {
+              final newStatus = !currentStore.isOpen;
+              final updated = currentStore.copyWith(isOpen: newStatus);
+              ref.read(currentMerchantStoreProvider.notifier).set(updated);
+              ref.read(storesProvider.notifier).update((stores) =>
+                  stores.map((s) => s.id == currentStore.id ? updated : s).toList());
+
+              if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                SupabaseService.client
+                    .from('stores')
+                    .update({'is_open': newStatus})
+                    .eq('id', currentStore.id)
+                    .catchError((_) {});
+              }
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(newStatus
+                      ? '🟢 Loja Ligada: Recebendo novos pedidos normalmente!'
+                      : '🔴 Loja Desligada (Pausada): Clientes verão que está fechado.'),
+                  backgroundColor: newStatus ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            },
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              decoration: BoxDecoration(
+                color: currentStore.isOpen
+                    ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                    : const Color(0xFFEF4444).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: currentStore.isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  width: 1.2,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: currentStore.isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    currentStore.isOpen ? 'ABERTA' : 'DESLIGADA',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: currentStore.isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+
           // Alerta Sonoro de Novo Pedido
           IconButton(
             tooltip: 'Alerta Sonoro de Novo Pedido',
-            icon: const Icon(Icons.notifications_active_rounded, color: Color(0xFFFF6B00), size: 20),
+            icon: const Icon(Icons.notifications_active_rounded, color: Color(0xFFFF6B00), size: 19),
             onPressed: () {
               ref.read(currentMerchantStoreProvider);
               AudioAlertService.playNewOrderAlert();
@@ -136,19 +204,19 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
             },
           ),
 
-          // Sair da Loja (Logout Real)
+          // Sair da Loja / Desligar Sessão
           IconButton(
-            tooltip: 'Sair da Loja',
-            icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
+            tooltip: 'Desligar / Sair da Loja',
+            icon: const Icon(Icons.power_settings_new_rounded, color: Colors.redAccent, size: 20),
             onPressed: () async {
               final router = GoRouter.of(context);
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: const Color(0xFF1E293B),
-                  title: const Text('Sair do Portal do Lojista', style: TextStyle(color: Colors.white)),
+                  title: const Text('Desligar / Sair do Portal', style: TextStyle(color: Colors.white)),
                   content: const Text(
-                    'Deseja realmente encerrar a sessão da sua distribuidora?',
+                    'Deseja realmente encerrar a sessão da sua distribuidora e sair da conta?',
                     style: TextStyle(color: Colors.white70),
                   ),
                   actions: [
@@ -159,7 +227,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text('Desligar e Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

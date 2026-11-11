@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/models/commission_model.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../../merchant/providers/merchant_providers.dart';
 import 'widgets/sales_chart_widget.dart';
@@ -28,6 +30,49 @@ class AdminDashboardScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Visão Geral & Comissões (Sem Mensalidade)'),
+        actions: [
+          TextButton.icon(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            ),
+            icon: const Icon(Icons.power_settings_new_rounded, color: Colors.redAccent, size: 18),
+            label: const Text(
+              'Desligar / Sair',
+              style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w800, fontSize: 13),
+            ),
+            onPressed: () async {
+              final router = GoRouter.of(context);
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: const Color(0xFF1E293B),
+                  title: const Text('Desligar / Sair do Super Admin', style: TextStyle(color: Colors.white)),
+                  content: const Text(
+                    'Deseja realmente encerrar a sessão administrativa e sair da conta?',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Desligar e Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await ref.read(authProvider.notifier).logout();
+                router.go('/login');
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -85,8 +130,8 @@ class AdminDashboardScreen extends ConsumerWidget {
 
             const SizedBox(height: 20),
 
-            // Sales & Commission Evolution Chart
-            const SalesChartWidget(),
+            // Sales & Commission Evolution Chart (Calculado de Pedidos Reais)
+            SalesChartWidget(orders: orders),
 
             const SizedBox(height: 24),
 
@@ -163,6 +208,55 @@ class AdminDashboardScreen extends ConsumerWidget {
                 },
               ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Card de Desligar Sessão / Logout do Admin
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.shield_outlined, color: Color(0xFFDC2626), size: 28),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Sessão de Controle Master Ativa',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF991B1B)),
+                        ),
+                        Text(
+                          'Desconecte seu acesso de administrador para segurança.',
+                          style: TextStyle(fontSize: 11.5, color: Color(0xFFB91C1C)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    ),
+                    onPressed: () async {
+                      final router = GoRouter.of(context);
+                      await ref.read(authProvider.notifier).logout();
+                      router.go('/login');
+                    },
+                    icon: const Icon(Icons.power_settings_new_rounded, size: 16),
+                    label: const Text('Desligar Sessão', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),

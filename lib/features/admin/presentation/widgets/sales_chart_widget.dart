@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/models/order_model.dart';
 
 class DailyMetric {
   final String dayName;
@@ -17,7 +18,8 @@ class DailyMetric {
 }
 
 class SalesChartWidget extends StatefulWidget {
-  const SalesChartWidget({super.key});
+  final List<OrderModel>? orders;
+  const SalesChartWidget({super.key, this.orders});
 
   @override
   State<SalesChartWidget> createState() => _SalesChartWidgetState();
@@ -27,19 +29,41 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
   int _selectedPeriodIndex = 0; // 0: 7 dias, 1: 15 dias, 2: 30 dias
   int? _hoveredBarIndex;
 
-  final List<DailyMetric> _last7Days = const [
-    DailyMetric(dayName: 'Seg', gmv: 4200.0, commission: 336.0, ordersCount: 40),
-    DailyMetric(dayName: 'Ter', gmv: 5100.0, commission: 408.0, ordersCount: 48),
-    DailyMetric(dayName: 'Qua', gmv: 6300.0, commission: 504.0, ordersCount: 60),
-    DailyMetric(dayName: 'Qui', gmv: 5800.0, commission: 464.0, ordersCount: 55),
-    DailyMetric(dayName: 'Sex', gmv: 7400.0, commission: 592.0, ordersCount: 71),
-    DailyMetric(dayName: 'Sáb', gmv: 9800.0, commission: 784.0, ordersCount: 94),
-    DailyMetric(dayName: 'Dom', gmv: 8200.0, commission: 656.0, ordersCount: 78),
-  ];
+  List<DailyMetric> _buildDailyMetrics(List<OrderModel>? orders) {
+    const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    final now = DateTime.now();
+    final actualOrders = orders ?? const <OrderModel>[];
+
+    return List.generate(7, (i) {
+      final targetDate = now.subtract(Duration(days: 6 - i));
+      final dayName = days[(targetDate.weekday - 1) % 7];
+
+      final matching = actualOrders.where((o) {
+        return o.createdAt.year == targetDate.year &&
+            o.createdAt.month == targetDate.month &&
+            o.createdAt.day == targetDate.day;
+      }).toList();
+
+      final dayGmv = matching.fold(0.0, (sum, o) => sum + o.totalAmount);
+      final dayComm = matching.fold(
+        0.0,
+        (sum, o) => sum + (o.totalAmount * (o.commissionRatePercent / 100)),
+      );
+
+      return DailyMetric(
+        dayName: dayName,
+        gmv: dayGmv,
+        commission: dayComm,
+        ordersCount: matching.length,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final maxGmv = _last7Days.map((d) => d.gmv).reduce((a, b) => a > b ? a : b);
+    final dailyMetrics = _buildDailyMetrics(widget.orders);
+    final maxGmvValue = dailyMetrics.map((d) => d.gmv).fold(0.0, (a, b) => a > b ? a : b);
+    final maxGmv = maxGmvValue > 0 ? maxGmvValue : 100.0;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -105,9 +129,11 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(_last7Days.length, (index) {
-                final item = _last7Days[index];
-                final heightFactor = item.gmv / maxGmv;
+              children: List.generate(dailyMetrics.length, (index) {
+                final item = dailyMetrics[index];
+                final heightFactor = (maxGmv > 0 && item.gmv > 0)
+                    ? (item.gmv / maxGmv).clamp(0.06, 1.0)
+                    : 0.05;
                 final isSelected = _hoveredBarIndex == index;
 
                 return Expanded(
@@ -132,7 +158,9 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
-                                'R\$${(item.gmv / 1000).toStringAsFixed(1)}k',
+                                item.gmv > 0
+                                    ? 'R\$ ${(item.gmv).toStringAsFixed(0)}'
+                                    : 'R\$ 0,00',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,

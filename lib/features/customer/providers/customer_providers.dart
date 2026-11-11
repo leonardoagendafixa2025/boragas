@@ -157,7 +157,9 @@ class StoresNotifier extends Notifier<List<StoreModel>> {
           deliveryFee: (item['base_delivery_fee'] as num?)?.toDouble() ?? 0.0,
           isVerified: item['is_verified'] == true,
           isOpen: item['is_open'] == true,
-          commissionRate: (item['commission_rate'] as num?)?.toDouble() ?? 8.0,
+          commissionRate: (item['commission_rate_percent'] as num?)?.toDouble() ??
+              (item['commission_rate'] as num?)?.toDouble() ??
+              8.0,
           isSuspendedForNonPayment: item['status'] == 'suspended',
         )).toList();
         state = list;

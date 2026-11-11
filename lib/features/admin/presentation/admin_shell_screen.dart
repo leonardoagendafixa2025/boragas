@@ -66,16 +66,25 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
             label: const Text('WhatsApp QR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Sair do Super Admin',
-            icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
+          TextButton.icon(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.redAccent,
+              backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: const Icon(Icons.power_settings_new_rounded, size: 16, color: Colors.redAccent),
+            label: const Text(
+              'Desligar / Sair',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.redAccent),
+            ),
             onPressed: () async {
               final router = GoRouter.of(context);
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: const Color(0xFF1E293B),
-                  title: const Text('Sair do Super Admin', style: TextStyle(color: Colors.white)),
+                  title: const Text('Desligar / Sair do Super Admin', style: TextStyle(color: Colors.white)),
                   content: const Text(
                     'Deseja realmente encerrar a sessão administrativa?',
                     style: TextStyle(color: Colors.white70),
@@ -88,7 +97,7 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
                       onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      child: const Text('Desligar e Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

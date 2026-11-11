@@ -130,40 +130,6 @@ class MockDatabase {
       isOpen: true,
       commissionRate: 8.0,
     ),
-    const StoreModel(
-      id: 'store-3',
-      name: 'Supergasbras Jardins',
-      cnpj: '45.123.789/0001-55',
-      phone: '(11) 99123-4567',
-      logoUrl: 'assets/images/app_icon.png',
-      coverUrl: 'assets/images/brand_lockup.png',
-      address: 'Al. Santos, 410 - Paraíso',
-      distanceKm: 2.8,
-      rating: 4.7,
-      reviewsCount: 156,
-      estimatedTimeMin: 30,
-      deliveryFee: 4.0,
-      isVerified: true,
-      isOpen: true,
-      commissionRate: 8.0,
-    ),
-    const StoreModel(
-      id: 'store-4',
-      name: 'Copagaz & Águas Lindoya Express',
-      cnpj: '33.987.654/0001-22',
-      phone: '(11) 98345-6789',
-      logoUrl: 'assets/images/app_icon_v2.png',
-      coverUrl: 'assets/images/brand_lockup.png',
-      address: 'Rua Vergueiro, 1500 - Vila Mariana',
-      distanceKm: 3.5,
-      rating: 4.9,
-      reviewsCount: 412,
-      estimatedTimeMin: 35,
-      deliveryFee: 6.0,
-      isVerified: true,
-      isOpen: true,
-      commissionRate: 7.5,
-    ),
   ];
 
   static final List<ProductModel> initialProducts = [
@@ -254,66 +220,6 @@ class MockDatabase {
       imageUrl: 'assets/images/brand_lockup.png',
       rating: 4.9,
     ),
-
-    // Supergasbras
-    const ProductModel(
-      id: 'prod-7',
-      storeId: 'store-3',
-      storeName: 'Supergasbras Jardins',
-      category: ProductCategory.p13,
-      name: 'Botijão Dourado Supergasbras P13',
-      brandName: 'Supergasbras',
-      description: 'Gás de qualidade com queima uniforme e alto rendimento.',
-      refillPrice: 103.00,
-      shellPrice: 285.00,
-      inStock: true,
-      imageUrl: 'assets/images/app_icon.png',
-      rating: 4.7,
-    ),
-    const ProductModel(
-      id: 'prod-8',
-      storeId: 'store-3',
-      storeName: 'Supergasbras Jardins',
-      category: ProductCategory.p20,
-      name: 'Cilindro P20 para Empilhadeira',
-      brandName: 'Supergasbras Auto',
-      description: 'GLP para empilhadeiras em regime de tração pesada.',
-      refillPrice: 195.00,
-      shellPrice: 480.00,
-      inStock: true,
-      imageUrl: 'assets/images/app_icon_v2.png',
-      rating: 4.7,
-    ),
-
-    // Copagaz
-    const ProductModel(
-      id: 'prod-9',
-      storeId: 'store-4',
-      storeName: 'Copagaz & Águas Lindoya Express',
-      category: ProductCategory.p13,
-      name: 'Botijão Copagaz P13 Tradicional',
-      brandName: 'Copagaz',
-      description: 'Distribuição direta com teste de vazamento na entrega.',
-      refillPrice: 101.50,
-      shellPrice: 280.00,
-      inStock: true,
-      imageUrl: 'assets/images/app_icon.png',
-      rating: 4.9,
-    ),
-    const ProductModel(
-      id: 'prod-10',
-      storeId: 'store-4',
-      storeName: 'Copagaz & Águas Lindoya Express',
-      category: ProductCategory.water20l,
-      name: 'Galão Água Crystal 20L',
-      brandName: 'Crystal',
-      description: 'Pureza e frescor da fonte para a sua família.',
-      refillPrice: 19.50,
-      shellPrice: 44.00,
-      inStock: true,
-      imageUrl: 'assets/images/app_icon_v2.png',
-      rating: 4.8,
-    ),
   ];
 
   // Pedidos em produção iniciam vazios e são persistidos no Supabase
@@ -372,99 +278,8 @@ class MockDatabase {
     isGatewayConnected: false,
   );
 
-  static final List<CommissionInvoiceModel> initialInvoices = [
-    CommissionInvoiceModel(
-      id: 'inv-01',
-      storeId: 'store-1',
-      storeName: 'Ultragaz Paulistana Express',
-      period: '01/11 a 07/11 (Semana 44)',
-      totalStoreSales: 8940.00,
-      commissionPercent: 8.0,
-      totalCommissionDue: 715.20,
-      dueDate: DateTime.now().add(const Duration(days: 3)),
-      status: InvoiceStatus.open,
-      pixCopyPaste:
-          '00020126580014br.gov.bcb.pix0136boragas-faturas@plataforma.com5204000053039865406715.205802BR5915BoraGas Admin6009Sao Paulo62070503***63041D9F',
-    ),
-    CommissionInvoiceModel(
-      id: 'inv-02',
-      storeId: 'store-2',
-      storeName: 'Liquigás Central do Gás',
-      period: '25/10 a 31/10 (Semana 43)',
-      totalStoreSales: 11250.00,
-      commissionPercent: 8.0,
-      totalCommissionDue: 900.00,
-      dueDate: DateTime.now().subtract(const Duration(days: 2)),
-      status: InvoiceStatus.paid,
-      pixCopyPaste: 'pix-pago-recibo-892',
-    ),
-    CommissionInvoiceModel(
-      id: 'inv-03',
-      storeId: 'store-4',
-      storeName: 'Copagaz & Águas Lindoya Express',
-      period: '18/10 a 24/10 (Semana 42)',
-      totalStoreSales: 4500.00,
-      commissionPercent: 7.5,
-      totalCommissionDue: 337.50,
-      dueDate: DateTime.now().subtract(const Duration(days: 10)),
-      status: InvoiceStatus.overdue,
-      pixCopyPaste: 'pix-pendente-overdue-110',
-    ),
-  ];
+  // Faturas e tickets reais iniciam vazios em produção
+  static final List<CommissionInvoiceModel> initialInvoices = const <CommissionInvoiceModel>[];
 
-  static final List<SupportTicketModel> initialTickets = [
-    SupportTicketModel(
-      id: 'tkt-01',
-      ticketNumber: '#SUP-1082',
-      requesterName: 'Carlos Eduardo Silva',
-      requesterRole: 'customer',
-      category: 'Atraso na Entrega',
-      subject: 'Pedido #BG-8842 - Entregador próximo há 15 min',
-      status: TicketStatus.inProgress,
-      relatedOrderId: '#BG-8842',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 12)),
-      messages: [
-        SupportMessageModel(
-          id: 'msg-1',
-          senderName: 'Carlos Eduardo Silva',
-          senderRole: 'customer',
-          content: 'Olá! O entregador já saiu da loja mas parece parado no trânsito.',
-          sentAt: DateTime.now().subtract(const Duration(minutes: 12)),
-        ),
-        SupportMessageModel(
-          id: 'msg-2',
-          senderName: 'Equipe BoraGás Suporte',
-          senderRole: 'admin',
-          content: 'Olá Carlos! Verificamos com o entregador Marcos. Houve um desvio devido a uma obra na Av. Brigadeiro, ele já está na sua rua.',
-          sentAt: DateTime.now().subtract(const Duration(minutes: 5)),
-        ),
-      ],
-    ),
-    SupportTicketModel(
-      id: 'tkt-02',
-      ticketNumber: '#SUP-1079',
-      requesterName: 'Ultragaz Paulistana Express',
-      requesterRole: 'merchant',
-      category: 'Dúvida Financeira / Fatura',
-      subject: 'Como funciona o desconto de cancelamentos na fatura semanal?',
-      status: TicketStatus.resolved,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      messages: [
-        SupportMessageModel(
-          id: 'msg-3',
-          senderName: 'Ultragaz Paulistana Express',
-          senderRole: 'merchant',
-          content: 'Tivemos 1 pedido cancelado pelo cliente antes da saída, a comissão foi estornada?',
-          sentAt: DateTime.now().subtract(const Duration(days: 1)),
-        ),
-        SupportMessageModel(
-          id: 'msg-4',
-          senderName: 'Suporte BoraGás Parceiro',
-          senderRole: 'admin',
-          content: 'Sim! Pedidos com status "cancelado" não geram registro no Ledger de comissões.',
-          sentAt: DateTime.now().subtract(const Duration(hours: 20)),
-        ),
-      ],
-    ),
-  ];
+  static final List<SupportTicketModel> initialTickets = const <SupportTicketModel>[];
 }

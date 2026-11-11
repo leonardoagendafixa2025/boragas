@@ -207,6 +207,279 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     }
   }
 
+  void _showForgotPasswordModal() {
+    final identifierController = TextEditingController(text: _loginEmailController.text.trim());
+    final otpController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool isStepTwo = false;
+    bool isSending = false;
+    String? localError;
+    String? localSuccess;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (innerContext, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(innerContext).viewInsets.bottom + 24,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 24),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Recuperar Senha',
+                                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                              ),
+                              Text(
+                                'Acesso via WhatsApp sem custo de SMS',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    if (localError != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF2F2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFECACA)),
+                        ),
+                        child: Text(
+                          localError!,
+                          style: const TextStyle(color: Color(0xFFDC2626), fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (localSuccess != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Text(
+                          localSuccess!,
+                          style: const TextStyle(color: Color(0xFF15803D), fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (!isStepTwo) ...[
+                      const Text(
+                        'Informe seu e-mail ou número de WhatsApp cadastrado para receber o código seguro de redefinição:',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: identifierController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: 'E-mail ou WhatsApp cadastrado',
+                          hintText: 'seu@email.com ou (11) 98765-4321',
+                          prefixIcon: const Icon(Icons.account_circle_outlined, color: AppColors.primary),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isSending
+                            ? null
+                            : () async {
+                                final text = identifierController.text.trim();
+                                if (text.isEmpty) {
+                                  setModalState(() => localError = 'Informe seu e-mail ou WhatsApp.');
+                                  return;
+                                }
+                                setModalState(() {
+                                  isSending = true;
+                                  localError = null;
+                                });
+
+                                final res = await ref.read(authProvider.notifier).sendPasswordResetOtp(text);
+
+                                setModalState(() {
+                                  isSending = false;
+                                  if (res['success'] == true) {
+                                    isStepTwo = true;
+                                    localSuccess = 'Código de validação enviado via WhatsApp!';
+                                  } else {
+                                    localError = res['message'] ?? 'Erro ao enviar código.';
+                                  }
+                                });
+                              },
+                        icon: isSending
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : const Icon(Icons.chat_rounded, size: 18),
+                        label: Text(
+                          isSending ? 'Enviando...' : 'Enviar Código no WhatsApp',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                        ),
+                      ),
+                    ] else ...[
+                      const Text(
+                        'Digite o código recebido no seu WhatsApp e crie a sua nova senha:',
+                        style: TextStyle(fontSize: 13, color: Color(0xFF334155), height: 1.4),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: otpController,
+                        keyboardType: TextInputType.number,
+                        maxLength: 6,
+                        decoration: InputDecoration(
+                          labelText: 'Código de 6 dígitos',
+                          hintText: 'Ex: 123456',
+                          prefixIcon: const Icon(Icons.pin_rounded, color: AppColors.primary),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          counterText: '',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: newPasswordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Nova Senha (mínimo 6 caracteres)',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: confirmPasswordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Confirmar Nova Senha',
+                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: isSending
+                            ? null
+                            : () async {
+                                final code = otpController.text.trim();
+                                final pwd = newPasswordController.text.trim();
+                                final confirm = confirmPasswordController.text.trim();
+
+                                if (code.isEmpty) {
+                                  setModalState(() => localError = 'Digite o código recebido.');
+                                  return;
+                                }
+                                if (pwd.length < 6) {
+                                  setModalState(() => localError = 'A nova senha deve ter no mínimo 6 caracteres.');
+                                  return;
+                                }
+                                if (pwd != confirm) {
+                                  setModalState(() => localError = 'As senhas digitadas não conferem.');
+                                  return;
+                                }
+
+                                setModalState(() {
+                                  isSending = true;
+                                  localError = null;
+                                });
+
+                                final res = await ref.read(authProvider.notifier).confirmPasswordReset(
+                                  code: code,
+                                  newPassword: pwd,
+                                );
+
+                                setModalState(() => isSending = false);
+
+                                if (res['success'] == true) {
+                                  if (sheetContext.mounted) {
+                                    Navigator.pop(sheetContext);
+                                  }
+                                  _loginPasswordController.text = pwd;
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('✅ Senha redefinida com sucesso! Você já pode entrar.'),
+                                        backgroundColor: Color(0xFF10B981),
+                                        duration: Duration(seconds: 4),
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  setModalState(() => localError = res['message'] ?? 'Falha ao redefinir.');
+                                }
+                              },
+                        child: Text(
+                          isSending ? 'Salvando...' : 'Salvar Nova Senha e Concluir',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => setModalState(() {
+                          isStepTwo = false;
+                          localError = null;
+                          localSuccess = null;
+                        }),
+                        child: const Text('Voltar / reenviar código'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
@@ -381,7 +654,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 8),
+
+          // Esqueci minha senha
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _showForgotPasswordModal,
+              icon: const Icon(Icons.lock_reset_rounded, size: 16, color: Color(0xFF64748B)),
+              label: const Text(
+                'Esqueci minha senha',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           AppButton(
             label: 'Acessar BoraGás',
             isLoading: auth.isLoading,
