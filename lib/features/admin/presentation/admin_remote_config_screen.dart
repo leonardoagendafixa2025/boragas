@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/remote_config_service.dart';
-import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/ui/bora_button.dart';
+import '../../../core/widgets/ui/bora_card.dart';
 
 class AdminRemoteConfigScreen extends ConsumerStatefulWidget {
   const AdminRemoteConfigScreen({super.key});
@@ -39,6 +41,7 @@ class _AdminRemoteConfigScreenState
   }
 
   void _saveRemoteConfig() {
+    HapticFeedback.mediumImpact();
     final newText = _bannerTextController.text.trim();
     final newComm = double.tryParse(_commissionController.text) ?? 8.0;
     final newTime = int.tryParse(_deliveryMinutesController.text) ?? 25;
@@ -51,7 +54,7 @@ class _AdminRemoteConfigScreenState
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Configurações remotas publicadas! Sincronizadas instantaneamente com os apps.'),
+        content: Text('Configurações remotas publicadas com sucesso!'),
         backgroundColor: AppColors.success,
       ),
     );
@@ -62,32 +65,42 @@ class _AdminRemoteConfigScreenState
     final config = ref.watch(remoteConfigProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Painel Remote Config (Flags Visuais)'),
-      ),
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Live Preview of Current Header Banner
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
+            // Header
+            const Text(
+              'Ajustes & Remote Config',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.3,
               ),
+            ),
+            const SizedBox(height: 2),
+            const Text(
+              'Configurações operacionais e avisos globais sincronizados em tempo real',
+              style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+
+            // Live Preview do Banner de Alerta
+            BoraCard(
+              padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'PREVIEW DO AVISO NO HEADER DO CLIENTE',
+                    'PREVIEW DO AVISO NO TOPO DO CLIENTE',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
+                      letterSpacing: 0.6,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -95,7 +108,7 @@ class _AdminRemoteConfigScreenState
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: config.seasonalAccentColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: config.seasonalAccentColor.withValues(alpha: 0.3)),
                     ),
                     child: Row(
@@ -115,76 +128,80 @@ class _AdminRemoteConfigScreenState
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // Form inputs
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.border),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _bannerTextController,
-                      decoration: const InputDecoration(
-                        labelText: 'Texto do Banner de Alerta / Feriado / Notícia',
-                        hintText: 'Ex.: Operação especial de feriado com entrega em 20 min',
-                      ),
+            // Formulário de Configurações
+            BoraCard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _bannerTextController,
+                    decoration: InputDecoration(
+                      labelText: 'Texto do Banner de Comunicado / Alerta',
+                      hintText: 'Ex.: Operação especial de entrega turbo em até 20 min',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    const SizedBox(height: 14),
-                    SwitchListTile(
-                      title: const Text('Exibir Banner de Alerta na Home'),
-                      subtitle: const Text('Ativa ou oculta a faixa de comunicado no topo do app'),
-                      value: config.showAnnouncementBanner,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (val) {
-                        ref.read(remoteConfigProvider.notifier).toggleAnnouncement();
-                      },
+                  ),
+                  const SizedBox(height: 12),
+                  SwitchListTile(
+                    title: const Text('Exibir Banner de Alerta na Home', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    subtitle: const Text('Ativa ou oculta a faixa de comunicado no topo do app', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    value: config.showAnnouncementBanner,
+                    contentPadding: EdgeInsets.zero,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (val) {
+                      HapticFeedback.selectionClick();
+                      ref.read(remoteConfigProvider.notifier).toggleAnnouncement();
+                    },
+                  ),
+                  const Divider(height: 20, color: AppColors.border),
+                  TextField(
+                    controller: _commissionController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Taxa de Comissão Padrão (%)',
+                      suffixText: '%',
+                      helperText: 'Aplicada para novas distribuidoras cadastradas',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    const Divider(height: 24),
-                    TextField(
-                      controller: _commissionController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(
-                        labelText: 'Taxa de Comissão Padrão da Plataforma (%)',
-                        suffixText: '%',
-                        helperText: 'Aplicada como padrão para novas distribuidoras cadastradas',
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _deliveryMinutesController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Tempo Médio Global Estimado (Minutos)',
+                      suffixText: 'min',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: _deliveryMinutesController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Tempo Médio Global Estimado (Minutos)',
-                        suffixText: 'min',
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    SwitchListTile(
-                      title: const Text('Modo Manutenção'),
-                      subtitle: const Text('Bloqueia a realização de novos pedidos temporariamente'),
-                      value: config.isMaintenanceMode,
-                      activeThumbColor: AppColors.error,
-                      onChanged: (val) {
-                        ref.read(remoteConfigProvider.notifier).toggleMaintenance();
-                      },
-                    ),
-                  ],
-                ),
+                  ),
+                  const Divider(height: 20, color: AppColors.border),
+                  SwitchListTile(
+                    title: const Text('Modo Manutenção Geral', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    subtitle: const Text('Bloqueia novos pedidos temporariamente em caso de contingência', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    value: config.isMaintenanceMode,
+                    contentPadding: EdgeInsets.zero,
+                    activeThumbColor: AppColors.error,
+                    onChanged: (val) {
+                      HapticFeedback.selectionClick();
+                      ref.read(remoteConfigProvider.notifier).toggleMaintenance();
+                    },
+                  ),
+                ],
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            AppButton(
-              label: 'Publicar Alterações no Remote Config',
-              icon: Icons.cloud_upload_rounded,
-              onPressed: _saveRemoteConfig,
+            SizedBox(
+              width: double.infinity,
+              child: BoraButton.flame(
+                text: 'Publicar Alterações no Sistema',
+                icon: Icons.cloud_upload_rounded,
+                height: 50,
+                onPressed: _saveRemoteConfig,
+              ),
             ),
           ],
         ),

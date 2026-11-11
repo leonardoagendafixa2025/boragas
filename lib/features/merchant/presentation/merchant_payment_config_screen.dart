@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_typography.dart';
-import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/ui/bora_button.dart';
+import '../../../core/widgets/ui/bora_card.dart';
 import '../providers/merchant_providers.dart';
 
 class MerchantPaymentConfigScreen extends ConsumerStatefulWidget {
@@ -45,9 +46,10 @@ class _MerchantPaymentConfigScreenState
   }
 
   Future<void> _testAndSaveConnection() async {
+    HapticFeedback.mediumImpact();
     setState(() => _isTesting = true);
 
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 1000));
 
     ref.read(storePaymentConfigProvider.notifier).testAndConnect(
           gatewayProvider: _selectedGateway,
@@ -63,60 +65,108 @@ class _MerchantPaymentConfigScreenState
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Chaves de API e Smart POS validadas com sucesso! Os pagamentos caem direto na sua conta.'),
+          content: Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '✅ Chaves de API e Smart POS validadas! Os pagamentos caem direto na sua conta.',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: AppColors.success,
         ),
       );
     }
   }
 
+  InputDecoration _buildDarkInput(String label, String hint, {String? helper}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5),
+      hintText: hint,
+      hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+      helperText: helper,
+      helperStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 10.5),
+      helperMaxLines: 2,
+      filled: true,
+      fillColor: const Color(0xFF0F172A),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0x1AFFFFFF))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0x1AFFFFFF))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.accentFlame, width: 1.5)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final config = ref.watch(storePaymentConfigProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B1120),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+    return Container(
+      color: AppColors.merchantCanvas,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Pagamentos BYOK
-            const Text(
-              'Configuração de Pagamento (BYOK)',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 2),
-            const Text(
-              'Configure suas chaves Mercado Pago, AbacatePay e maquininhas de entrega',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+            // Header
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Pagamentos & Gateways (BYOK)',
+                        style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Conecte suas credenciais para receber vendas direto na sua conta',
+                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
-            // Informative Notice Banner
+
+            // Banner Explicativo BYOK
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.shield_rounded, color: AppColors.primary, size: 24),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.shield_rounded, color: Color(0xFF38BDF8), size: 20),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Modelo BYOK (Bring Your Own Key)',
-                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Colors.white),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 3),
                         Text(
                           '100% do dinheiro das vendas online cai na conta do seu próprio estabelecimento. O app BoraGás nunca retém o valor dos seus produtos.',
-                          style: AppTypography.bodySmall,
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5, height: 1.35),
                         ),
                       ],
                     ),
@@ -127,31 +177,29 @@ class _MerchantPaymentConfigScreenState
 
             const SizedBox(height: 20),
 
-            // SECTION 1: Gateway Online
+            // SEÇÃO 1: Gateway Online
             const Text(
-              '1. GATEWAY ONLINE DA LOJA (PIX & CARTÃO)',
+              '1. GATEWAY ONLINE (PIX & CARTÃO NO APP)',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.5,
+                color: Color(0xFF94A3B8),
+                letterSpacing: 0.6,
               ),
             ),
             const SizedBox(height: 10),
 
-            Container(
+            BoraCard(
+              color: AppColors.merchantCard,
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
                     initialValue: _selectedGateway,
-                    decoration: const InputDecoration(labelText: 'Provedor de Pagamento'),
+                    dropdownColor: const Color(0xFF1E293B),
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                    decoration: _buildDarkInput('Provedor de Pagamento', ''),
                     items: const [
                       DropdownMenuItem(value: 'mercadopago', child: Text('Mercado Pago (Pix & Cartão)')),
                       DropdownMenuItem(value: 'abacatepay', child: Text('AbacatePay (Pix Instantâneo)')),
@@ -163,28 +211,22 @@ class _MerchantPaymentConfigScreenState
                   const SizedBox(height: 12),
                   TextField(
                     controller: _publicKeyController,
-                    decoration: const InputDecoration(
-                      labelText: 'Public Key / Chave Pública',
-                      hintText: 'APP_USR-xxxxxx',
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                    decoration: _buildDarkInput('Public Key / Chave Pública', 'APP_USR-xxxxxx'),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _accessTokenController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Access Token / Chave Privada (Armazenada Segura)',
-                      hintText: 'APP_USR-xxxxxx-token',
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                    decoration: _buildDarkInput('Access Token (Chave Segura)', 'APP_USR-xxxxxx-token'),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _webhookSecretController,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Webhook Secret',
-                      hintText: 'whsec_xxxxxx',
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                    decoration: _buildDarkInput('Webhook Secret (Opcional)', 'whsec_xxxxxx'),
                   ),
                 ],
               ),
@@ -192,44 +234,33 @@ class _MerchantPaymentConfigScreenState
 
             const SizedBox(height: 20),
 
-            // SECTION 2: Smart POS Maquininha
+            // SEÇÃO 2: Smart POS
             const Text(
-              '2. INTEGRAÇÃO COM MAQUININHA (SMART POS NA PORTA)',
+              '2. MAQUININHA FÍSICA (SMART POS DE ENTREGA)',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.5,
+                color: Color(0xFF94A3B8),
+                letterSpacing: 0.6,
               ),
             ),
             const SizedBox(height: 10),
 
-            Container(
+            BoraCard(
+              color: AppColors.merchantCard,
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   DropdownButtonFormField<String>(
                     initialValue: _selectedPosProvider,
-                    decoration: const InputDecoration(labelText: 'Modelo do Terminal / Maquininha'),
+                    dropdownColor: const Color(0xFF1E293B),
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                    decoration: _buildDarkInput('Modelo do Terminal / Maquininha', ''),
                     items: const [
-                      DropdownMenuItem(
-                        value: 'Mercado Pago Point Smart',
-                        child: Text('Mercado Pago Point Smart / Pro 2'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'PagBank Moderninha Smart',
-                        child: Text('PagBank Moderninha Smart 2'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Stone Smart POS',
-                        child: Text('Stone Smart POS'),
-                      ),
+                      DropdownMenuItem(value: 'Mercado Pago Point Smart', child: Text('Mercado Pago Point Smart / Pro 2')),
+                      DropdownMenuItem(value: 'PagBank Moderninha Smart', child: Text('PagBank Moderninha Smart 2')),
+                      DropdownMenuItem(value: 'Stone Smart POS', child: Text('Stone Smart POS')),
                     ],
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedPosProvider = val);
@@ -238,10 +269,11 @@ class _MerchantPaymentConfigScreenState
                   const SizedBox(height: 12),
                   TextField(
                     controller: _posSerialController,
-                    decoration: const InputDecoration(
-                      labelText: 'Device ID / Serial da Maquininha',
-                      hintText: 'Ex.: MP-SMART-84920',
-                      helperText: 'O valor do pedido é enviado automaticamente ao visor do terminal na hora da entrega',
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                    decoration: _buildDarkInput(
+                      'Device ID / Serial da Maquininha',
+                      'Ex.: MP-SMART-84920',
+                      helper: 'O valor do pedido vai automaticamente para o visor da maquininha do entregador.',
                     ),
                   ),
                 ],
@@ -250,56 +282,65 @@ class _MerchantPaymentConfigScreenState
 
             const SizedBox(height: 20),
 
-            // SECTION 3: Formas de Pagamento Ativas
+            // SEÇÃO 3: Formas de Pagamento Aceitas
             const Text(
-              '3. FORMAS DE PAGAMENTO ACEITAS PELO SEU DEPÓSITO',
+              '3. FORMAS DE PAGAMENTO ACEITAS',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.5,
+                color: Color(0xFF94A3B8),
+                letterSpacing: 0.6,
               ),
             ),
             const SizedBox(height: 10),
 
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
+            BoraCard(
+              color: AppColors.merchantCard,
+              padding: EdgeInsets.zero,
               child: Column(
                 children: [
                   SwitchListTile(
-                    title: const Text('PIX Online Direto'),
-                    subtitle: const Text('Cliente paga no app pelo seu Mercado Pago / Gateway'),
+                    title: const Text('PIX Online Direto', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                    subtitle: const Text('Cliente paga no app pelo seu Mercado Pago / Gateway', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                     value: config.acceptsOnlinePix,
-                    activeThumbColor: AppColors.primary,
-                    onChanged: (v) => ref.read(storePaymentConfigProvider.notifier).toggleOnlinePix(v),
+                    activeThumbColor: AppColors.success,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      ref.read(storePaymentConfigProvider.notifier).toggleOnlinePix(v);
+                    },
                   ),
-                  const Divider(height: 1),
+                  Divider(height: 1, color: AppColors.merchantDivider),
                   SwitchListTile(
-                    title: const Text('Cartão de Crédito Online'),
-                    subtitle: const Text('Cobrança processada pela sua chave de API'),
+                    title: const Text('Cartão de Crédito Online', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                    subtitle: const Text('Cobrança processada pela sua chave de API', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                     value: config.acceptsOnlineCard,
-                    activeThumbColor: AppColors.primary,
-                    onChanged: (v) => ref.read(storePaymentConfigProvider.notifier).toggleOnlineCard(v),
+                    activeThumbColor: AppColors.success,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      ref.read(storePaymentConfigProvider.notifier).toggleOnlineCard(v);
+                    },
                   ),
-                  const Divider(height: 1),
+                  Divider(height: 1, color: AppColors.merchantDivider),
                   SwitchListTile(
-                    title: const Text('Maquininha na Entrega (Smart POS)'),
-                    subtitle: const Text('Entregador leva a maquininha física até o cliente'),
+                    title: const Text('Maquininha na Entrega (Smart POS)', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                    subtitle: const Text('Entregador leva a maquininha física até o cliente', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                     value: config.acceptsPosOnDelivery,
-                    activeThumbColor: AppColors.primary,
-                    onChanged: (v) => ref.read(storePaymentConfigProvider.notifier).togglePosOnDelivery(v),
+                    activeThumbColor: AppColors.success,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      ref.read(storePaymentConfigProvider.notifier).togglePosOnDelivery(v);
+                    },
                   ),
-                  const Divider(height: 1),
+                  Divider(height: 1, color: AppColors.merchantDivider),
                   SwitchListTile(
-                    title: const Text('Dinheiro na Entrega'),
-                    subtitle: const Text('Permite troco em espécie'),
+                    title: const Text('Dinheiro na Entrega', style: TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                    subtitle: const Text('Permite troco em espécie', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11)),
                     value: config.acceptsCashOnDelivery,
-                    activeThumbColor: AppColors.primary,
-                    onChanged: (v) => ref.read(storePaymentConfigProvider.notifier).toggleCashOnDelivery(v),
+                    activeThumbColor: AppColors.success,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      ref.read(storePaymentConfigProvider.notifier).toggleCashOnDelivery(v);
+                    },
                   ),
                 ],
               ),
@@ -307,15 +348,17 @@ class _MerchantPaymentConfigScreenState
 
             const SizedBox(height: 24),
 
-            // Test and Save Button
-            AppButton(
-              label: 'Testar e Salvar Conexão das APIs',
-              isLoading: _isTesting,
-              icon: Icons.check_circle_outline_rounded,
-              onPressed: _testAndSaveConnection,
+            // Botão Testar e Salvar
+            SizedBox(
+              width: double.infinity,
+              child: BoraButton.flame(
+                text: 'Testar e Salvar Conexão das APIs',
+                isLoading: _isTesting,
+                icon: Icons.check_circle_rounded,
+                height: 52,
+                onPressed: _testAndSaveConnection,
+              ),
             ),
-
-            const SizedBox(height: 32),
           ],
         ),
       ),

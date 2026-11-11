@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_home_manager_screen.dart';
@@ -35,19 +37,21 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
         elevation: 0,
-        titleSpacing: 12,
+        titleSpacing: 14,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF6554C0),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6554C0), Color(0xFF8B5CF6)],
+                ),
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF6554C0).withValues(alpha: 0.3),
-                    blurRadius: 6,
+                    color: const Color(0xFF6554C0).withValues(alpha: 0.35),
+                    blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -55,67 +59,73 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shield_rounded, size: 13, color: Colors.white),
-                  SizedBox(width: 4),
+                  Icon(Icons.shield_rounded, size: 14, color: Colors.white),
+                  SizedBox(width: 5),
                   Text(
                     'SUPER ADMIN',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
-                      letterSpacing: 0.4,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ],
               ),
             ),
             if (isWide) ...[
-              const SizedBox(width: 10),
-              const Text('BoraGás Master Control', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 12),
+              const Text('BoraGás Master Control', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
             ],
           ],
         ),
         actions: [
+          // Atalho WhatsApp QR
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF25D366),
               side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               minimumSize: const Size(0, 34),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
+              HapticFeedback.selectionClick();
               setState(() => _currentIndex = 4);
             },
             icon: const Icon(Icons.qr_code_scanner_rounded, size: 15),
-            label: const Text('WhatsApp QR', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800)),
+            label: const Text('WhatsApp QR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
           ),
           const SizedBox(width: 6),
+
+          // Botão Desligar / Sair
           IconButton(
             tooltip: 'Desligar / Sair do Super Admin',
             style: IconButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             icon: const Icon(Icons.power_settings_new_rounded, size: 18, color: Color(0xFFEF4444)),
             onPressed: () async {
+              HapticFeedback.lightImpact();
               final router = GoRouter.of(context);
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  backgroundColor: const Color(0xFF1E293B),
-                  title: const Text('Desligar / Sair do Super Admin', style: TextStyle(color: Colors.white)),
+                  backgroundColor: const Color(0xFF111827),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  title: const Text('Desligar / Sair do Super Admin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                   content: const Text(
-                    'Deseja realmente encerrar a sessão administrativa?',
-                    style: TextStyle(color: Colors.white70),
+                    'Deseja realmente encerrar a sessão administrativa master?',
+                    style: TextStyle(color: Color(0xFF94A3B8)),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                      child: const Text('Cancelar', style: TextStyle(color: Color(0xFF94A3B8))),
                     ),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
                       onPressed: () => Navigator.pop(ctx, true),
                       child: const Text('Desligar e Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
@@ -141,22 +151,25 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
               unselectedIconTheme: const IconThemeData(color: Color(0xFF94A3B8)),
               selectedLabelTextStyle: const TextStyle(color: Color(0xFF8B5CF6), fontSize: 12, fontWeight: FontWeight.w800),
               unselectedLabelTextStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-              onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+              onDestinationSelected: (idx) {
+                HapticFeedback.selectionClick();
+                setState(() => _currentIndex = idx);
+              },
               labelType: NavigationRailLabelType.all,
               destinations: const [
                 NavigationRailDestination(
-                  icon: Icon(Icons.insights_rounded),
-                  selectedIcon: Icon(Icons.insights_rounded),
+                  icon: Icon(Icons.query_stats_rounded),
+                  selectedIcon: Icon(Icons.query_stats_rounded),
                   label: Text('Comissões'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.storefront_outlined),
+                  icon: Icon(Icons.storefront_rounded),
                   selectedIcon: Icon(Icons.storefront_rounded),
                   label: Text('Lojas'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.dashboard_customize_outlined),
-                  selectedIcon: Icon(Icons.dashboard_customize_rounded),
+                  icon: Icon(Icons.view_carousel_rounded),
+                  selectedIcon: Icon(Icons.view_carousel_rounded),
                   label: Text('Vitrine'),
                 ),
                 NavigationRailDestination(
@@ -165,8 +178,8 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                   label: Text('Ajustes'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.chat_bubble_outline_rounded),
-                  selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366)),
+                  icon: Icon(Icons.chat_rounded),
+                  selectedIcon: Icon(Icons.chat_rounded, color: Color(0xFF25D366)),
                   label: Text('WhatsApp'),
                 ),
               ],
@@ -178,13 +191,14 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
           ? null
           : Container(
               decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFF1E293B))),
+                color: Color(0xFF0F172A),
+                border: Border(top: BorderSide(color: Color(0x1AFFFFFF), width: 1)),
               ),
               child: NavigationBarTheme(
                 data: NavigationBarThemeData(
-                  height: 66,
+                  height: 64,
                   backgroundColor: const Color(0xFF0F172A),
-                  indicatorColor: const Color(0xFF6554C0).withValues(alpha: 0.28),
+                  indicatorColor: const Color(0xFF6554C0).withValues(alpha: 0.25),
                   indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   labelTextStyle: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
@@ -203,28 +217,31 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                   }),
                   iconTheme: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
-                      return const IconThemeData(color: Color(0xFF8B5CF6), size: 23);
+                      return const IconThemeData(color: Color(0xFF8B5CF6), size: 22);
                     }
                     return const IconThemeData(color: Color(0xFF94A3B8), size: 21);
                   }),
                 ),
                 child: NavigationBar(
                   selectedIndex: _currentIndex,
-                  onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+                  onDestinationSelected: (idx) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _currentIndex = idx);
+                  },
                   destinations: const [
                     NavigationDestination(
-                      icon: Icon(Icons.insights_rounded),
-                      selectedIcon: Icon(Icons.insights_rounded),
+                      icon: Icon(Icons.query_stats_rounded),
+                      selectedIcon: Icon(Icons.query_stats_rounded),
                       label: 'Comissões',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.storefront_outlined),
+                      icon: Icon(Icons.storefront_rounded),
                       selectedIcon: Icon(Icons.storefront_rounded),
                       label: 'Lojas',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.dashboard_customize_outlined),
-                      selectedIcon: Icon(Icons.dashboard_customize_rounded),
+                      icon: Icon(Icons.view_carousel_rounded),
+                      selectedIcon: Icon(Icons.view_carousel_rounded),
                       label: 'Vitrine',
                     ),
                     NavigationDestination(
@@ -233,8 +250,8 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
                       label: 'Ajustes',
                     ),
                     NavigationDestination(
-                      icon: Icon(Icons.chat_bubble_outline_rounded),
-                      selectedIcon: Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366)),
+                      icon: Icon(Icons.chat_rounded),
+                      selectedIcon: Icon(Icons.chat_rounded),
                       label: 'WhatsApp',
                     ),
                   ],

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/constants/app_colors.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/widgets/status_badge.dart';
+import '../../../core/widgets/ui/bora_button.dart';
+import '../../../core/widgets/ui/bora_card.dart';
+import '../../../core/widgets/ui/bora_empty_state.dart';
+import '../../../core/widgets/ui/bora_pulsing_halo.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../providers/merchant_providers.dart';
@@ -32,6 +38,7 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
 
   Future<void> _whatsappCustomer(String phone, String orderNumber) async {
     try {
+      HapticFeedback.lightImpact();
       String clean = phone.replaceAll(RegExp(r'\D'), '');
       if (!clean.startsWith('55')) clean = '55$clean';
       final uri = Uri.parse(
@@ -45,6 +52,7 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
 
   Future<void> _callCustomer(String phone) async {
     try {
+      HapticFeedback.lightImpact();
       final clean = phone.replaceAll(RegExp(r'\D'), '');
       final uri = Uri.parse('tel:$clean');
       if (await canLaunchUrl(uri)) {
@@ -54,6 +62,7 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
   }
 
   void _advanceOrder(OrderModel order) {
+    HapticFeedback.mediumImpact();
     OrderStatus next;
     if (order.status == OrderStatus.pending || order.status == OrderStatus.accepted) {
       next = OrderStatus.preparing;
@@ -69,10 +78,10 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
       status: next,
       deliveredAt: next == OrderStatus.delivered ? DateTime.now() : null,
       courierName: next == OrderStatus.outForDelivery
-          ? 'Marcos Oliveira (Honda Fan 160)'
+          ? (order.courierName?.isNotEmpty == true ? order.courierName : 'Marcos Oliveira (Honda Fan 160)')
           : order.courierName,
       courierPhone: next == OrderStatus.outForDelivery
-          ? '(11) 97722-1199'
+          ? (order.courierPhone?.isNotEmpty == true ? order.courierPhone : '(11) 97722-1199')
           : order.courierPhone,
     );
 
@@ -82,11 +91,68 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Pedido ${order.orderNumber} atualizado para "${next.name}"!'),
-        backgroundColor: const Color(0xFF10B981),
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Pedido ${order.orderNumber} avançou para: ${next.name.toUpperCase()}!',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppColors.success,
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  void _cancelOrder(OrderModel order) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF111827),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Recusar Pedido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        content: Text(
+          'Deseja realmente recusar o pedido ${order.orderNumber}? O cliente será notificado imediatamente.',
+          style: const TextStyle(color: Color(0xFF94A3B8)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Voltar', style: TextStyle(color: Color(0xFF94A3B8))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Recusar Pedido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final updated = order.copyWith(status: OrderStatus.cancelled);
+      ref.read(ordersProvider.notifier).update(
+            (list) => list.map((o) => o.id == order.id ? updated : o).toList(),
+          );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Pedido ${order.orderNumber} cancelado.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  bool _isGasItem(String name) {
+    final lower = name.toLowerCase();
+    return lower.contains('gás') || lower.contains('gas') || lower.contains('p13') || lower.contains('p45') || lower.contains('glp');
   }
 
   @override
@@ -95,37 +161,30 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
     final allOrders = ref.watch(ordersProvider);
     final authUser = ref.watch(authProvider).user;
 
-    final storeOrders =
-        allOrders.where((o) => o.storeId == currentStore.id).toList();
+    final storeOrders = allOrders.where((o) => o.storeId == currentStore.id).toList();
 
     final newOrders = storeOrders
-        .where((o) =>
-            o.status == OrderStatus.pending || o.status == OrderStatus.accepted)
+        .where((o) => o.status == OrderStatus.pending || o.status == OrderStatus.accepted)
         .toList();
 
     final inTransitOrders = storeOrders
-        .where((o) =>
-            o.status == OrderStatus.preparing ||
-            o.status == OrderStatus.outForDelivery)
+        .where((o) => o.status == OrderStatus.preparing || o.status == OrderStatus.outForDelivery)
         .toList();
 
     final completedOrders = storeOrders
-        .where((o) =>
-            o.status == OrderStatus.delivered ||
-            o.status == OrderStatus.cancelled)
+        .where((o) => o.status == OrderStatus.delivered || o.status == OrderStatus.cancelled)
         .toList();
 
-    // Cálculo real do Faturamento Hoje da Distribuidora
     final totalRevenue = storeOrders
         .where((o) => o.status != OrderStatus.cancelled)
         .fold<double>(0.0, (acc, item) => acc + item.totalAmount);
 
     return Container(
-      color: const Color(0xFF0B1120),
+      color: AppColors.merchantCanvas,
       child: Column(
         children: [
-          // 1. HUD de Faturamento & Operação Tática da Distribuidora (Cockpit Ribbon)
-          _buildExecutiveStatsRibbon(
+          // 1. Cockpit Ribbon: Faturamento & Despacho
+          _buildCockpitRibbon(
             totalRevenue: totalRevenue,
             activeCount: newOrders.length + inTransitOrders.length,
             courierName: authUser?.role == UserRole.courier
@@ -134,19 +193,19 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
             courierVehicle: authUser?.vehicleModel ?? 'Honda Fan 160',
           ),
 
-          // 2. Barra de Segmentos (Tabs Táticas: Novos, Em Rota, Concluídos)
+          // 2. Segmented Navigation Tab Bar
           _buildSegmentedTabBar(
             newCount: newOrders.length,
             inTransitCount: inTransitOrders.length,
             completedCount: completedOrders.length,
           ),
 
-          // 3. Conteúdo das Abas (Kanban)
+          // 3. Tab Contents
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildNewOrdersTab(newOrders, currentStore.id, currentStore.name),
+                _buildNewOrdersTab(newOrders, currentStore.id),
                 _buildOrdersList(inTransitOrders, isTransitTab: true),
                 _buildOrdersList(completedOrders, isCompletedTab: true),
               ],
@@ -157,31 +216,31 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
     );
   }
 
-  /// 1. HUD Executivo de Faturamento e Frota
-  Widget _buildExecutiveStatsRibbon({
+  /// 1. Cockpit Ribbon: Faturamento e Despacho
+  Widget _buildCockpitRibbon({
     required double totalRevenue,
     required int activeCount,
     required String courierName,
     required String courierVehicle,
   }) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF161F30),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2E3D56)),
+        color: AppColors.merchantCard,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.merchantCardBorder, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          // Bloco Faturamento Hoje (O que traz o dinheiro!)
+          // Faturamento Hoje
           Expanded(
             flex: 6,
             child: Column(
@@ -191,43 +250,43 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
                 Row(
                   children: [
                     Container(
-                      width: 6,
-                      height: 6,
+                      width: 7,
+                      height: 7,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
+                        color: AppColors.success,
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 6),
                     const Text(
                       'FATURAMENTO HOJE',
                       style: TextStyle(
                         color: Color(0xFF94A3B8),
-                        fontSize: 9.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
                   'R\$ ${totalRevenue.toStringAsFixed(2).replaceAll('.', ',')}',
                   style: const TextStyle(
                     color: Color(0xFF34D399),
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
                     letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 2),
                 const Text(
-                  '100% repassado à sua conta • Taxa 8% BoraGás',
+                  '100% repassado à loja • Taxa 8%',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Color(0xFF64748B),
-                    fontSize: 9.5,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -235,14 +294,15 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
             ),
           ),
 
+          // Divisor Vertical
           Container(
-            height: 38,
+            height: 44,
             width: 1,
-            color: const Color(0xFF2E3D56),
-            margin: const EdgeInsets.symmetric(horizontal: 10),
+            color: const Color(0x1FFFFFFF),
+            margin: const EdgeInsets.symmetric(horizontal: 12),
           ),
 
-          // Bloco Despacho & Frota
+          // Despacho & Frota
           Expanded(
             flex: 5,
             child: Column(
@@ -251,27 +311,27 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.two_wheeler_rounded, color: Color(0xFFFF6B00), size: 12),
-                    const SizedBox(width: 4),
+                    const Icon(Icons.two_wheeler_rounded, color: AppColors.accentFlame, size: 14),
+                    const SizedBox(width: 5),
                     const Text(
-                      'DESPACHO & FROTA',
+                      'DESPACHO',
                       style: TextStyle(
                         color: Color(0xFF94A3B8),
-                        fontSize: 9.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.6,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(
-                  activeCount > 0 ? '$activeCount em andamento' : 'Depósito Pronto',
+                  activeCount > 0 ? '$activeCount em rota' : 'Depósito Pronto',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: activeCount > 0 ? const Color(0xFF38BDF8) : Colors.white,
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -282,7 +342,7 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Color(0xFF94A3B8),
-                    fontSize: 9.5,
+                    fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -294,7 +354,7 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
     );
   }
 
-  /// 2. Segmented Tab Bar Tática
+  /// 2. Segmented Tab Bar com Indicador Animado
   Widget _buildSegmentedTabBar({
     required int newCount,
     required int inTransitCount,
@@ -304,22 +364,29 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF161F30),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2E3D56)),
+        color: AppColors.merchantCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.merchantCardBorder, width: 1),
       ),
       child: TabBar(
         controller: _tabController,
         dividerColor: Colors.transparent,
         indicator: BoxDecoration(
-          color: const Color(0xFFFF6B00),
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.accentFlame,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accentFlame.withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         indicatorSize: TabBarIndicatorSize.tab,
         labelColor: Colors.white,
         unselectedLabelColor: const Color(0xFF94A3B8),
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-        unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        labelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+        unselectedLabelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
         tabs: [
           Tab(
             child: Row(
@@ -327,17 +394,17 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
               children: [
                 const Text('Novos'),
                 if (newCount > 0) ...[
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '$newCount',
                       style: const TextStyle(
-                        color: Color(0xFFFF6B00),
+                        color: AppColors.accentFlame,
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
                       ),
@@ -353,12 +420,12 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
               children: [
                 const Text('Em Rota'),
                 if (inTransitCount > 0) ...[
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                     decoration: BoxDecoration(
                       color: const Color(0xFF0284C7),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '$inTransitCount',
@@ -381,68 +448,21 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
     );
   }
 
-  /// 3. Aba de Novos Pedidos (Com Radar Ativo e Simulação de Teste)
-  Widget _buildNewOrdersTab(List<OrderModel> orders, String storeId, String storeName) {
+  /// 3. Aba de Novos Pedidos (Empty State ou Lista com Halo de Pulso)
+  Widget _buildNewOrdersTab(List<OrderModel> orders, String storeId) {
     if (orders.isEmpty) {
-      return Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Radar Visual Glow
-              Container(
-                width: 76,
-                height: 76,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.12),
-                  border: Border.all(color: const Color(0xFFFF6B00).withValues(alpha: 0.35), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.radar_rounded,
-                    color: Color(0xFFFF6B00),
-                    size: 38,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Radar de Vendas Ativo',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 17,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'Sua distribuidora está aberta e visível no raio de até 8 km. Novos pedidos via App ou WhatsApp acionarão o alarme sonoro instantaneamente.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5, height: 1.4),
-                ),
-              ),
-            ],
-          ),
-        ),
+      return const BoraEmptyState(
+        icon: Icons.radar_rounded,
+        iconColor: AppColors.accentFlame,
+        title: 'Radar de Vendas Ativo',
+        description: 'Sua distribuidora está aberta e recebendo pedidos normalmente. Quando um cliente fizer um pedido, o alerta sonoro tocará aqui.',
       );
     }
 
     return _buildOrdersList(orders, isNewTab: true);
   }
 
-  /// Lista de Pedidos com Cards Táticos
+  /// 4. Lista de Pedidos
   Widget _buildOrdersList(
     List<OrderModel> orders, {
     bool isNewTab = false,
@@ -450,290 +470,331 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
     bool isCompletedTab = false,
   }) {
     if (orders.isEmpty) {
-      return Center(
-        child: Text(
-          isTransitTab
-              ? 'Nenhum pedido em rota agora.'
-              : 'Nenhum pedido concluído recentemente.',
-          style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-        ),
+      return BoraEmptyState(
+        icon: isTransitTab ? Icons.two_wheeler_rounded : Icons.check_circle_outline_rounded,
+        iconColor: isTransitTab ? const Color(0xFF38BDF8) : AppColors.success,
+        title: isTransitTab ? 'Nenhum pedido em rota' : 'Nenhum pedido concluído',
+        description: isTransitTab
+            ? 'Assim que você aceitar e despachar pedidos, eles aparecerão aqui com o motoboy.'
+            : 'Os pedidos entregues ou finalizados do dia ficarão registrados aqui.',
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       itemCount: orders.length,
       itemBuilder: (context, index) {
         final order = orders[index];
-        final isPendingAction = order.status == OrderStatus.accepted || order.status == OrderStatus.pending;
+        final isPending = order.status == OrderStatus.pending;
+        final isAccepted = order.status == OrderStatus.accepted;
+        final isNewAction = isPending || isAccepted;
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF161F30),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isPendingAction ? const Color(0xFFFF6B00) : const Color(0xFF2E3D56),
-              width: isPendingAction ? 1.5 : 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Linha 1: Pedido + StatusBadge
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF6B00),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            order.orderNumber,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 13.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Há ${index == 0 ? "4" : "12"} min',
-                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                        ),
-                      ],
-                    ),
-                    StatusBadge.fromOrderStatus(order.status),
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // Linha 2: Contato do Cliente (Com Botões WhatsApp e Ligar Rápidos)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF1E293B)),
-                  ),
-                  child: Row(
+        final cardContent = BoraCard(
+          color: AppColors.merchantCard,
+          borderColor: isNewAction ? AppColors.accentFlame.withValues(alpha: 0.5) : AppColors.merchantCardBorder,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header do Card: Número do Pedido + Tempo + Status Badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
                     children: [
                       Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF1E293B),
-                          shape: BoxShape.circle,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isNewAction ? AppColors.accentFlame : const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.person, color: Color(0xFF38BDF8), size: 18),
+                        child: Text(
+                          order.orderNumber,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      Text(
+                        'Há ${index == 0 ? "3" : "10"} min',
+                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  StatusBadge.fromOrderStatus(order.status),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Bloco do Cliente: Nome, Telefone, Ações de 1 toque (WhatsApp e Ligar)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0x14FFFFFF)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF1E293B),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person_rounded, color: Color(0xFF38BDF8), size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            order.customerName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w800),
+                          ),
+                          Text(
+                            order.customerPhone,
+                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Botão WhatsApp Oficial de 1 Toque
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        minimumSize: const Size(0, 34),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () => _whatsappCustomer(order.customerPhone, order.orderNumber),
+                      icon: const Icon(Icons.chat_rounded, size: 14),
+                      label: const Text('WhatsApp', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                    ),
+                    const SizedBox(width: 6),
+                    // Botão Ligar de 1 Toque
+                    IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFF0284C7),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(34, 34),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: () => _callCustomer(order.customerPhone),
+                      icon: const Icon(Icons.phone_rounded, size: 16),
+                      tooltip: 'Ligar para cliente',
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // Endereço de Entrega
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.location_on_rounded, color: AppColors.accentFlame, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      order.deliveryAddress,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 12.5, height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+              Divider(height: 1, color: AppColors.merchantDivider),
+              const SizedBox(height: 10),
+
+              // Itens do Pedido com Distinção Gás x Água
+              ...order.items.map((i) {
+                final isGas = _isGasItem(i.productName);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      // Badge Semântico Gás x Água
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isGas ? AppColors.gasTagBgDark : AppColors.waterTagBgDark,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isGas ? AppColors.accentFlame.withValues(alpha: 0.3) : const Color(0xFF0284C7).withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              order.customerName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800),
+                            Icon(
+                              isGas ? Icons.local_fire_department_rounded : Icons.water_drop_rounded,
+                              size: 11,
+                              color: isGas ? AppColors.accentFlame : const Color(0xFF38BDF8),
                             ),
+                            const SizedBox(width: 3),
                             Text(
-                              order.customerPhone,
-                              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                              isGas ? 'GÁS' : 'ÁGUA',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w900,
+                                color: isGas ? AppColors.accentFlame : const Color(0xFF38BDF8),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      // Botão WhatsApp Oficial
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF25D366),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                          minimumSize: const Size(0, 32),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${i.quantity}x ${i.productName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                         ),
-                        onPressed: () => _whatsappCustomer(order.customerPhone, order.orderNumber),
-                        icon: const Icon(Icons.chat_rounded, size: 13),
-                        label: const Text('WhatsApp', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800)),
                       ),
-                      const SizedBox(width: 6),
-                      // Botão Ligar
-                      IconButton(
-                        style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFF0284C7),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(32, 32),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        onPressed: () => _callCustomer(order.customerPhone),
-                        icon: const Icon(Icons.phone, size: 14),
-                        tooltip: 'Ligar para cliente',
+                      Text(
+                        'R\$ ${i.totalPrice.toStringAsFixed(2).replaceAll('.', ',')}',
+                        style: const TextStyle(color: Color(0xFF34D399), fontSize: 13.5, fontWeight: FontWeight.w900),
                       ),
                     ],
                   ),
+                );
+              }),
+
+              const SizedBox(height: 10),
+
+              // Pagamento & PIN de Segurança
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0x14FFFFFF)),
                 ),
-
-                const SizedBox(height: 10),
-
-                // Endereço de Entrega
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Icon(Icons.location_on_rounded, color: Color(0xFFFF6B00), size: 15),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        order.deliveryAddress,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 12),
-                      ),
+                    Row(
+                      children: [
+                        const Icon(Icons.payment_rounded, size: 15, color: Color(0xFF38BDF8)),
+                        const SizedBox(width: 6),
+                        Text(
+                          order.paymentMode.name.toUpperCase(),
+                          style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        const Text('PIN de Entrega: ', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+                        Text(
+                          order.deliveryConfirmationCode,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.accentFlame,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
+              ),
 
-                const SizedBox(height: 10),
-                const Divider(height: 1, color: Color(0xFF2E3D56)),
-                const SizedBox(height: 10),
-
-                // Lista de Itens do Pedido
-                ...order.items.map((i) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '${i.quantity}x ${i.productName}',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          Text(
-                            'R\$ ${i.totalPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                            style: const TextStyle(color: Color(0xFF34D399), fontSize: 13, fontWeight: FontWeight.w800),
-                          ),
-                        ],
-                      ),
-                    )),
-
-                const SizedBox(height: 10),
-
-                // Linha de Meio de Pagamento & PIN de Segurança
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F172A),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF1E293B)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.payment_rounded, size: 14, color: Color(0xFF38BDF8)),
-                          const SizedBox(width: 5),
-                          Text(
-                            order.paymentMode.name.toUpperCase(),
-                            style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 10.5, fontWeight: FontWeight.w800),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          const Text('PIN de Entrega: ', style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-                          Text(
-                            order.deliveryConfirmationCode,
-                            style: const TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFFFF6B00),
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              if (order.courierName != null && order.courierName!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Entregador: ${order.courierName}',
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5, fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
+              ],
 
-                // Se houver entregador atribuído
-                if (order.courierName != null && order.courierName!.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+              const SizedBox(height: 16),
+
+              // Ações Principais ao alcance do Polegar (48px a 52px)
+              if (order.status != OrderStatus.delivered && order.status != OrderStatus.cancelled) ...[
+                if (isPending) ...[
                   Row(
                     children: [
-                      const Icon(Icons.two_wheeler_rounded, color: Color(0xFF94A3B8), size: 13),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Entregador: ${order.courierName}',
-                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w600),
+                      // Botão Recusar
+                      Expanded(
+                        flex: 3,
+                        child: BoraButton.danger(
+                          text: 'Recusar',
+                          icon: Icons.close_rounded,
+                          height: 48,
+                          onPressed: () => _cancelOrder(order),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Botão Aceitar Gigante
+                      Expanded(
+                        flex: 6,
+                        child: BoraButton.flame(
+                          text: 'Aceitar Pedido',
+                          icon: Icons.check_circle_rounded,
+                          height: 52,
+                          onPressed: () => _advanceOrder(order),
+                        ),
                       ),
                     ],
                   ),
-                ],
-
-                const SizedBox(height: 14),
-
-                // Botão de Avanço do Fluxo Operacional
-                if (order.status != OrderStatus.delivered && order.status != OrderStatus.cancelled) ...[
+                ] else ...[
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: BoraButton(
+                      text: order.status == OrderStatus.accepted
+                          ? 'Iniciar Preparo & Separação'
+                          : (order.status == OrderStatus.preparing
+                              ? 'Despachar para Entrega'
+                              : 'Confirmar Entrega Concluída'),
+                      icon: order.status == OrderStatus.accepted
+                          ? Icons.inventory_2_rounded
+                          : (order.status == OrderStatus.preparing
+                              ? Icons.two_wheeler_rounded
+                              : Icons.task_alt_rounded),
+                      variant: order.status == OrderStatus.accepted
+                          ? BoraButtonVariant.primaryFlame
+                          : (order.status == OrderStatus.preparing
+                              ? BoraButtonVariant.primaryRoyal
+                              : BoraButtonVariant.primarySuccess),
+                      height: 50,
                       onPressed: () => _advanceOrder(order),
-                      icon: Icon(
-                        order.status == OrderStatus.accepted
-                            ? Icons.inventory_2_outlined
-                            : (order.status == OrderStatus.preparing
-                                ? Icons.two_wheeler_rounded
-                                : Icons.check_circle_outline_rounded),
-                        size: 17,
-                      ),
-                      label: Text(
-                        order.status == OrderStatus.accepted
-                            ? 'Aceitar e Iniciar Separação'
-                            : (order.status == OrderStatus.preparing
-                                ? 'Despachar com Motoboy Marcos'
-                                : 'Confirmar Entrega Concluída (PIN)'),
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: order.status == OrderStatus.accepted
-                            ? const Color(0xFFFF6B00)
-                            : (order.status == OrderStatus.preparing
-                                ? const Color(0xFF0284C7)
-                                : const Color(0xFF10B981)),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
                     ),
                   ),
                 ],
               ],
-            ),
+            ],
           ),
+        );
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: isPending ? BoraPulsingHalo(child: cardContent) : cardContent,
         );
       },
     );

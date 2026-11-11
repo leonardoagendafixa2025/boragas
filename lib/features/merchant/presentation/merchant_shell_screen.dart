@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/models/order_model.dart';
 import '../../../core/services/audio_alert_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/widgets/status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../providers/merchant_providers.dart';
@@ -33,9 +37,15 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
     final isWide = MediaQuery.of(context).size.width > 750;
     final currentStore = ref.watch(currentMerchantStoreProvider);
     final allStores = ref.watch(storesProvider);
+    final allOrders = ref.watch(ordersProvider);
+
+    // Contagem de pedidos novos para badge na bottom bar
+    final pendingOrdersCount = allOrders
+        .where((o) => o.storeId == currentStore.id && (o.status == OrderStatus.pending || o.status == OrderStatus.accepted))
+        .length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0F1D),
+      backgroundColor: AppColors.merchantCanvas,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
@@ -45,24 +55,31 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           children: [
             // Badge Portal do Lojista
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6B00),
-                borderRadius: BorderRadius.circular(6),
+                gradient: AppColors.flameGradient,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accentFlame.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.storefront_rounded, color: Colors.white, size: 12),
+                  const Icon(Icons.storefront_rounded, color: Colors.white, size: 14),
                   if (isWide) ...[
                     const SizedBox(width: 4),
                     const Text(
                       'PORTAL LOJISTA',
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
-                        letterSpacing: 0.3,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ],
@@ -71,15 +88,15 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
             ),
             const SizedBox(width: 8),
 
-            // Seletor da Distribuidora Ativa (Protegido por Expanded para NUNCA colidir)
+            // Seletor da Distribuidora Ativa
             Expanded(
               child: allStores.length > 1
                   ? Container(
-                      height: 32,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      height: 36,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFF334155)),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -99,7 +116,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12.5,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -107,6 +124,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                           }).toList(),
                           onChanged: (newId) {
                             if (newId != null) {
+                              HapticFeedback.selectionClick();
                               final found = allStores.firstWhere((s) => s.id == newId);
                               ref.read(currentMerchantStoreProvider.notifier).set(found);
                             }
@@ -118,7 +136,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                       currentStore.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white),
                     ),
             ),
           ],
@@ -127,6 +145,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           // Interruptor da Loja (Ligar / Desligar Loja para Pedidos)
           InkWell(
             onTap: () {
+              HapticFeedback.mediumImpact();
               final newStatus = !currentStore.isOpen;
               final updated = currentStore.copyWith(isOpen: newStatus);
               ref.read(currentMerchantStoreProvider.notifier).set(updated);
@@ -146,57 +165,22 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                   content: Text(newStatus
                       ? '🟢 Loja Ligada: Recebendo novos pedidos normalmente!'
                       : '🔴 Loja Desligada (Pausada): Clientes verão que está fechado.'),
-                  backgroundColor: newStatus ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  backgroundColor: newStatus ? AppColors.success : AppColors.error,
                   duration: const Duration(seconds: 3),
                 ),
               );
             },
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-              decoration: BoxDecoration(
-                color: currentStore.isOpen
-                    ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                    : const Color(0xFFEF4444).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: currentStore.isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: currentStore.isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    currentStore.isOpen ? 'ABERTA' : 'DESLIGADA',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: currentStore.isOpen ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            borderRadius: BorderRadius.circular(10),
+            child: StatusBadge.storeOpen(isOpen: currentStore.isOpen),
           ),
           const SizedBox(width: 4),
 
-          // Alerta Sonoro de Novo Pedido
+          // Alerta Sonoro de Novo Pedido (Teste / Toque)
           IconButton(
-            tooltip: 'Alerta Sonoro de Novo Pedido',
-            icon: const Icon(Icons.notifications_active_rounded, color: Color(0xFFFF6B00), size: 19),
+            tooltip: 'Alerta Sonoro de Pedido',
+            icon: const Icon(Icons.notifications_active_rounded, color: AppColors.accentFlame, size: 20),
             onPressed: () {
-              ref.read(currentMerchantStoreProvider);
+              HapticFeedback.lightImpact();
               AudioAlertService.playNewOrderAlert();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -213,23 +197,25 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
             tooltip: 'Desligar / Sair da Loja',
             icon: const Icon(Icons.power_settings_new_rounded, color: Colors.redAccent, size: 20),
             onPressed: () async {
+              HapticFeedback.lightImpact();
               final router = GoRouter.of(context);
               final confirm = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  backgroundColor: const Color(0xFF1E293B),
-                  title: const Text('Desligar / Sair do Portal', style: TextStyle(color: Colors.white)),
+                  backgroundColor: const Color(0xFF111827),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  title: const Text('Desligar / Sair do Portal', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                   content: const Text(
                     'Deseja realmente encerrar a sessão da sua distribuidora e sair da conta?',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: Color(0xFF94A3B8)),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                      child: const Text('Cancelar', style: TextStyle(color: Color(0xFF94A3B8))),
                     ),
                     ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
                       onPressed: () => Navigator.pop(ctx, true),
                       child: const Text('Desligar e Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                     ),
@@ -251,30 +237,43 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
             NavigationRail(
               backgroundColor: const Color(0xFF0F172A),
               selectedIndex: _currentIndex,
-              onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
+              onDestinationSelected: (idx) {
+                HapticFeedback.selectionClick();
+                setState(() => _currentIndex = idx);
+              },
               labelType: NavigationRailLabelType.all,
-              indicatorColor: const Color(0xFFFF6B00).withValues(alpha: 0.2),
-              selectedIconTheme: const IconThemeData(color: Color(0xFFFF6B00)),
+              indicatorColor: AppColors.accentFlame.withValues(alpha: 0.18),
+              selectedIconTheme: const IconThemeData(color: AppColors.accentFlame),
               unselectedIconTheme: const IconThemeData(color: Color(0xFF64748B)),
-              selectedLabelTextStyle: const TextStyle(color: Color(0xFFFF6B00), fontSize: 12, fontWeight: FontWeight.w800),
+              selectedLabelTextStyle: const TextStyle(color: AppColors.accentFlame, fontSize: 12, fontWeight: FontWeight.w800),
               unselectedLabelTextStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
-              destinations: const [
+              destinations: [
                 NavigationRailDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard_rounded),
-                  label: Text('Pedidos (Kanban)'),
+                  icon: Badge(
+                    isLabelVisible: pendingOrdersCount > 0,
+                    label: Text('$pendingOrdersCount'),
+                    backgroundColor: AppColors.accentFlame,
+                    child: const Icon(Icons.dashboard_outlined),
+                  ),
+                  selectedIcon: Badge(
+                    isLabelVisible: pendingOrdersCount > 0,
+                    label: Text('$pendingOrdersCount'),
+                    backgroundColor: AppColors.accentFlame,
+                    child: const Icon(Icons.dashboard_rounded),
+                  ),
+                  label: const Text('Pedidos'),
                 ),
-                NavigationRailDestination(
+                const NavigationRailDestination(
                   icon: Icon(Icons.inventory_2_outlined),
                   selectedIcon: Icon(Icons.inventory_2_rounded),
-                  label: Text('Meus Produtos'),
+                  label: Text('Produtos'),
                 ),
-                NavigationRailDestination(
+                const NavigationRailDestination(
                   icon: Icon(Icons.payments_outlined),
                   selectedIcon: Icon(Icons.payments_rounded),
-                  label: Text('Pagamentos BYOK'),
+                  label: Text('Pagamentos'),
                 ),
-                NavigationRailDestination(
+                const NavigationRailDestination(
                   icon: Icon(Icons.account_balance_wallet_outlined),
                   selectedIcon: Icon(Icons.account_balance_wallet_rounded),
                   label: Text('Finanças'),
@@ -288,45 +287,59 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           ? null
           : Container(
               decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFF1E293B))),
+                color: Color(0xFF0F172A),
+                border: Border(top: BorderSide(color: Color(0x1AFFFFFF), width: 1)),
               ),
               child: NavigationBarTheme(
                 data: NavigationBarThemeData(
                   backgroundColor: const Color(0xFF0F172A),
-                  indicatorColor: const Color(0xFFFF6B00).withValues(alpha: 0.18),
+                  indicatorColor: AppColors.accentFlame.withValues(alpha: 0.18),
                   labelTextStyle: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
-                      return const TextStyle(color: Color(0xFFFF6B00), fontSize: 11, fontWeight: FontWeight.w800);
+                      return const TextStyle(color: AppColors.accentFlame, fontSize: 11, fontWeight: FontWeight.w800);
                     }
                     return const TextStyle(color: Color(0xFF64748B), fontSize: 11, fontWeight: FontWeight.w500);
                   }),
                   iconTheme: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
-                      return const IconThemeData(color: Color(0xFFFF6B00), size: 22);
+                      return const IconThemeData(color: AppColors.accentFlame, size: 22);
                     }
                     return const IconThemeData(color: Color(0xFF64748B), size: 22);
                   }),
                 ),
                 child: NavigationBar(
                   selectedIndex: _currentIndex,
-                  onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
-                  destinations: const [
+                  onDestinationSelected: (idx) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _currentIndex = idx);
+                  },
+                  destinations: [
                     NavigationDestination(
-                      icon: Icon(Icons.dashboard_outlined),
-                      selectedIcon: Icon(Icons.dashboard_rounded),
+                      icon: Badge(
+                        isLabelVisible: pendingOrdersCount > 0,
+                        label: Text('$pendingOrdersCount'),
+                        backgroundColor: AppColors.accentFlame,
+                        child: const Icon(Icons.dashboard_outlined),
+                      ),
+                      selectedIcon: Badge(
+                        isLabelVisible: pendingOrdersCount > 0,
+                        label: Text('$pendingOrdersCount'),
+                        backgroundColor: AppColors.accentFlame,
+                        child: const Icon(Icons.dashboard_rounded),
+                      ),
                       label: 'Pedidos',
                     ),
-                    NavigationDestination(
+                    const NavigationDestination(
                       icon: Icon(Icons.inventory_2_outlined),
                       selectedIcon: Icon(Icons.inventory_2_rounded),
                       label: 'Produtos',
                     ),
-                    NavigationDestination(
+                    const NavigationDestination(
                       icon: Icon(Icons.payments_outlined),
                       selectedIcon: Icon(Icons.payments_rounded),
                       label: 'Pagamentos',
                     ),
-                    NavigationDestination(
+                    const NavigationDestination(
                       icon: Icon(Icons.account_balance_wallet_outlined),
                       selectedIcon: Icon(Icons.account_balance_wallet_rounded),
                       label: 'Finanças',

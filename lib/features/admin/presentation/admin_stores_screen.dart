@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/store_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/widgets/ui/bora_button.dart';
+import '../../../core/widgets/ui/bora_card.dart';
+import '../../../core/widgets/ui/bora_empty_state.dart';
+import '../../../core/widgets/ui/bora_kpi_card.dart';
 import '../../customer/providers/customer_providers.dart';
 
 class AdminStoresScreen extends ConsumerStatefulWidget {
@@ -20,12 +25,13 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF111827),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(
           children: [
             Icon(Icons.cleaning_services_rounded, color: Colors.amber),
             SizedBox(width: 8),
-            Text('Reset de Dados Demo', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Text('Reset de Dados Demo', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
           ],
         ),
         content: Column(
@@ -35,15 +41,15 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
             const Text(
               'Deseja zerar todos os dados demo locais para deixar o sistema 100% limpo para operação comercial?\n\n'
               'Para limpar também as linhas de teste do seu banco Supabase na nuvem, execute o comando abaixo no SQL Editor do Supabase:',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF334155)),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0x1AFFFFFF)),
               ),
               child: const SelectableText(
                 'TRUNCATE public.orders, public.products, public.stores, public.store_payment_configs, public.commission_invoices, public.support_tickets CASCADE;',
@@ -55,10 +61,10 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Fechar', style: TextStyle(color: Colors.white60)),
+            child: const Text('Fechar', style: TextStyle(color: Color(0xFF94A3B8))),
           ),
           ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             icon: const Icon(Icons.delete_sweep_rounded, size: 16, color: Colors.white),
             label: const Text('Zerar em Memória Agora', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             onPressed: () {
@@ -68,7 +74,7 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Lojas e produtos demo zerados com sucesso!'),
-                  backgroundColor: Color(0xFF10B981),
+                  backgroundColor: AppColors.success,
                 ),
               );
             },
@@ -118,7 +124,7 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           padding: EdgeInsets.only(
-            top: 24,
+            top: 20,
             left: 20,
             right: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 24,
@@ -128,6 +134,19 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Handle bar
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+
                 // Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -137,40 +156,40 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6554C0).withValues(alpha: 0.1),
+                            color: const Color(0xFF6554C0).withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.store_mall_directory_rounded,
-                              color: Color(0xFF6554C0), size: 22),
+                          child: const Icon(Icons.storefront_rounded, color: Color(0xFF6554C0), size: 20),
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          isEditing ? 'Editar Distribuidora' : 'Cadastrar Nova Distribuidora',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                          isEditing ? 'Editar Distribuidora' : 'Cadastrar Distribuidora',
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                         ),
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
 
                 // Nome da Loja
-                const Text('Nome Fantasia da Distribuidora',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                const Text('Nome Fantasia da Distribuidora', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: nameController,
                   decoration: InputDecoration(
-                    hintText: 'Ex: Ultragaz Paulista Express',
-                    prefixIcon: const Icon(Icons.business_rounded),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    hintText: 'Ex: Ultragaz Paulistana Express',
+                    prefixIcon: const Icon(Icons.business_rounded, size: 18),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
                 // CNPJ e WhatsApp
                 Row(
@@ -179,27 +198,26 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('CNPJ',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          const Text('CNPJ', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           TextField(
                             controller: cnpjController,
-                            keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               hintText: '00.000.000/0001-00',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('WhatsApp Oficial',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          const Text('WhatsApp Oficial', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           TextField(
                             controller: phoneController,
@@ -207,7 +225,9 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                             decoration: InputDecoration(
                               hintText: '(11) 98765-4321',
                               prefixIcon: const Icon(Icons.phone_rounded, size: 18),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                             ),
                           ),
                         ],
@@ -215,31 +235,31 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
                 // Endereço Completo
-                const Text('Endereço Completo (com Bairro e Cidade)',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                const Text('Endereço Completo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: addressController,
                   decoration: InputDecoration(
                     hintText: 'Ex: Av. Paulista, 1200 - Bela Vista, São Paulo - SP',
-                    prefixIcon: const Icon(Icons.location_on_rounded),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    prefixIcon: const Icon(Icons.location_on_rounded, size: 18),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
-                // Taxa de Comissão BoraGás (%) e Taxa de Entrega (R$)
+                // Taxa de Comissão BoraGás (%) e Taxa de Entrega
                 Row(
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Comissão BoraGás (%)',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          const Text('Comissão BoraGás (%)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           TextField(
                             controller: commissionController,
@@ -247,19 +267,20 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                             decoration: InputDecoration(
                               hintText: '8.0',
                               suffixText: '%',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Taxa de Entrega Base',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          const Text('Taxa de Entrega', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           TextField(
                             controller: deliveryFeeController,
@@ -267,7 +288,9 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                             decoration: InputDecoration(
                               hintText: '0.00',
                               prefixText: 'R\$ ',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                             ),
                           ),
                         ],
@@ -275,7 +298,7 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
                 // Tempo Estimado e Raio de Entrega
                 Row(
@@ -284,8 +307,7 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Tempo Médio (minutos)',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          const Text('Tempo Médio', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           TextField(
                             controller: timeController,
@@ -293,19 +315,20 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                             decoration: InputDecoration(
                               hintText: '25',
                               suffixText: 'min',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Raio / Distância (km)',
-                              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          const Text('Raio / Distância (km)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                           const SizedBox(height: 6),
                           TextField(
                             controller: distanceController,
@@ -313,7 +336,9 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                             decoration: InputDecoration(
                               hintText: '3.5',
                               suffixText: 'km',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
                             ),
                           ),
                         ],
@@ -321,62 +346,61 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-                // Seletor de Ícone / Logo
-                const Text('Logo / Identidade Visual',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 12,
+                // Logo da Distribuidora
+                const Text('Logo / Ícone', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                const SizedBox(height: 6),
+                Row(
                   children: logoOptions.map((opt) {
                     final isSel = selectedLogo == opt['path'];
-                    return InkWell(
+                    return GestureDetector(
                       onTap: () => setModalState(() => selectedLogo = opt['path']!),
-                      borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
+                          color: isSel ? const Color(0xFF6554C0).withValues(alpha: 0.1) : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSel ? const Color(0xFF6554C0) : AppColors.border,
-                            width: isSel ? 2 : 1,
+                            width: isSel ? 1.5 : 1,
                           ),
-                          borderRadius: BorderRadius.circular(12),
-                          color: isSel ? const Color(0xFF6554C0).withValues(alpha: 0.08) : Colors.transparent,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Image.asset(opt['path']!, width: 28, height: 28, fit: BoxFit.contain),
-                            const SizedBox(width: 8),
-                            Text(opt['name']!,
-                                style: TextStyle(
-                                  fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                  fontSize: 12,
-                                  color: isSel ? const Color(0xFF6554C0) : AppColors.textPrimary,
-                                )),
+                            Image.asset(opt['path']!, width: 24, height: 24, fit: BoxFit.contain),
+                            const SizedBox(width: 6),
+                            Text(
+                              opt['name']!,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                color: isSel ? const Color(0xFF6554C0) : AppColors.textPrimary,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-                // Switches: Aberta no Momento e Suspensão
+                // Switches
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
                   ),
                   child: Column(
                     children: [
                       SwitchListTile(
-                        title: const Text('Loja Aberta para Pedidos',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                        subtitle: const Text('Se desmarcado, aparecerá como fechada no app',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        title: const Text('Loja Aberta para Vendas', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                        subtitle: const Text('Se desmarcado, aparecerá como fechada no app', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                         value: isOpen,
                         contentPadding: EdgeInsets.zero,
                         activeThumbColor: AppColors.success,
@@ -384,10 +408,8 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                       ),
                       const Divider(height: 1, color: AppColors.border),
                       SwitchListTile(
-                        title: const Text('Suspensa por Inadimplência',
-                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
-                        subtitle: const Text('Bloqueia a exibição da loja no marketplace do cliente',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        title: const Text('Suspensa por Inadimplência', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                        subtitle: const Text('Bloqueia a exibição da loja no marketplace do cliente', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                         value: isSuspended,
                         contentPadding: EdgeInsets.zero,
                         activeThumbColor: AppColors.error,
@@ -396,18 +418,15 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
                 // Botão Salvar
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6554C0),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
+                  child: BoraButton.flame(
+                    text: isEditing ? 'Salvar Alterações' : 'Cadastrar Distribuidora',
+                    icon: Icons.check_circle_rounded,
+                    height: 50,
                     onPressed: () {
                       final name = nameController.text.trim();
                       if (name.isEmpty) {
@@ -502,21 +521,14 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                             'base_delivery_fee': deliveryFee,
                             'estimated_time_min': estTime,
                             'commission_rate': commissionRate,
-                            'is_verified': true,
-                            'lat': -23.561414,
-                            'lng': -46.655881,
-                            'delivery_radius_km': 10,
-                            'rating': 5.0,
                           }).catchError((_) {});
                         }
 
-                        ref.read(storesProvider.notifier).update(
-                              (list) => [...list, newStore],
-                            );
+                        ref.read(storesProvider.notifier).update((list) => [newStore, ...list]);
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Distribuidora "${newStore.name}" cadastrada no Supabase!'),
+                            content: Text('Distribuidora "${newStore.name}" cadastrada com sucesso!'),
                             backgroundColor: AppColors.success,
                           ),
                         );
@@ -524,10 +536,6 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
 
                       Navigator.pop(ctx);
                     },
-                    child: Text(
-                      isEditing ? 'Salvar Alterações' : 'Cadastrar Distribuidora',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
                   ),
                 ),
               ],
@@ -538,56 +546,43 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
     );
   }
 
-  void _confirmDeleteStore(StoreModel store) {
-    showDialog(
+  void _confirmDeleteStore(StoreModel store) async {
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF111827),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.warning_amber_rounded, color: AppColors.error, size: 28),
-            const SizedBox(width: 8),
-            const Expanded(child: Text('Excluir Distribuidora?')),
-          ],
-        ),
+        title: const Text('Excluir Distribuidora', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         content: Text(
-          'Deseja realmente remover a distribuidora "${store.name}" da rede BoraGás?\n\n'
-          'Essa ação cancelará sua presença na plataforma.',
-          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          'Deseja excluir "${store.name}" da plataforma? Todos os vínculos serão desativados.',
+          style: const TextStyle(color: Color(0xFF94A3B8)),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Color(0xFF94A3B8)))),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
-                SupabaseService.client.from('stores').delete().eq('id', store.id).catchError((_) {});
-              }
-              ref.read(storesProvider.notifier).update(
-                    (list) => list.where((s) => s.id != store.id).toList(),
-                  );
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Distribuidora "${store.name}" removida da rede.'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-            },
-            child: const Text('Excluir Loja'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Excluir Definitivamente', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
+
+    if (confirm == true) {
+      if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+        SupabaseService.client.from('stores').delete().eq('id', store.id).catchError((_) {});
+      }
+      ref.read(storesProvider.notifier).update((list) => list.where((s) => s.id != store.id).toList());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Distribuidora "${store.name}" removida.'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   void _toggleStoreSuspension(StoreModel store) {
+    HapticFeedback.lightImpact();
     final updated = store.copyWith(
       isSuspendedForNonPayment: !store.isSuspendedForNonPayment,
     );
@@ -615,7 +610,6 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
   @override
   Widget build(BuildContext context) {
     final stores = ref.watch(storesProvider);
-    final isMobile = MediaQuery.of(context).size.width < 600;
 
     // Filter
     final filtered = stores.where((s) {
@@ -639,152 +633,117 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
         : stores.fold<double>(0.0, (acc, s) => acc + s.commissionRate) / stores.length;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gestão de Distribuidoras & Taxas'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.cleaning_services_rounded, color: Colors.amber),
-            tooltip: 'Zerar Dados Demo (Reset Produção)',
-            onPressed: () => _showPurgeDemoDialog(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_business_rounded),
-            tooltip: 'Cadastrar Loja',
-            onPressed: () => _showStoreFormDialog(),
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: Column(
         children: [
-          // Header Metrics Cards (Responsivo: Grid 2x2 no mobile para nunca cortar textos)
+          // Header com Título e Botão "Nova Distribuidora" (Fixo no topo, NUNCA sobrepondo cards!)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             color: Colors.white,
-            child: isMobile
-                ? Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'Total de Lojas',
-                              value: '$totalStores',
-                              icon: Icons.storefront_rounded,
-                              color: const Color(0xFF6554C0),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'Lojas Ativas',
-                              value: '$activeStores',
-                              icon: Icons.check_circle_rounded,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'Suspensas',
-                              value: '$suspendedStores',
-                              icon: Icons.block_rounded,
-                              color: AppColors.error,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'Comissão Média',
-                              value: '${avgCommission.toStringAsFixed(1)}%',
-                              icon: Icons.percent_rounded,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: _buildMetricTile(
-                          label: 'Total de Lojas',
-                          value: '$totalStores',
-                          icon: Icons.storefront_rounded,
-                          color: const Color(0xFF6554C0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Gestão de Distribuidoras',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: AppColors.textPrimary, letterSpacing: -0.3),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildMetricTile(
-                          label: 'Lojas Ativas',
-                          value: '$activeStores',
-                          icon: Icons.check_circle_rounded,
-                          color: AppColors.success,
+                        SizedBox(height: 2),
+                        Text(
+                          'Controle de parceiros, comissões e repasses',
+                          style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildMetricTile(
-                          label: 'Suspensas',
-                          value: '$suspendedStores',
-                          icon: Icons.block_rounded,
-                          color: AppColors.error,
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.cleaning_services_rounded, color: Colors.amber, size: 20),
+                          tooltip: 'Zerar Dados Demo',
+                          onPressed: () => _showPurgeDemoDialog(),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildMetricTile(
-                          label: 'Comissão Média',
-                          value: '${avgCommission.toStringAsFixed(1)}%',
-                          icon: Icons.percent_rounded,
-                          color: AppColors.primary,
+                        const SizedBox(width: 4),
+                        BoraButton.flame(
+                          text: 'Nova Loja',
+                          icon: Icons.add_business_rounded,
+                          height: 40,
+                          borderRadius: 12,
+                          onPressed: () => _showStoreFormDialog(),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.border),
+
+          // KPIs em Carrossel Horizontal (Zero Truncamento garantido em qualquer aparelho móvel)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            color: Colors.white,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  BoraKpiCard(
+                    label: 'Total de Lojas',
+                    value: '$totalStores',
+                    icon: Icons.storefront_rounded,
+                    iconColor: const Color(0xFF6554C0),
+                    subtitle: 'Lojas registradas',
                   ),
+                  const SizedBox(width: 10),
+                  BoraKpiCard(
+                    label: 'Lojas Ativas',
+                    value: '$activeStores',
+                    icon: Icons.check_circle_rounded,
+                    iconColor: AppColors.success,
+                    subtitle: 'Recebendo pedidos',
+                  ),
+                  const SizedBox(width: 10),
+                  BoraKpiCard(
+                    label: 'Suspensas',
+                    value: '$suspendedStores',
+                    icon: Icons.block_rounded,
+                    iconColor: AppColors.error,
+                    subtitle: 'Bloqueadas por débito',
+                  ),
+                  const SizedBox(width: 10),
+                  BoraKpiCard(
+                    label: 'Comissão Média',
+                    value: '${avgCommission.toStringAsFixed(1)}%',
+                    icon: Icons.percent_rounded,
+                    iconColor: AppColors.primary,
+                    subtitle: 'Taxa sobre vendas',
+                  ),
+                ],
+              ),
+            ),
           ),
           const Divider(height: 1, color: AppColors.border),
 
           // Search and Filters
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Column(
               children: [
-                // Botão de Ação Direta "Cadastrar Nova Distribuidora" (Fixo no topo para NUNCA sobrepor cards)
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6554C0),
-                      foregroundColor: Colors.white,
-                      elevation: 1.5,
-                      shadowColor: const Color(0xFF6554C0).withValues(alpha: 0.35),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.add_business_rounded, size: 20),
-                    label: const Text(
-                      'Cadastrar Nova Distribuidora',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 0.3),
-                    ),
-                    onPressed: () => _showStoreFormDialog(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
                 TextField(
                   onChanged: (val) => setState(() => _searchQuery = val),
                   decoration: InputDecoration(
                     hintText: 'Buscar distribuidora por nome, CNPJ ou bairro...',
-                    prefixIcon: const Icon(Icons.search_rounded),
+                    hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+                    prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF64748B), size: 20),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear_rounded),
+                            icon: const Icon(Icons.clear_rounded, size: 18),
                             onPressed: () => setState(() => _searchQuery = ''),
                           )
                         : null,
@@ -821,23 +780,11 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
           // Stores List
           Expanded(
             child: filtered.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.storefront_outlined, size: 64, color: Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Nenhuma distribuidora encontrada',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Tente outro termo ou cadastre uma nova distribuidora.',
-                          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
+                ? const BoraEmptyState(
+                    icon: Icons.storefront_rounded,
+                    iconColor: Color(0xFF6554C0),
+                    title: 'Nenhuma distribuidora encontrada',
+                    description: 'Tente outro termo na busca ou cadastre uma nova distribuidora parceira.',
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
@@ -845,19 +792,12 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                     itemBuilder: (context, index) {
                       final store = filtered[index];
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          side: BorderSide(
-                            color: store.isSuspendedForNonPayment
-                                ? AppColors.error
-                                : AppColors.border,
-                            width: store.isSuspendedForNonPayment ? 1.5 : 1.0,
-                          ),
-                        ),
-                        elevation: 1,
-                        child: Padding(
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: BoraCard(
+                          borderColor: store.isSuspendedForNonPayment
+                              ? AppColors.error.withValues(alpha: 0.4)
+                              : AppColors.border,
                           padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -868,13 +808,13 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(12),
                                     child: Container(
-                                      width: 52,
-                                      height: 52,
-                                      color: AppColors.background,
+                                      width: 48,
+                                      height: 48,
+                                      color: AppColors.surfaceVariant,
                                       child: Image.asset(store.logoUrl, fit: BoxFit.contain),
                                     ),
                                   ),
-                                  const SizedBox(width: 14),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -886,41 +826,39 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                                                 store.name,
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.w800,
-                                                  fontSize: 16,
+                                                  fontSize: 15,
+                                                  color: AppColors.textPrimary,
                                                 ),
                                               ),
                                             ),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 8, vertical: 4),
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                               decoration: BoxDecoration(
                                                 color: store.isSuspendedForNonPayment
-                                                    ? AppColors.error.withValues(alpha: 0.15)
-                                                    : AppColors.success.withValues(alpha: 0.15),
+                                                    ? AppColors.error.withValues(alpha: 0.12)
+                                                    : AppColors.success.withValues(alpha: 0.12),
                                                 borderRadius: BorderRadius.circular(6),
                                               ),
                                               child: Text(
                                                 store.isSuspendedForNonPayment ? 'SUSPENSA' : 'ATIVA',
                                                 style: TextStyle(
                                                   fontSize: 10,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: store.isSuspendedForNonPayment
-                                                      ? AppColors.error
-                                                      : AppColors.success,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: store.isSuspendedForNonPayment ? AppColors.error : AppColors.success,
                                                 ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 4),
+                                        const SizedBox(height: 3),
                                         Text(
                                           'CNPJ: ${store.cnpj}',
-                                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                          style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
                                           store.address,
-                                          style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                                          style: const TextStyle(fontSize: 11.5, color: AppColors.textPrimary),
                                         ),
                                       ],
                                     ),
@@ -929,11 +867,11 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                               ),
                               const SizedBox(height: 12),
                               const Divider(height: 1, color: AppColors.border),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
 
-                              // Detalhes Operacionais (Grid 2x2 limpo e espaçoso para nunca encavalar)
+                              // Grid de Metadados Operacionais
                               Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(12),
@@ -945,7 +883,7 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                                       children: [
                                         Expanded(
                                           child: _buildStoreDetail(
-                                            label: 'WhatsApp Oficial',
+                                            label: 'WhatsApp',
                                             value: store.phone.isNotEmpty ? store.phone : 'Não informado',
                                             icon: Icons.phone_rounded,
                                           ),
@@ -953,7 +891,7 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: _buildStoreDetail(
-                                            label: 'Comissão Plataforma',
+                                            label: 'Comissão',
                                             value: '${store.commissionRate}% por venda',
                                             icon: Icons.percent_rounded,
                                             isHighlight: true,
@@ -961,18 +899,16 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 10),
-                                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
                                     Row(
                                       children: [
                                         Expanded(
                                           child: _buildStoreDetail(
-                                            label: 'Taxa de Entrega',
+                                            label: 'Taxa Entrega',
                                             value: store.deliveryFee == 0
-                                                ? 'Entrega Grátis'
+                                                ? 'Grátis'
                                                 : 'R\$ ${store.deliveryFee.toStringAsFixed(2)}',
-                                            icon: Icons.delivery_dining_rounded,
+                                            icon: Icons.two_wheeler_rounded,
                                           ),
                                         ),
                                         const SizedBox(width: 8),
@@ -988,19 +924,20 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 12),
 
-                              // Ações: Editar, Suspender/Reativar, Excluir
+                              // Ações: Editar, Suspender/Reativar, Excluir (Dispostas com folga, sem sobreposição)
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   OutlinedButton.icon(
                                     icon: const Icon(Icons.edit_rounded, size: 14),
-                                    label: const Text('Editar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                                    label: const Text('Editar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5)),
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFF0F172A),
+                                      foregroundColor: AppColors.textPrimary,
                                       side: const BorderSide(color: Color(0xFFCBD5E1)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      minimumSize: const Size(0, 34),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     ),
                                     onPressed: () => _showStoreFormDialog(storeToEdit: store),
@@ -1008,32 +945,30 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
                                   const SizedBox(width: 8),
                                   ElevatedButton.icon(
                                     icon: Icon(
-                                      store.isSuspendedForNonPayment
-                                          ? Icons.lock_open_rounded
-                                          : Icons.block_rounded,
+                                      store.isSuspendedForNonPayment ? Icons.lock_open_rounded : Icons.block_rounded,
                                       size: 14,
                                     ),
                                     label: Text(
                                       store.isSuspendedForNonPayment ? 'Reativar' : 'Suspender',
-                                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11.5),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: store.isSuspendedForNonPayment
-                                          ? const Color(0xFF10B981)
-                                          : const Color(0xFFEF4444),
+                                      backgroundColor: store.isSuspendedForNonPayment ? AppColors.success : AppColors.error,
                                       foregroundColor: Colors.white,
                                       elevation: 0,
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      minimumSize: const Size(0, 34),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     ),
                                     onPressed: () => _toggleStoreSuspension(store),
                                   ),
                                   const SizedBox(width: 8),
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444), size: 18),
+                                    icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 18),
                                     tooltip: 'Remover Distribuidora',
                                     style: IconButton.styleFrom(
-                                      backgroundColor: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                                      backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                                      minimumSize: const Size(34, 34),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                     ),
                                     onPressed: () => _confirmDeleteStore(store),
@@ -1052,58 +987,31 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
     );
   }
 
-  Widget _buildMetricTile({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.18), width: 1.2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 13, color: color),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                    letterSpacing: 0.2,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+  Widget _buildFilterChip(String label, String value, int count) {
+    final isSelected = _statusFilter == value;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _statusFilter = value);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6554C0) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6554C0) : AppColors.border,
+            width: 1,
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: color,
-              letterSpacing: -0.5,
-            ),
+        ),
+        child: Text(
+          '$label ($count)',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected ? Colors.white : AppColors.textPrimary,
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1114,60 +1022,29 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
     required IconData icon,
     bool isHighlight = false,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
+    return Row(
       children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 13,
-              color: isHighlight
-                  ? const Color(0xFF6554C0)
-                  : (icon == Icons.phone_rounded
-                      ? const Color(0xFF25D366)
-                      : const Color(0xFF64748B)),
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label,
+        Icon(icon, size: 14, color: isHighlight ? AppColors.primary : AppColors.textSecondary),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+              Text(
+                value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: isHighlight ? AppColors.primary : AppColors.textPrimary,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 3),
-        Text(
-          value,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: isHighlight ? FontWeight.w900 : FontWeight.w700,
-            color: isHighlight ? const Color(0xFF6554C0) : const Color(0xFF0F172A),
+            ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildFilterChip(String label, String value, int count) {
-    final isSelected = _statusFilter == value;
-    return ChoiceChip(
-      label: Text('$label ($count)'),
-      selected: isSelected,
-      onSelected: (_) => setState(() => _statusFilter = value),
-      selectedColor: const Color(0xFF6554C0).withValues(alpha: 0.15),
-      labelStyle: TextStyle(
-        fontSize: 12,
-        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-        color: isSelected ? const Color(0xFF6554C0) : AppColors.textSecondary,
-      ),
     );
   }
 }

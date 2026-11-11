@@ -6,6 +6,7 @@ class StatusBadge extends StatelessWidget {
   final Color backgroundColor;
   final Color textColor;
   final IconData? icon;
+  final BoxBorder? border;
 
   const StatusBadge({
     super.key,
@@ -13,6 +14,7 @@ class StatusBadge extends StatelessWidget {
     required this.backgroundColor,
     required this.textColor,
     this.icon,
+    this.border,
   });
 
   factory StatusBadge.fromOrderStatus(OrderStatus status) {
@@ -71,6 +73,43 @@ class StatusBadge extends StatelessWidget {
     );
   }
 
+  factory StatusBadge.gas({String label = 'GÁS GLP'}) {
+    return StatusBadge(
+      label: label,
+      backgroundColor: const Color(0xFFFF5630).withValues(alpha: 0.15),
+      textColor: const Color(0xFFFF5630),
+      icon: Icons.local_fire_department_rounded,
+      border: Border.all(color: const Color(0xFFFF5630).withValues(alpha: 0.3), width: 1),
+    );
+  }
+
+  factory StatusBadge.water({String label = 'ÁGUA 20L'}) {
+    return StatusBadge(
+      label: label,
+      backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.15),
+      textColor: const Color(0xFF38BDF8),
+      icon: Icons.water_drop_rounded,
+      border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3), width: 1),
+    );
+  }
+
+  factory StatusBadge.storeOpen({required bool isOpen}) {
+    return StatusBadge(
+      label: isOpen ? 'LOJA ABERTA' : 'DESLIGADA',
+      backgroundColor: isOpen
+          ? const Color(0xFF10B981).withValues(alpha: 0.16)
+          : const Color(0xFFEF4444).withValues(alpha: 0.16),
+      textColor: isOpen ? const Color(0xFF34D399) : const Color(0xFFF87171),
+      icon: isOpen ? Icons.check_circle_rounded : Icons.power_settings_new_rounded,
+      border: Border.all(
+        color: isOpen
+            ? const Color(0xFF10B981).withValues(alpha: 0.4)
+            : const Color(0xFFEF4444).withValues(alpha: 0.4),
+        width: 1,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -78,6 +117,7 @@ class StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),
+        border: border,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

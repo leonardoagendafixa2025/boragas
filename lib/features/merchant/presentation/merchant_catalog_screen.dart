@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/product_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/product_image_preview.dart';
+import '../../../core/widgets/ui/bora_button.dart';
+import '../../../core/widgets/ui/bora_card.dart';
+import '../../../core/widgets/ui/bora_empty_state.dart';
+import '../../../core/widgets/ui/bora_kpi_card.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../providers/merchant_providers.dart';
 
@@ -17,6 +22,16 @@ class MerchantCatalogScreen extends ConsumerStatefulWidget {
 class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
   String _searchQuery = '';
   ProductCategory? _selectedCategoryFilter;
+
+  bool _isGasItem(ProductModel prod) {
+    if (prod.category == ProductCategory.p13 ||
+        prod.category == ProductCategory.p45 ||
+        prod.category == ProductCategory.p20) {
+      return true;
+    }
+    final lower = prod.name.toLowerCase();
+    return lower.contains('gás') || lower.contains('gas') || lower.contains('p13') || lower.contains('p45') || lower.contains('glp');
+  }
 
   // Diálogo para Adicionar ou Editar Produto
   void _showProductFormDialog({ProductModel? productToEdit}) {
@@ -38,63 +53,16 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
     ProductCategory selectedCategory = productToEdit?.category ?? ProductCategory.p13;
     bool inStock = productToEdit?.inStock ?? true;
     String selectedImage = productToEdit?.imageUrl ?? 'assets/images/app_icon.png';
-    bool showPhotoPicker = true; // Aberto por padrão para o lojista ver e escolher imediatamente
+    bool showPhotoPicker = true;
     final customUrlController = TextEditingController(text: selectedImage.startsWith('http') ? selectedImage : '');
 
-    final brandsList = [
-      'Ultragaz (Azul)',
-      'Liquigás (Verde)',
-      'Copagaz',
-      'Supergasbras',
-      'Nacional Gás',
-      'Consigaz',
-      'Bonafont',
-      'Lindoya Verão',
-      'Aliança Reguladores',
-      'Outra Marca',
-    ];
-
     final photoPresets = [
-      {
-        'title': 'Ultragaz (Azul)',
-        'category': 'Botijão P13',
-        'url': 'assets/images/app_icon.png',
-      },
-      {
-        'title': 'Liquigás (Verde)',
-        'category': 'Botijão P13',
-        'url': 'assets/images/app_icon_v2.png',
-      },
-      {
-        'title': 'Supergasbras (Dourado)',
-        'category': 'Botijão P13',
-        'url': 'assets/images/brand_lockup.png',
-      },
-      {
-        'title': 'Copagaz / Nacional',
-        'category': 'Botijão P13',
-        'url': 'assets/images/app_icon.png',
-      },
-      {
-        'title': 'Consigaz (Azul)',
-        'category': 'Botijão P13',
-        'url': 'assets/images/app_icon.png',
-      },
-      {
-        'title': 'Água Mineral Galão 20L',
-        'category': 'Galão 20L',
-        'url': 'assets/images/app_icon_v2.png',
-      },
-      {
-        'title': 'Cilindro P45 Industrial',
-        'category': 'Cilindro 45kg',
-        'url': 'assets/images/app_icon.png',
-      },
-      {
-        'title': 'Regulador & Mangueira',
-        'category': 'Acessórios INMETRO',
-        'url': 'assets/images/brand_lockup.png',
-      },
+      {'title': 'Ultragaz (Azul)', 'category': 'Botijão P13', 'url': 'assets/images/app_icon.png'},
+      {'title': 'Liquigás (Verde)', 'category': 'Botijão P13', 'url': 'assets/images/app_icon_v2.png'},
+      {'title': 'Supergasbras', 'category': 'Botijão P13', 'url': 'assets/images/brand_lockup.png'},
+      {'title': 'Água Mineral 20L', 'category': 'Galão 20L', 'url': 'assets/images/app_icon_v2.png'},
+      {'title': 'Cilindro P45', 'category': 'Cilindro 45kg', 'url': 'assets/images/app_icon.png'},
+      {'title': 'Regulador & Válvula', 'category': 'Acessórios', 'url': 'assets/images/brand_lockup.png'},
     ];
 
     showModalBottomSheet(
@@ -104,11 +72,12 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) => Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
+            color: Color(0xFF111827),
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(top: BorderSide(color: Color(0x1FFFFFFF), width: 1)),
           ),
           padding: EdgeInsets.only(
-            top: 24,
+            top: 20,
             left: 20,
             right: 20,
             bottom: MediaQuery.of(context).viewInsets.bottom + 24,
@@ -118,6 +87,19 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Handle Bar
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4.5,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF334155),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+
                 // Header
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -127,33 +109,33 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
+                            color: AppColors.primary.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.inventory_2_rounded, color: AppColors.primary, size: 22),
+                          child: const Icon(Icons.inventory_2_rounded, color: AppColors.primaryLight, size: 20),
                         ),
                         const SizedBox(width: 12),
                         Text(
                           isEditing ? 'Editar Produto' : 'Cadastrar Novo Produto',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
                         ),
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(Icons.close_rounded, color: Color(0xFF94A3B8)),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
 
-                // Seção de Foto do Produto (Destaque e Edição 100% Funcional de Ponta a Ponta)
+                // Seção de Foto do Produto
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: const Color(0xFF0F172A),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: const Color(0x1AFFFFFF)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,24 +145,17 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                           Stack(
                             children: [
                               Container(
-                                width: 72,
-                                height: 72,
+                                width: 68,
+                                height: 68,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: const Color(0xFF1E293B),
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.05),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
+                                  border: Border.all(color: const Color(0xFF334155), width: 1.5),
                                 ),
                                 child: ProductImagePreview(
                                   imageUrl: selectedImage,
-                                  width: 72,
-                                  height: 72,
+                                  width: 68,
+                                  height: 68,
                                   borderRadius: 12,
                                 ),
                               ),
@@ -190,10 +165,10 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFFFF6B00),
+                                    color: AppColors.accentFlame,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.photo_camera_rounded, size: 11, color: Colors.white),
+                                  child: const Icon(Icons.photo_camera_rounded, size: 10, color: Colors.white),
                                 ),
                               ),
                             ],
@@ -203,44 +178,40 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Row(
-                                  children: [
-                                    Text(
-                                      'Foto do Produto',
-                                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      '(No Catálogo)',
-                                      style: TextStyle(color: Color(0xFF64748B), fontSize: 11),
-                                    ),
-                                  ],
+                                const Text(
+                                  'Foto de Catálogo',
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.white),
                                 ),
-                                const SizedBox(height: 3),
+                                const SizedBox(height: 2),
                                 Text(
-                                  selectedImage.startsWith('http')
-                                      ? 'Foto via Link Web / Storage'
-                                      : 'Foto oficial de catálogo ativa',
-                                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                                  selectedImage.startsWith('http') ? 'Foto personalizada via Web' : 'Foto oficial ativa',
+                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
                                 ),
-                                const SizedBox(height: 8),
-                                OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFFFF6B00),
-                                    side: const BorderSide(color: Color(0xFFFF6B00)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    minimumSize: const Size(0, 32),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                  onPressed: () {
-                                    setModalState(() {
-                                      showPhotoPicker = !showPhotoPicker;
-                                    });
+                                const SizedBox(height: 6),
+                                InkWell(
+                                  onTap: () {
+                                    setModalState(() => showPhotoPicker = !showPhotoPicker);
                                   },
-                                  icon: Icon(showPhotoPicker ? Icons.expand_less_rounded : Icons.photo_library_rounded, size: 14),
-                                  label: Text(
-                                    showPhotoPicker ? 'Recolher Opções' : 'Trocar Foto / Galeria',
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentFlame.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: AppColors.accentFlame.withValues(alpha: 0.3)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(showPhotoPicker ? Icons.expand_less_rounded : Icons.photo_library_rounded,
+                                            size: 13, color: AppColors.accentFlame),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          showPhotoPicker ? 'Recolher Opções' : 'Trocar Foto Oficial',
+                                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: AppColors.accentFlame),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -249,133 +220,62 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                         ],
                       ),
 
-                      // Galeria de Presets Oficiais e Input de Link
                       if (showPhotoPicker) ...[
-                        const SizedBox(height: 14),
-                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
                         const SizedBox(height: 12),
+                        const Divider(height: 1, color: Color(0x1AFFFFFF)),
+                        const SizedBox(height: 10),
                         const Text(
-                          '1. Escolha a Foto Oficial da Bandeira:',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF334155)),
+                          'Escolha um preset oficial ou insira uma URL:',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8)),
                         ),
                         const SizedBox(height: 8),
-                        SizedBox(
-                          height: 96,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: photoPresets.length,
-                            separatorBuilder: (_, index) => const SizedBox(width: 8),
-                            itemBuilder: (context, idx) {
-                              final preset = photoPresets[idx];
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: photoPresets.map((preset) {
                               final isSelected = selectedImage == preset['url'];
-
-                              return InkWell(
+                              return GestureDetector(
                                 onTap: () {
+                                  HapticFeedback.selectionClick();
                                   setModalState(() {
-                                    selectedImage = preset['url'] as String;
-                                    if (!isEditing) {
-                                      if (preset['title']!.contains('Liquigás')) {
-                                        brandController.text = 'Liquigás (Verde)';
-                                      } else if (preset['title']!.contains('Ultragaz')) {
-                                        brandController.text = 'Ultragaz (Azul)';
-                                      } else if (preset['title']!.contains('Supergasbras')) {
-                                        brandController.text = 'Supergasbras';
-                                      } else if (preset['title']!.contains('Água')) {
-                                        brandController.text = 'Bonafont';
-                                        selectedCategory = ProductCategory.water20l;
-                                      }
-                                    }
+                                    selectedImage = preset['url']!;
+                                    customUrlController.clear();
                                   });
                                 },
-                                borderRadius: BorderRadius.circular(12),
                                 child: Container(
-                                  width: 92,
+                                  margin: const EdgeInsets.only(right: 8),
                                   padding: const EdgeInsets.all(6),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFFFF6B00).withValues(alpha: 0.1) : Colors.white,
+                                    color: isSelected ? AppColors.accentFlame.withValues(alpha: 0.15) : const Color(0xFF1E293B),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isSelected ? const Color(0xFFFF6B00) : const Color(0xFFCBD5E1),
-                                      width: isSelected ? 2 : 1,
+                                      color: isSelected ? AppColors.accentFlame : const Color(0xFF334155),
+                                      width: isSelected ? 1.5 : 1,
                                     ),
                                   ),
                                   child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      SizedBox(
+                                      ProductImagePreview(
+                                        imageUrl: preset['url']!,
                                         width: 44,
                                         height: 44,
-                                        child: ProductImagePreview(
-                                          imageUrl: preset['url'] as String,
-                                          width: 44,
-                                          height: 44,
-                                          borderRadius: 8,
-                                        ),
+                                        borderRadius: 8,
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        preset['title'] as String,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                        preset['title']!,
                                         style: TextStyle(
                                           fontSize: 9.5,
-                                          fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                                          color: isSelected ? const Color(0xFFFF6B00) : const Color(0xFF1E293B),
+                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                          color: isSelected ? AppColors.accentFlame : Colors.white70,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
                               );
-                            },
+                            }).toList(),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          '2. Ou insira um Link de Imagem Personalizado:',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF334155)),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: customUrlController,
-                                style: const TextStyle(fontSize: 12),
-                                decoration: InputDecoration(
-                                  hintText: 'https://exemplo.com/foto-botijao.jpg',
-                                  hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
-                                  isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF0F172A),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              onPressed: () {
-                                final text = customUrlController.text.trim();
-                                if (text.isNotEmpty) {
-                                  setModalState(() {
-                                    selectedImage = text;
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Foto personalizada aplicada ao preview!'),
-                                      duration: Duration(seconds: 1),
-                                    ),
-                                  );
-                                }
-                              },
-                              child: const Text('Aplicar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                            ),
-                          ],
                         ),
                       ],
                     ],
@@ -383,342 +283,158 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                // Categoria
-                const Text('Categoria do Produto', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<ProductCategory>(
-                  initialValue: selectedCategory,
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: ProductCategory.p13,
-                      child: Text('Botijão de Gás P13 (Cozinha 13kg)'),
-                    ),
-                    DropdownMenuItem(
-                      value: ProductCategory.water20l,
-                      child: Text('Água Mineral Galão 20L'),
-                    ),
-                    DropdownMenuItem(
-                      value: ProductCategory.p45,
-                      child: Text('Cilindro Industrial P45 (45kg)'),
-                    ),
-                    DropdownMenuItem(
-                      value: ProductCategory.p20,
-                      child: Text('Cilindro P20 (Empilhadeira)'),
-                    ),
-                    DropdownMenuItem(
-                      value: ProductCategory.accessories,
-                      child: Text('Reguladores, Mangueiras & Acessórios'),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setModalState(() {
-                        selectedCategory = val;
-                        if (val == ProductCategory.water20l) {
-                          selectedImage = 'assets/images/app_icon_v2.png';
-                          if (!isEditing) {
-                            nameController.text = 'Água Mineral Galão 20L';
-                            brandController.text = 'Bonafont';
-                            refillPriceController.text = '14.90';
-                            shellPriceController.text = '42.00';
-                          }
-                        } else if (val == ProductCategory.p13) {
-                          selectedImage = 'assets/images/app_icon.png';
-                          if (!isEditing) {
-                            nameController.text = 'Botijão de Gás P13 (13kg)';
-                            brandController.text = 'Ultragaz (Azul)';
-                            refillPriceController.text = '104.90';
-                            shellPriceController.text = '289.00';
-                          }
-                        } else if (val == ProductCategory.p45) {
-                          selectedImage = 'assets/images/app_icon.png';
-                          if (!isEditing) {
-                            nameController.text = 'Cilindro Industrial P45';
-                            refillPriceController.text = '430.00';
-                            shellPriceController.text = '890.00';
-                          }
-                        }
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 14),
-
                 // Nome do Produto
-                const Text('Nome Exibido no Catálogo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 6),
                 TextField(
                   controller: nameController,
-                  decoration: InputDecoration(
-                    hintText: 'Ex: Botijão P13 Ultragaz com Lacre',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                  decoration: _buildInputDecoration('Nome do Produto', 'Ex: Botijão de Gás P13'),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
 
-                // Marca
-                const Text('Marca / Bandeira', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  initialValue: brandsList.contains(brandController.text) ? brandController.text : brandsList.first,
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  items: brandsList
-                      .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                      .toList(),
-                  onChanged: (val) {
-                    if (val != null) {
-                      setModalState(() {
-                        brandController.text = val;
-                        if (val.contains('Liquigás') || val.contains('Verde') || val.contains('Bonafont')) {
-                          selectedImage = 'assets/images/app_icon_v2.png';
-                        } else {
-                          selectedImage = 'assets/images/app_icon.png';
-                        }
-                      });
-                    }
-                  },
+                // Marca / Distribuidora
+                TextField(
+                  controller: brandController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                  decoration: _buildInputDecoration('Marca / Selo', 'Ex: Ultragaz, Liquigás, Bonafont'),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
 
-                // Preços (Troca e Completo)
+                // Preços: Recarga e Completo
                 Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Preço da Troca (Recarga)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: refillPriceController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              prefixText: 'R\$ ',
-                              hintText: '104.90',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ],
+                      child: TextField(
+                        controller: refillPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                        decoration: _buildInputDecoration('Preço Recarga (R\$)', 'Ex: 104.90'),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Preço Completo (+ Casco)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                          const SizedBox(height: 6),
-                          TextField(
-                            controller: shellPriceController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            decoration: InputDecoration(
-                              prefixText: 'R\$ ',
-                              hintText: '289.00',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ],
+                      child: TextField(
+                        controller: shellPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.bold),
+                        decoration: _buildInputDecoration('Preço Completo (R\$)', 'Ex: 289.00'),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
 
-                // Descrição
-                const Text('Descrição / Detalhes de Segurança', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: 'Peso líquido aferido, lacre inviolável e garantia ANP.',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                // Categoria
+                DropdownButtonFormField<ProductCategory>(
+                  initialValue: selectedCategory,
+                  dropdownColor: const Color(0xFF1E293B),
+                  style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                  decoration: _buildInputDecoration('Categoria', ''),
+                  items: const [
+                    DropdownMenuItem(value: ProductCategory.p13, child: Text('Botijão P13 (Residencial)')),
+                    DropdownMenuItem(value: ProductCategory.water20l, child: Text('Água Mineral 20L')),
+                    DropdownMenuItem(value: ProductCategory.p45, child: Text('Cilindro P45 (Comercial)')),
+                    DropdownMenuItem(value: ProductCategory.p20, child: Text('Cilindro P20 (Empilhadeira)')),
+                    DropdownMenuItem(value: ProductCategory.accessories, child: Text('Acessórios (Válvula / Mangueira)')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setModalState(() => selectedCategory = val);
+                  },
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
                 // Switch de Estoque
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: inStock ? Colors.green.withValues(alpha: 0.08) : Colors.red.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: inStock ? Colors.green.withValues(alpha: 0.3) : Colors.red.withValues(alpha: 0.3),
-                    ),
+                    color: const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0x1AFFFFFF)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            inStock ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                            color: inStock ? Colors.green : Colors.red,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                inStock ? 'Produto Disponível para Venda' : 'Produto Pausado (Esgotado)',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: inStock ? Colors.green.shade800 : Colors.red.shade800,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              Text(
-                                inStock ? 'Aparecerá para clientes em seu raio' : 'Oculto na busca dos clientes',
-                                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                              ),
-                            ],
-                          ),
+                          Text('Disponível para Venda', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                          Text('Se desligado, aparecerá como esgotado aos clientes', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10.5)),
                         ],
                       ),
                       Switch(
                         value: inStock,
-                        activeThumbColor: Colors.green,
+                        activeThumbColor: AppColors.success,
                         onChanged: (val) => setModalState(() => inStock = val),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
 
-                // Botão Salvar
+                // Botão Salvar Fixo
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
+                  child: BoraButton.flame(
+                    text: isEditing ? 'Salvar Alterações' : 'Cadastrar no Depósito',
+                    icon: Icons.check_circle_rounded,
+                    height: 50,
                     onPressed: () {
                       final name = nameController.text.trim();
+                      final brand = brandController.text.trim();
+                      final refill = double.tryParse(refillPriceController.text.replaceAll(',', '.')) ?? 0.0;
+                      final shell = double.tryParse(shellPriceController.text.replaceAll(',', '.')) ?? 0.0;
+
                       if (name.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Por favor, informe o nome do produto.')),
+                          const SnackBar(content: Text('Informe o nome do produto.')),
                         );
                         return;
                       }
 
-                      final refill = double.tryParse(refillPriceController.text.replaceAll(',', '.')) ?? 100.0;
-                      final shell = double.tryParse(shellPriceController.text.replaceAll(',', '.')) ?? 280.0;
+                      final newProd = ProductModel(
+                        id: productToEdit?.id ?? 'prod_${DateTime.now().millisecondsSinceEpoch}',
+                        storeId: currentStore.id,
+                        storeName: currentStore.name,
+                        name: name,
+                        brandName: brand.isNotEmpty ? brand : 'BoraGás',
+                        category: selectedCategory,
+                        refillPrice: refill,
+                        shellPrice: shell,
+                        imageUrl: selectedImage,
+                        description: descriptionController.text.trim(),
+                        inStock: inStock,
+                      );
 
                       if (isEditing) {
-                        final updated = productToEdit.copyWith(
-                          name: name,
-                          category: selectedCategory,
-                          brandName: brandController.text.trim(),
-                          description: descriptionController.text.trim(),
-                          refillPrice: refill,
-                          shellPrice: shell,
-                          inStock: inStock,
-                          imageUrl: selectedImage,
-                        );
-
                         ref.read(productsProvider.notifier).update(
-                              (list) => list.map((p) => p.id == updated.id ? updated : p).toList(),
+                              (list) => list.map((p) => p.id == newProd.id ? newProd : p).toList(),
                             );
-
-                        if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
-                          try {
-                            SupabaseService.client.from('products').update({
-                              'name': updated.name,
-                              'brand_name': updated.brandName,
-                              'description': updated.description,
-                              'refill_price': updated.refillPrice,
-                              'shell_price': updated.shellPrice,
-                              'image_url': updated.imageUrl,
-                              'is_available': updated.inStock,
-                              'updated_at': DateTime.now().toIso8601String(),
-                            }).eq('id', updated.id).then((_) {
-                              debugPrint('Produto ${updated.id} sincronizado no Supabase');
-                            }).catchError((err) {
-                              debugPrint('Aviso Supabase update: $err');
-                            });
-                          } catch (e) {
-                            debugPrint('Erro ao atualizar Supabase: $e');
-                          }
-                        }
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Produto "${updated.name}" atualizado com sucesso!'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
                       } else {
-                        final newProduct = ProductModel(
-                          id: 'prod-${DateTime.now().millisecondsSinceEpoch}',
-                          storeId: currentStore.id,
-                          storeName: currentStore.name,
-                          category: selectedCategory,
-                          name: name,
-                          brandName: brandController.text.trim(),
-                          description: descriptionController.text.trim(),
-                          refillPrice: refill,
-                          shellPrice: shell,
-                          inStock: inStock,
-                          imageUrl: selectedImage,
-                          rating: 5.0,
-                        );
+                        ref.read(productsProvider.notifier).update((list) => [newProd, ...list]);
+                      }
 
-                        ref.read(productsProvider.notifier).update(
-                              (list) => [newProduct, ...list],
-                            );
-
-                        if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
-                          try {
-                            SupabaseService.client.from('products').insert({
-                              'id': newProduct.id,
-                              'store_id': currentStore.id,
-                              'category_slug': newProduct.category.name,
-                              'name': newProduct.name,
-                              'brand_name': newProduct.brandName,
-                              'description': newProduct.description,
-                              'refill_price': newProduct.refillPrice,
-                              'shell_price': newProduct.shellPrice,
-                              'stock_quantity': 100,
-                              'image_url': newProduct.imageUrl,
-                              'is_available': newProduct.inStock,
-                              'rating': 5.0,
-                              'created_at': DateTime.now().toIso8601String(),
-                              'updated_at': DateTime.now().toIso8601String(),
-                            }).then((_) {
-                              debugPrint('Novo produto inserido no Supabase');
-                            }).catchError((err) {
-                              debugPrint('Aviso Supabase insert: $err');
-                            });
-                          } catch (e) {
-                            debugPrint('Erro ao inserir Supabase: $e');
-                          }
-                        }
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Produto "${newProduct.name}" cadastrado no catálogo!'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
+                      if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                        SupabaseService.client.from('products').upsert({
+                          'id': newProd.id,
+                          'store_id': newProd.storeId,
+                          'name': newProd.name,
+                          'brand_name': newProd.brandName,
+                          'category': newProd.category.name,
+                          'refill_price': newProd.refillPrice,
+                          'shell_price': newProd.shellPrice,
+                          'image_url': newProd.imageUrl,
+                          'description': newProd.description,
+                          'in_stock': newProd.inStock,
+                        }).catchError((_) {});
                       }
 
                       Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(isEditing ? 'Produto atualizado com sucesso!' : 'Produto cadastrado com sucesso!'),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
                     },
-                    child: Text(
-                      isEditing ? 'Salvar Alterações' : 'Cadastrar no Estoque',
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Colors.white),
-                    ),
                   ),
                 ),
               ],
@@ -729,223 +445,211 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
     );
   }
 
-  void _confirmDeleteProduct(ProductModel product) {
-    showDialog(
+  InputDecoration _buildInputDecoration(String label, String hint) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5),
+      hintText: hint,
+      hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+      filled: true,
+      fillColor: const Color(0xFF0F172A),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0x1AFFFFFF))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0x1AFFFFFF))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primaryLight, width: 1.5)),
+    );
+  }
+
+  void _confirmDeleteProduct(ProductModel prod) async {
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF111827),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Excluir Produto?'),
-        content: Text('Deseja remover "${product.name}" do seu catálogo de vendas?'),
+        title: const Text('Excluir Produto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        content: Text('Deseja excluir "${prod.name}" do seu catálogo?', style: const TextStyle(color: Color(0xFF94A3B8))),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: Color(0xFF94A3B8)))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            onPressed: () {
-              ref.read(productsProvider.notifier).update(
-                    (list) => list.where((p) => p.id != product.id).toList(),
-                  );
-              if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
-                try {
-                  SupabaseService.client.from('products').delete().eq('id', product.id).catchError((_) {});
-                } catch (_) {}
-              }
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Produto removido do catálogo.')),
-              );
-            },
-            child: const Text('Excluir', style: TextStyle(color: Colors.white)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Excluir', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
     );
+
+    if (confirm == true) {
+      ref.read(productsProvider.notifier).update((list) => list.where((p) => p.id != prod.id).toList());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"${prod.name}" removido.'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final currentStore = ref.watch(currentMerchantStoreProvider);
-    final allProducts = ref.watch(merchantProductsProvider);
+    final allProducts = ref.watch(productsProvider).where((p) => p.storeId == currentStore.id).toList();
 
-    // Filtros de busca e categoria
     final filteredProducts = allProducts.where((p) {
       final matchesSearch = _searchQuery.isEmpty ||
           p.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           p.brandName.toLowerCase().contains(_searchQuery.toLowerCase());
-
-      final matchesCategory =
-          _selectedCategoryFilter == null || p.category == _selectedCategoryFilter;
-
-      return matchesSearch && matchesCategory;
+      final matchesCat = _selectedCategoryFilter == null || p.category == _selectedCategoryFilter;
+      return matchesSearch && matchesCat;
     }).toList();
 
     final activeCount = allProducts.where((p) => p.inStock).length;
-    final outOfStockCount = allProducts.length - activeCount;
+    final outOfStockCount = allProducts.where((p) => !p.inStock).length;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B1120),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showProductFormDialog(),
-        backgroundColor: const Color(0xFFFF6B00),
-        icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
-        label: const Text('Adicionar Produto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
-      body: CustomScrollView(
+    return Container(
+      color: AppColors.merchantCanvas,
+      child: CustomScrollView(
         slivers: [
-          // Header Tático de Catálogo
+          // Header
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Catálogo & Estoque • ${currentStore.name}',
-                        style: const TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Gerencie botijões, preços e disponibilidade no depósito',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Catálogo & Depósito',
+                          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: -0.3),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${currentStore.name} • ${allProducts.length} itens cadastrados',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5),
+                        ),
+                      ],
+                    ),
                   ),
-                  FilledButton.icon(
+                  BoraButton.flame(
+                    text: 'Novo Item',
+                    icon: Icons.add_rounded,
+                    height: 40,
+                    borderRadius: 12,
                     onPressed: () => _showProductFormDialog(),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Novo', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF6B00),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // 1. Resumo Métrico do Catálogo
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      label: 'Total de Itens',
-                      value: '${allProducts.length}',
-                      icon: Icons.inventory_rounded,
-                      color: Colors.blue.shade700,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildMetricCard(
-                      label: 'Em Venda',
-                      value: '$activeCount',
-                      icon: Icons.check_circle_outline_rounded,
-                      color: Colors.green.shade700,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildMetricCard(
-                      label: 'Pausados',
-                      value: '$outOfStockCount',
-                      icon: Icons.pause_circle_outline_rounded,
-                      color: Colors.amber.shade800,
-                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-          // 2. Barra de Busca
+          // Resumo Métrico Horizontal
+          SliverToBoxAdapter(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  BoraKpiCard(
+                    label: 'Total de Itens',
+                    value: '${allProducts.length}',
+                    icon: Icons.inventory_2_rounded,
+                    iconColor: const Color(0xFF38BDF8),
+                    subtitle: 'Itens no sistema',
+                  ),
+                  const SizedBox(width: 10),
+                  BoraKpiCard(
+                    label: 'Em Venda',
+                    value: '$activeCount',
+                    icon: Icons.check_circle_rounded,
+                    iconColor: AppColors.success,
+                    subtitle: 'Visíveis no app',
+                  ),
+                  const SizedBox(width: 10),
+                  BoraKpiCard(
+                    label: 'Pausados',
+                    value: '$outOfStockCount',
+                    icon: Icons.pause_circle_rounded,
+                    iconColor: const Color(0xFFF59E0B),
+                    subtitle: 'Esgotados/Pausa',
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Barra de Busca
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
                 onChanged: (val) => setState(() => _searchQuery = val),
+                style: const TextStyle(color: Colors.white, fontSize: 13.5),
                 decoration: InputDecoration(
-                  hintText: 'Buscar por nome, marca ou capacidade...',
-                  prefixIcon: const Icon(Icons.search_rounded),
+                  hintText: 'Buscar botijão, galão de água, marca...',
+                  hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 12.5),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 20),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear_rounded),
+                          icon: const Icon(Icons.clear_rounded, color: Color(0xFF94A3B8), size: 18),
                           onPressed: () => setState(() => _searchQuery = ''),
                         )
                       : null,
                   filled: true,
-                  fillColor: Colors.grey.shade100,
+                  fillColor: AppColors.merchantCard,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0x1AFFFFFF))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0x1AFFFFFF))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.accentFlame, width: 1.5)),
                 ),
               ),
             ),
           ),
 
-          // 3. Chips de Categoria
+          // Chips de Categoria
           SliverToBoxAdapter(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
-                  _buildCategoryChip(label: 'Todos', category: null),
+                  _buildCategoryFilterChip('Todos', null),
                   const SizedBox(width: 8),
-                  _buildCategoryChip(label: 'P13 Residencial', category: ProductCategory.p13),
+                  _buildCategoryFilterChip('Gás P13', ProductCategory.p13),
                   const SizedBox(width: 8),
-                  _buildCategoryChip(label: 'Água 20L', category: ProductCategory.water20l),
+                  _buildCategoryFilterChip('Água 20L', ProductCategory.water20l),
                   const SizedBox(width: 8),
-                  _buildCategoryChip(label: 'P45 Industrial', category: ProductCategory.p45),
+                  _buildCategoryFilterChip('Cilindro P45', ProductCategory.p45),
                   const SizedBox(width: 8),
-                  _buildCategoryChip(label: 'P20 Empilhadeira', category: ProductCategory.p20),
+                  _buildCategoryFilterChip('P20 Empilhadeira', ProductCategory.p20),
                   const SizedBox(width: 8),
-                  _buildCategoryChip(label: 'Acessórios & Válvulas', category: ProductCategory.accessories),
+                  _buildCategoryFilterChip('Acessórios', ProductCategory.accessories),
                 ],
               ),
             ),
           ),
 
-          // 4. Lista de Produtos
+          // Lista de Produtos
           if (filteredProducts.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey.shade400),
-                    const SizedBox(height: 14),
-                    Text(
-                      _searchQuery.isNotEmpty
-                          ? 'Nenhum produto encontrado para "$_searchQuery"'
-                          : 'Nenhum produto cadastrado nesta categoria.',
-                      style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      onPressed: () => _showProductFormDialog(),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Cadastrar Primeiro Produto'),
-                    ),
-                  ],
-                ),
+              child: BoraEmptyState(
+                icon: Icons.inventory_2_outlined,
+                iconColor: AppColors.accentFlame,
+                title: _searchQuery.isNotEmpty ? 'Nenhum item encontrado' : 'Nenhum produto cadastrado',
+                description: _searchQuery.isNotEmpty
+                    ? 'Tente outro termo de busca ou limpe o filtro de categoria.'
+                    : 'Cadastre seu primeiro botijão ou galão de água para começar a vender.',
+                buttonText: _searchQuery.isEmpty ? 'Cadastrar Primeiro Produto' : null,
+                onButtonPressed: _searchQuery.isEmpty ? () => _showProductFormDialog() : null,
               ),
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 60),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -961,104 +665,77 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
     );
   }
 
-  Widget _buildMetricCard({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
-              Icon(icon, color: color, size: 16),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip({required String label, required ProductCategory? category}) {
+  Widget _buildCategoryFilterChip(String label, ProductCategory? category) {
     final isSelected = _selectedCategoryFilter == category;
-    return FilterChip(
-      selected: isSelected,
-      label: Text(label),
-      labelStyle: TextStyle(
-        fontSize: 12,
-        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-        color: isSelected ? Colors.white : AppColors.textPrimary,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedCategoryFilter = category);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.accentFlame : AppColors.merchantCard,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? AppColors.accentFlame : AppColors.merchantCardBorder,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+          ),
+        ),
       ),
-      backgroundColor: Colors.grey.shade100,
-      selectedColor: AppColors.primary,
-      checkmarkColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      onSelected: (_) => setState(() => _selectedCategoryFilter = category),
     );
   }
 
   Widget _buildProductCard(ProductModel prod) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: prod.inStock ? AppColors.border : Colors.red.withValues(alpha: 0.3),
-          width: prod.inStock ? 1 : 1.5,
-        ),
-      ),
-      child: Padding(
+    final isGas = _isGasItem(prod);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: BoraCard(
+        color: AppColors.merchantCard,
         padding: const EdgeInsets.all(14),
         child: Column(
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Imagem
+                // Imagem com preview
                 Stack(
                   children: [
                     ProductImagePreview(
                       imageUrl: prod.imageUrl,
-                      width: 72,
-                      height: 72,
+                      width: 68,
+                      height: 68,
                       borderRadius: 14,
                     ),
                     if (!prod.inStock)
                       Positioned.fill(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.45),
+                            color: Colors.black.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(14),
                           ),
                           child: const Center(
                             child: Text(
-                              'ESGOTADO',
-                              style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900),
+                              'PAUSADO',
+                              style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900),
                             ),
                           ),
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
 
-                // Informações Principais
+                // Dados
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1069,23 +746,28 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                           Expanded(
                             child: Text(
                               prod.name,
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14.5, color: Colors.white),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          // Badge Semântico Gás x Água
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: prod.inStock ? Colors.green.withValues(alpha: 0.12) : Colors.red.withValues(alpha: 0.12),
+                              color: isGas ? AppColors.gasTagBgDark : AppColors.waterTagBgDark,
                               borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isGas ? AppColors.accentFlame.withValues(alpha: 0.3) : const Color(0xFF0284C7).withValues(alpha: 0.3),
+                                width: 1,
+                              ),
                             ),
                             child: Text(
-                              prod.inStock ? 'DISPONÍVEL' : 'PAUSADO',
+                              isGas ? 'GÁS' : 'ÁGUA',
                               style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: prod.inStock ? Colors.green.shade800 : Colors.red.shade800,
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w900,
+                                color: isGas ? AppColors.accentFlame : const Color(0xFF38BDF8),
                               ),
                             ),
                           ),
@@ -1094,7 +776,7 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                       const SizedBox(height: 2),
                       Text(
                         prod.brandName,
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 8),
 
@@ -1102,20 +784,21 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.08),
+                              color: AppColors.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                             ),
                             child: Text(
                               'Troca: R\$ ${prod.refillPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: AppColors.primary),
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: Color(0xFF38BDF8)),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'Completo: R\$ ${prod.shellPrice.toStringAsFixed(2).replaceAll('.', ',')}',
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.textSecondary),
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11.5, color: Color(0xFF94A3B8)),
                           ),
                         ],
                       ),
@@ -1124,27 +807,35 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
+            const SizedBox(height: 10),
+            Divider(height: 1, color: AppColors.merchantDivider),
             const SizedBox(height: 8),
 
-            // Ações Rápidas no Rodapé do Card
+            // Ações de Rodapé
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    const Text('Estoque Imediato:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    const Text('Estoque Imediato:', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF94A3B8))),
                     const SizedBox(width: 8),
                     Switch(
                       value: prod.inStock,
-                      activeThumbColor: Colors.green,
+                      activeThumbColor: AppColors.success,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       onChanged: (val) {
+                        HapticFeedback.selectionClick();
                         final updated = prod.copyWith(inStock: val);
                         ref.read(productsProvider.notifier).update(
                               (list) => list.map((p) => p.id == prod.id ? updated : p).toList(),
                             );
+                        if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+                          SupabaseService.client
+                              .from('products')
+                              .update({'in_stock': val})
+                              .eq('id', prod.id)
+                              .catchError((_) {});
+                        }
                       },
                     ),
                   ],
@@ -1152,12 +843,12 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Colors.blueGrey, size: 20),
+                      icon: const Icon(Icons.edit_outlined, color: Color(0xFF38BDF8), size: 19),
                       tooltip: 'Editar Produto',
                       onPressed: () => _showProductFormDialog(productToEdit: prod),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 19),
                       tooltip: 'Excluir Produto',
                       onPressed: () => _confirmDeleteProduct(prod),
                     ),
