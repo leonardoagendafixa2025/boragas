@@ -540,5 +540,204 @@ void main() {
             reason: 'Rota $r avaliada com sucesso sem exceção');
       }
     });
+
+    test('I1. Validação de funcionamento real de CADA slug de categoria na Home', () {
+      final testStores = [
+        const StoreModel(
+          id: 'store-gas-only',
+          name: 'Central do Gás Exclusivo',
+          cnpj: '11.111.111/0001-11',
+          phone: '(11) 91111-1111',
+          logoUrl: 'assets/images/app_icon.png',
+          coverUrl: 'assets/images/brand_lockup.png',
+          address: 'Rua do Gás, 10',
+          distanceKm: 2.0,
+          rating: 4.8,
+          reviewsCount: 100,
+          estimatedTimeMin: 30,
+          deliveryFee: 10.0,
+          isVerified: true,
+          isOpen: true,
+          commissionRate: 8.0,
+        ),
+        const StoreModel(
+          id: 'store-water-only',
+          name: 'Fonte Pura Água Mineral',
+          cnpj: '22.222.222/0001-22',
+          phone: '(11) 92222-2222',
+          logoUrl: 'assets/images/app_icon.png',
+          coverUrl: 'assets/images/brand_lockup.png',
+          address: 'Av. das Fontes, 20',
+          distanceKm: 1.5,
+          rating: 4.9,
+          reviewsCount: 50,
+          estimatedTimeMin: 20,
+          deliveryFee: 0.0, // Frete Grátis
+          isVerified: true,
+          isOpen: true,
+          commissionRate: 8.0,
+        ),
+        const StoreModel(
+          id: 'store-complete',
+          name: 'Mega Distribuidora Multiuso',
+          cnpj: '33.333.333/0001-33',
+          phone: '(11) 93333-3333',
+          logoUrl: 'assets/images/app_icon.png',
+          coverUrl: 'assets/images/brand_lockup.png',
+          address: 'Rodovia dos Comércios, 30',
+          distanceKm: 4.0,
+          rating: 4.7,
+          reviewsCount: 80,
+          estimatedTimeMin: 45,
+          deliveryFee: 15.0,
+          isVerified: true,
+          isOpen: true,
+          commissionRate: 8.0,
+        ),
+      ];
+
+      final testProducts = [
+        const ProductModel(
+          id: 'prod-p13',
+          storeId: 'store-gas-only',
+          storeName: 'Central do Gás Exclusivo',
+          category: ProductCategory.p13,
+          name: 'Botijão P13 Ultragaz',
+          brandName: 'Ultragaz',
+          description: 'P13 residencial',
+          refillPrice: 105.00,
+          shellPrice: 280.00,
+          inStock: true,
+          imageUrl: 'assets/images/products/gas_13kg_gold.png',
+          rating: 5.0,
+        ),
+        const ProductModel(
+          id: 'prod-water',
+          storeId: 'store-water-only',
+          storeName: 'Fonte Pura Água Mineral',
+          category: ProductCategory.water20l,
+          name: 'Galão Água Mineral 20L',
+          brandName: 'Minalba',
+          description: 'Água pura 20L',
+          refillPrice: 14.00,
+          shellPrice: 40.00,
+          inStock: true,
+          imageUrl: 'assets/images/products/water_20l_blue.png',
+          rating: 5.0,
+        ),
+        const ProductModel(
+          id: 'prod-p45',
+          storeId: 'store-complete',
+          storeName: 'Mega Distribuidora Multiuso',
+          category: ProductCategory.p45,
+          name: 'Cilindro P45 Industrial',
+          brandName: 'Supergasbras',
+          description: 'P45 Industrial',
+          refillPrice: 420.00,
+          shellPrice: 850.00,
+          inStock: true,
+          imageUrl: 'assets/images/products/gas_13kg_gold.png',
+          rating: 5.0,
+        ),
+        const ProductModel(
+          id: 'prod-p20',
+          storeId: 'store-complete',
+          storeName: 'Mega Distribuidora Multiuso',
+          category: ProductCategory.p20,
+          name: 'Cilindro P20 Empilhadeira',
+          brandName: 'NacionalGás',
+          description: 'P20 Empilhadeira',
+          refillPrice: 180.00,
+          shellPrice: 400.00,
+          inStock: true,
+          imageUrl: 'assets/images/products/gas_13kg_gold.png',
+          rating: 5.0,
+        ),
+        const ProductModel(
+          id: 'prod-acc',
+          storeId: 'store-complete',
+          storeName: 'Mega Distribuidora Multiuso',
+          category: ProductCategory.accessories,
+          name: 'Kit Regulador e Mangueira Inmetro',
+          brandName: 'Aliança',
+          description: 'Regulador',
+          refillPrice: 45.00,
+          shellPrice: 45.00,
+          inStock: true,
+          imageUrl: 'assets/images/products/gas_13kg_gold.png',
+          rating: 5.0,
+        ),
+      ];
+
+      final container = ProviderContainer(
+        overrides: [
+          storesProvider.overrideWith(() => _TestStoresNotifier(testStores)),
+          productsProvider.overrideWith(() => _TestProductsNotifier(testProducts)),
+        ],
+      );
+
+      // 1. Slug 'all' deve trazer todas as 3 lojas
+      container.read(selectedCategorySlugProvider.notifier).set('all');
+      expect(container.read(filteredStoresProvider).length, equals(3));
+
+      // 2. Slug 'p13' deve trazer apenas a loja que tem P13 ('store-gas-only')
+      container.read(selectedCategorySlugProvider.notifier).set('p13');
+      final p13Stores = container.read(filteredStoresProvider);
+      expect(p13Stores.length, equals(1));
+      expect(p13Stores.first.id, equals('store-gas-only'));
+
+      // 3. Slug 'water20l' deve trazer apenas 'store-water-only'
+      container.read(selectedCategorySlugProvider.notifier).set('water20l');
+      final waterStores = container.read(filteredStoresProvider);
+      expect(waterStores.length, equals(1));
+      expect(waterStores.first.id, equals('store-water-only'));
+
+      // 4. Slug 'p45' deve trazer apenas 'store-complete'
+      container.read(selectedCategorySlugProvider.notifier).set('p45');
+      final p45Stores = container.read(filteredStoresProvider);
+      expect(p45Stores.length, equals(1));
+      expect(p45Stores.first.id, equals('store-complete'));
+
+      // 5. Slug 'p20' deve trazer apenas 'store-complete'
+      container.read(selectedCategorySlugProvider.notifier).set('p20');
+      final p20Stores = container.read(filteredStoresProvider);
+      expect(p20Stores.length, equals(1));
+      expect(p20Stores.first.id, equals('store-complete'));
+
+      // 6. Slug 'accessories' deve trazer apenas 'store-complete'
+      container.read(selectedCategorySlugProvider.notifier).set('accessories');
+      final accStores = container.read(filteredStoresProvider);
+      expect(accStores.length, equals(1));
+      expect(accStores.first.id, equals('store-complete'));
+
+      // 7. Slug 'free_delivery' deve trazer apenas 'store-water-only' (deliveryFee == 0)
+      container.read(selectedCategorySlugProvider.notifier).set('free_delivery');
+      final freeStores = container.read(filteredStoresProvider);
+      expect(freeStores.length, equals(1));
+      expect(freeStores.first.id, equals('store-water-only'));
+      expect(freeStores.first.deliveryFee, equals(0.0));
+
+      // 8. Comparador de Preços para 'water20l' deve filtrar exatamente 1 item
+      final waterItems = container.read(priceComparisonListProvider);
+      expect(waterItems.length, equals(1));
+      expect(waterItems.first.product.category, equals(ProductCategory.water20l));
+      expect(waterItems.first.totalPrice, equals(14.00));
+    });
   });
+}
+
+class _TestStoresNotifier extends StoresNotifier {
+  final List<StoreModel> _stores;
+  _TestStoresNotifier(this._stores);
+
+  @override
+  List<StoreModel> build() => _stores;
+}
+
+class _TestProductsNotifier extends ProductsNotifier {
+  final List<ProductModel> _products;
+  _TestProductsNotifier(this._products);
+
+  @override
+  List<ProductModel> build() => _products;
 }

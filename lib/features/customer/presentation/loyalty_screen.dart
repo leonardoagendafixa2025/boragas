@@ -218,35 +218,62 @@ class LoyaltyScreen extends ConsumerWidget {
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 10),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: loyalty.completedOrders.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final orderNum = loyalty.completedOrders[index];
-                  return ListTile(
-                    leading: const CircleAvatar(
-                      radius: 16,
-                      backgroundColor: Color(0xFFDCFCE7),
-                      child: Icon(Icons.check_rounded, color: AppColors.success, size: 16),
+            if (loyalty.completedOrders.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.receipt_long_rounded, color: AppColors.textMuted, size: 40),
+                    SizedBox(height: 8),
+                    Text(
+                      'Nenhum pedido finalizado ainda',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textSecondary),
                     ),
-                    title: Text('Pedido $orderNum Concluído', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                    subtitle: const Text('Entregue no endereço • +1 Selo validado', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    trailing: const Text(
-                      'Selo Ativo',
-                      style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w800),
+                    SizedBox(height: 4),
+                    Text(
+                      'Cada entrega concluída adiciona 1 selo automaticamente!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                     ),
-                  );
-                },
+                  ],
+                ),
+              )
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: loyalty.completedOrders.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final orderNum = loyalty.completedOrders[index];
+                    return ListTile(
+                      leading: const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: Color(0xFFDCFCE7),
+                        child: Icon(Icons.check_rounded, color: AppColors.success, size: 16),
+                      ),
+                      title: Text('Pedido $orderNum Concluído', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: const Text('Entregue no endereço • +1 Selo validado', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      trailing: const Text(
+                        'Selo Ativo',
+                        style: TextStyle(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w800),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
             const SizedBox(height: 24),
           ],
         ),

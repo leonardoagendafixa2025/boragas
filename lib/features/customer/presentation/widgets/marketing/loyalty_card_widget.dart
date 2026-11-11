@@ -155,7 +155,9 @@ class LoyaltyCardWidget extends ConsumerWidget {
                   child: Text(
                     loyalty.isRewardReady
                         ? '🎉 Parabéns! Sua recompensa está disponível para resgate!'
-                        : 'Faltam apenas ${loyalty.remainingStamps} pedidos para resgatar R\$ 25 OFF!',
+                        : (loyalty.currentStamps == 0
+                            ? 'Faça seu 1º pedido para ganhar seu primeiro selo!'
+                            : 'Faltam apenas ${loyalty.remainingStamps} pedidos para resgatar R\$ 25 OFF!'),
                     style: const TextStyle(
                       color: Color(0xFF166534),
                       fontSize: 11,

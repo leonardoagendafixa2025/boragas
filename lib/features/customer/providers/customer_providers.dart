@@ -326,14 +326,75 @@ final ordersProvider =
 // Filtered Stores for Home
 final filteredStoresProvider = Provider<List<StoreModel>>((ref) {
   final stores = ref.watch(storesProvider);
-  final query = ref.watch(searchQueryProvider).toLowerCase();
+  final query = ref.watch(searchQueryProvider).trim().toLowerCase();
+  final categorySlug = ref.watch(selectedCategorySlugProvider);
+  final products = ref.watch(productsProvider);
 
-  return stores.where((s) {
+  // Mapeamento de produtos por loja para filtros rápidos de categoria
+  final productsByStore = <String, List<ProductModel>>{};
+  for (final prod in products) {
+    productsByStore.putIfAbsent(prod.storeId, () => []).add(prod);
+  }
+
+  var filtered = stores.where((s) {
     if (s.isSuspendedForNonPayment) return false;
-    if (query.isEmpty) return true;
-    return s.name.toLowerCase().contains(query) ||
-        s.address.toLowerCase().contains(query);
+
+    // 1. Filtro real por slug de categoria
+    if (categorySlug != 'all') {
+      if (categorySlug == 'free_delivery') {
+        if (s.deliveryFee > 0) return false;
+      } else if (categorySlug == 'lowest_price') {
+        // 'lowest_price' mantém todas e ordena no final
+      } else {
+        // Slugs de produtos: p13, water20l, p45, p20, accessories
+        final storeProducts = productsByStore[s.id] ?? const <ProductModel>[];
+        final hasCategoryProduct = storeProducts.any((p) {
+          if (!p.inStock) return false;
+          switch (categorySlug) {
+            case 'p13':
+              return p.category == ProductCategory.p13;
+            case 'water20l':
+              return p.category == ProductCategory.water20l;
+            case 'p45':
+              return p.category == ProductCategory.p45;
+            case 'p20':
+              return p.category == ProductCategory.p20;
+            case 'accessories':
+              return p.category == ProductCategory.accessories;
+            default:
+              return false;
+          }
+        });
+        if (!hasCategoryProduct) return false;
+      }
+    }
+
+    // 2. Filtro por termo de busca
+    if (query.isNotEmpty) {
+      final matchesStore = s.name.toLowerCase().contains(query) ||
+          s.address.toLowerCase().contains(query);
+      if (matchesStore) return true;
+
+      final storeProducts = productsByStore[s.id] ?? const <ProductModel>[];
+      final matchesProduct = storeProducts.any((p) =>
+          p.name.toLowerCase().contains(query) ||
+          p.brandName.toLowerCase().contains(query));
+      if (!matchesProduct) return false;
+    }
+
+    return true;
   }).toList();
+
+  // 3. Ordenação se 'lowest_price' estiver ativo
+  if (categorySlug == 'lowest_price') {
+    filtered.sort((a, b) {
+      final feeComparison = a.deliveryFee.compareTo(b.deliveryFee);
+      if (feeComparison != 0) return feeComparison;
+      return a.distanceKm.compareTo(b.distanceKm);
+    });
+  }
+
+  return filtered;
 });
 
 // Price Comparison Items

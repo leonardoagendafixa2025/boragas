@@ -166,22 +166,10 @@ class CartNotifier extends Notifier<CartState> {
         discount: 10.0,
       );
       return true;
-    } else if (clean == 'PRIMEIRACOMPRA' || clean == 'BEMVINDO' || clean == 'RELAMPAGO15') {
+    } else if (clean == 'PRIMEIRACOMPRA' || clean == 'BEMVINDO') {
       state = state.copyWith(
         appliedCoupon: clean,
         discount: 15.0,
-      );
-      return true;
-    } else if (clean == 'COMBOTOP') {
-      state = state.copyWith(
-        appliedCoupon: clean,
-        discount: 12.0,
-      );
-      return true;
-    } else if (clean == 'FIMDESEMANA5') {
-      state = state.copyWith(
-        appliedCoupon: clean,
-        discount: 5.0,
       );
       return true;
     }

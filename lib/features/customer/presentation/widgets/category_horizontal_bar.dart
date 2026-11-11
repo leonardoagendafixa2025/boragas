@@ -60,9 +60,13 @@ class CategoryHorizontalBar extends ConsumerWidget {
             icon: _getIconForCategory(cat.iconName),
             isSelected: isSelected,
             onTap: () {
-              ref.read(selectedCategorySlugProvider.notifier).set(cat.slug);
-              if (cat.slug == 'lowest_price') {
-                ref.read(homeViewModeProvider.notifier).set(HomeViewMode.items);
+              if (isSelected) {
+                ref.read(selectedCategorySlugProvider.notifier).set('all');
+              } else {
+                ref.read(selectedCategorySlugProvider.notifier).set(cat.slug);
+                if (cat.slug == 'lowest_price') {
+                  ref.read(homeViewModeProvider.notifier).set(HomeViewMode.items);
+                }
               }
             },
           );

@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
+import '../../../core/models/banner_model.dart';
 import '../../../core/models/order_model.dart';
 import '../providers/cart_provider.dart';
 import '../providers/customer_providers.dart';
+import '../providers/marketing_providers.dart';
 import '../../../core/widgets/interactive_scale_button.dart';
 import 'widgets/banner_carousel.dart';
 import 'widgets/category_horizontal_bar.dart';
@@ -32,6 +34,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  String _getCategoryTitle(String slug, List<HomeCategoryModel> categories) {
+    for (final c in categories) {
+      if (c.slug == slug) return c.title;
+    }
+    return slug;
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewMode = ref.watch(homeViewModeProvider);
@@ -39,6 +48,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final priceComparisonItems = ref.watch(priceComparisonListProvider);
     final cart = ref.watch(cartProvider);
     final orders = ref.watch(ordersProvider);
+    final stories = ref.watch(storiesProvider);
+    final flashDeal = ref.watch(flashDealProvider);
+    final selectedSlug = ref.watch(selectedCategorySlugProvider);
+    final categories = ref.watch(homeCategoriesProvider);
     final hasActiveOrder = orders.any((o) =>
         o.status == OrderStatus.outForDelivery ||
         o.status == OrderStatus.preparing ||
@@ -55,18 +68,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(
               child: CustomScrollView(
                 slivers: [
-                  // 1. Stories Bar (Instagram-style Ofertas & Dicas)
-                  const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 10),
-                      child: StoriesBar(),
+                  // 1. Stories Bar (apenas quando houver campanhas cadastradas)
+                  if (stories.isNotEmpty)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 10),
+                        child: StoriesBar(),
+                      ),
                     ),
-                  ),
 
-                  // 2. Oferta Chama Relâmpago com Cronômetro Regressivo
-                  const SliverToBoxAdapter(
-                    child: FlashDealCard(),
-                  ),
+                  // 2. Oferta Chama Relâmpago (apenas quando houver oferta ativa configurada)
+                  if (flashDeal != null)
+                    const SliverToBoxAdapter(
+                      child: FlashDealCard(),
+                    ),
 
                   // 3. Promotional Banners Carousel
                   const SliverToBoxAdapter(
@@ -112,6 +127,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: CategoryHorizontalBar(),
                     ),
                   ),
+
+                  // Indicador visual de filtro por categoria ativo
+                  if (selectedSlug != 'all')
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.filter_alt_rounded, size: 16, color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Filtrando por: ${_getCategoryTitle(selectedSlug, categories)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () => ref.read(selectedCategorySlugProvider.notifier).set('all'),
+                                borderRadius: BorderRadius.circular(6),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Limpar',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Icon(Icons.close_rounded, size: 14, color: AppColors.textPrimary),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
 
                   // Dual View Mode Selector (Segmented Button / Toggle)
                   SliverToBoxAdapter(
@@ -241,12 +310,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // View Content: Tab 1 Stores List OR Tab 2 Price Comparison
                   if (viewMode == HomeViewMode.stores) ...[
                     if (filteredStores.isEmpty)
-                      const SliverFillRemaining(
+                      SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
-                          child: Text(
-                            'Nenhuma distribuidora encontrada.',
-                            style: TextStyle(color: AppColors.textSecondary),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.storefront_outlined, size: 48, color: AppColors.textMuted),
+                                const SizedBox(height: 12),
+                                Text(
+                                  selectedSlug != 'all'
+                                      ? 'Nenhuma distribuidora com ${_getCategoryTitle(selectedSlug, categories)} encontrada no momento.'
+                                      : 'Nenhuma distribuidora cadastrada na região.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                ),
+                                if (selectedSlug != 'all') ...[
+                                  const SizedBox(height: 12),
+                                  TextButton.icon(
+                                    onPressed: () => ref.read(selectedCategorySlugProvider.notifier).set('all'),
+                                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                                    label: const Text('Ver todas as distribuidoras'),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       )
@@ -263,12 +353,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                   ] else ...[
                     if (priceComparisonItems.isEmpty)
-                      const SliverFillRemaining(
+                      SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
-                          child: Text(
-                            'Nenhum item encontrado para esta categoria.',
-                            style: TextStyle(color: AppColors.textSecondary),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.inventory_2_outlined, size: 48, color: AppColors.textMuted),
+                                const SizedBox(height: 12),
+                                Text(
+                                  selectedSlug != 'all'
+                                      ? 'Nenhum produto em estoque para a categoria selecionada.'
+                                      : 'Nenhum item disponível para comparação no momento.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                                ),
+                                if (selectedSlug != 'all') ...[
+                                  const SizedBox(height: 12),
+                                  TextButton.icon(
+                                    onPressed: () => ref.read(selectedCategorySlugProvider.notifier).set('all'),
+                                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                                    label: const Text('Limpar filtro de categoria'),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       )
