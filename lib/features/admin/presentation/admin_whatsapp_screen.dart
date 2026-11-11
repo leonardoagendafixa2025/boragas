@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/backend_config_service.dart';
 
 class AdminWhatsAppScreen extends ConsumerStatefulWidget {
   const AdminWhatsAppScreen({super.key});
@@ -29,14 +30,12 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
   bool _isSendingTest = false;
   String? _testResult;
 
-  String _backendBaseUrl = const String.fromEnvironment(
-    'BACKEND_URL',
-    defaultValue: 'http://localhost:10000',
-  );
+  String _backendBaseUrl = BackendConfigService.baseUrl;
 
   @override
   void initState() {
     super.initState();
+    _backendBaseUrl = BackendConfigService.baseUrl;
     _fetchWhatsAppStatus();
     // Polling a cada 3 segundos enquanto na tela
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
@@ -174,22 +173,22 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white70,
-                      side: const BorderSide(color: Color(0xFF334155)),
+                      foregroundColor: const Color(0xFF25D366),
+                      side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
                     ),
-                    onPressed: () => controller.text = 'http://localhost:10000',
-                    child: const Text('Localhost (10000)', style: TextStyle(fontSize: 11)),
+                    onPressed: () => controller.text = 'https://boragas-backend.onrender.com',
+                    child: const Text('Render Nuvem (Padrão)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF25D366),
-                      side: const BorderSide(color: Color(0xFF25D366)),
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Color(0xFF334155)),
                     ),
-                    onPressed: () => controller.text = 'https://boragas-backend.onrender.com',
-                    child: const Text('Render (Exemplo)', style: TextStyle(fontSize: 11)),
+                    onPressed: () => controller.text = 'http://localhost:10000',
+                    child: const Text('Localhost (10000)', style: TextStyle(fontSize: 11)),
                   ),
                 ),
               ],
@@ -206,14 +205,17 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
               backgroundColor: const Color(0xFF25D366),
               foregroundColor: Colors.black,
             ),
-            onPressed: () {
+            onPressed: () async {
               final newUrl = controller.text.trim().replaceAll(RegExp(r'/+$'), '');
               if (newUrl.isNotEmpty) {
-                setState(() {
-                  _backendBaseUrl = newUrl;
-                  _isLoading = true;
-                });
-                Navigator.pop(ctx);
+                await BackendConfigService.setBaseUrl(newUrl);
+                if (mounted) {
+                  setState(() {
+                    _backendBaseUrl = newUrl;
+                    _isLoading = true;
+                  });
+                }
+                if (ctx.mounted) Navigator.pop(ctx);
                 _fetchWhatsAppStatus();
               }
             },

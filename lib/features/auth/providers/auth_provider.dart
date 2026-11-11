@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/backend_config_service.dart';
 import '../../../core/services/supabase_service.dart';
 
 enum UserRole { customer, merchant, courier, admin }
@@ -523,7 +524,7 @@ class AuthNotifier extends Notifier<AuthState> {
     final code = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000)).toString();
 
     try {
-      const backendUrl = String.fromEnvironment('BACKEND_URL', defaultValue: 'http://localhost:10000');
+      final backendUrl = BackendConfigService.baseUrl;
       await http.post(
         Uri.parse('$backendUrl/api/v1/whatsapp/send'),
         headers: {'Content-Type': 'application/json'},
@@ -580,7 +581,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final cleanDigits = clean.replaceAll(RegExp(r'\D'), '');
       if (cleanDigits.length >= 10) {
         final formattedPhone = cleanDigits.startsWith('55') ? cleanDigits : '55$cleanDigits';
-        const backendUrl = String.fromEnvironment('BACKEND_URL', defaultValue: 'http://localhost:10000');
+        final backendUrl = BackendConfigService.baseUrl;
         await http.post(
           Uri.parse('$backendUrl/api/v1/whatsapp/send'),
           headers: {'Content-Type': 'application/json'},
