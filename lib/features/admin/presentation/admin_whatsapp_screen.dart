@@ -142,7 +142,12 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
           children: [
             Icon(Icons.cloud_sync_rounded, color: Color(0xFF25D366)),
             SizedBox(width: 8),
-            Text('Servidor do Backend (Render / Local)', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Expanded(
+              child: Text(
+                'Servidor Backend (Render / Local)',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -229,59 +234,21 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Row(
-          children: [
-            Icon(Icons.chat_rounded, color: Color(0xFF25D366)),
-            SizedBox(width: 8),
-            Text('Conexão Baileys WhatsApp'),
-          ],
-        ),
-        actions: [
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
-              side: BorderSide(
-                color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
-                width: 1.2,
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: _showServerConfigDialog,
-            icon: const Icon(Icons.cloud_sync_rounded, size: 16),
-            label: Text(
-              _backendBaseUrl.contains('localhost') ? 'API: Localhost' : 'API: Render Nuvem',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Atualizar Status',
-            onPressed: _fetchWhatsAppStatus,
-          ),
-          TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-            onPressed: () => launchUrl(
-              Uri.parse('$_backendBaseUrl/whatsapp'),
-              mode: LaunchMode.externalApplication,
-            ),
-            icon: const Icon(Icons.open_in_new_rounded, size: 16),
-            label: const Text('Abrir QR no Navegador', style: TextStyle(fontSize: 12)),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top Section: Title & Actions Header (Responsivo Mobile-First, sem duplo AppBar)
+            _buildTopHeader(),
+
+            const SizedBox(height: 16),
+
             // Status Card Hero
             _buildStatusHeaderCard(),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             // QR Code Scanner Box (Quando aguardando conexão)
             if (_status == 'qr_ready') _buildQrScannerBox(),
@@ -295,17 +262,112 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
             // Card Erro / Desconectado
             if (_status == 'disconnected' && !_isLoading) _buildDisconnectedBox(),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             // Formulário de Teste de Disparo
             _buildTestSenderCard(),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             // Modelos de Mensagens Ativos
             _buildTemplatesPreviewCard(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTopHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.chat_rounded, color: Color(0xFF25D366), size: 22),
+              SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Conexão Baileys WhatsApp',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Serviço de mensageria ativa e notificações transacionais',
+                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _backendBaseUrl.contains('localhost')
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFF059669),
+                    side: BorderSide(
+                      color: _backendBaseUrl.contains('localhost')
+                          ? const Color(0xFF38BDF8)
+                          : const Color(0xFF10B981),
+                      width: 1.2,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: _showServerConfigDialog,
+                  icon: const Icon(Icons.cloud_sync_rounded, size: 16),
+                  label: Text(
+                    _backendBaseUrl.contains('localhost') ? 'API: Localhost' : 'API: Render Nuvem',
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF475569),
+                    side: const BorderSide(color: AppColors.border, width: 1.2),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    minimumSize: const Size(0, 36),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: _fetchWhatsAppStatus,
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: const Text('Atualizar', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    minimumSize: const Size(0, 36),
+                  ),
+                  onPressed: () => launchUrl(
+                    Uri.parse('$_backendBaseUrl/whatsapp'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: const Text('Abrir QR no Navegador', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -333,98 +395,137 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
       badgeIcon = Icons.error_outline_rounded;
     }
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: badgeColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(badgeIcon, color: badgeColor, size: 28),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+
+        final badgeIconWidget = Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: badgeColor.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: Icon(badgeIcon, color: badgeColor, size: 26),
+        );
+
+        final statusInfoWidget = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(color: badgeColor, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      statusTitle,
-                      style: TextStyle(
-                        color: badgeColor,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(color: badgeColor, shape: BoxShape.circle),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _status == 'connected'
-                      ? 'WhatsApp Oficial do BoraGás Pareado'
-                      : 'Notificações Automáticas de Pedidos via Baileys',
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                if (_connectedPhone != null)
-                  Text(
-                    'Número: +$_connectedPhone',
-                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-                  ),
-                const SizedBox(height: 4),
-                InkWell(
-                  onTap: _showServerConfigDialog,
-                  borderRadius: BorderRadius.circular(4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.link_rounded,
-                        size: 14,
-                        color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'API: $_backendBaseUrl',
-                        style: TextStyle(
-                          color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
-                          fontSize: 12,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ],
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    statusTitle,
+                    style: TextStyle(
+                      color: badgeColor,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11.5,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-          ElevatedButton.icon(
+            const SizedBox(height: 4),
+            Text(
+              _status == 'connected'
+                  ? 'WhatsApp Oficial do BoraGás Pareado'
+                  : 'Notificações Automáticas de Pedidos via Baileys',
+              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+            ),
+            if (_connectedPhone != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Número: +$_connectedPhone',
+                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+              ),
+            ],
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: _showServerConfigDialog,
+              borderRadius: BorderRadius.circular(4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.link_rounded,
+                    size: 14,
+                    color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'API: $_backendBaseUrl',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
+                        fontSize: 11.5,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+
+        final restartButton = SizedBox(
+          width: isMobile ? double.infinity : null,
+          child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1E293B),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: _requestNewQrCode,
             icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: const Text('Reiniciar Bot', style: TextStyle(fontSize: 12)),
+            label: const Text('Reiniciar Bot', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
-        ],
-      ),
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: badgeColor.withValues(alpha: 0.4)),
+          ),
+          child: isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        badgeIconWidget,
+                        const SizedBox(width: 12),
+                        Expanded(child: statusInfoWidget),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    restartButton,
+                  ],
+                )
+              : Row(
+                  children: [
+                    badgeIconWidget,
+                    const SizedBox(width: 16),
+                    Expanded(child: statusInfoWidget),
+                    const SizedBox(width: 12),
+                    restartButton,
+                  ],
+                ),
+        );
+      },
     );
   }
 
@@ -603,7 +704,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
         side: BorderSide(color: Colors.amber.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -611,9 +712,11 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
               children: [
                 Icon(Icons.warning_amber_rounded, color: Colors.amber.shade800),
                 const SizedBox(width: 8),
-                Text(
-                  'Serviço Baileys em espera',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                Expanded(
+                  child: Text(
+                    'Serviço Baileys em espera',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                  ),
                 ),
               ],
             ),
@@ -623,9 +726,18 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
               style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
             ),
             const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _requestNewQrCode,
-              child: const Text('Iniciar Conexão'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber.shade800,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: _requestNewQrCode,
+                child: const Text('Iniciar Conexão', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
             ),
           ],
         ),
@@ -637,7 +749,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -645,20 +757,25 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
               children: [
                 Icon(Icons.send_rounded, color: Color(0xFF25D366), size: 20),
                 SizedBox(width: 8),
-                Text('Testar Disparo de Mensagem WhatsApp', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                Expanded(
+                  child: Text(
+                    'Testar Disparo de Mensagem WhatsApp',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
             const Text(
               'Envie uma mensagem direta para qualquer número para comprovar o funcionamento do Baileys:',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _testPhoneController,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: 'Telefone do Destinatário com DDD',
+                labelText: 'Telefone com DDD',
                 hintText: '11987654321',
                 prefixIcon: const Icon(Icons.phone_rounded),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -674,31 +791,37 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (_testResult != null)
-                  Expanded(
-                    child: Text(
-                      _testResult!,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                    ),
-                  )
-                else
-                  const Spacer(),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  ),
-                  onPressed: _isSendingTest ? null : _sendTestMessage,
-                  icon: _isSendingTest
-                      ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Icon(Icons.send_rounded, size: 16),
-                  label: const Text('Enviar WhatsApp Teste', style: TextStyle(fontWeight: FontWeight.bold)),
+            if (_testResult != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
                 ),
-              ],
+                child: Text(
+                  _testResult!,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: _isSendingTest ? null : _sendTestMessage,
+                icon: _isSendingTest
+                    ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.send_rounded, size: 16),
+                label: const Text('Enviar WhatsApp Teste', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ),
             ),
           ],
         ),
@@ -710,7 +833,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -718,7 +841,12 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
               children: [
                 Icon(Icons.format_quote_rounded, color: AppColors.primary, size: 20),
                 SizedBox(width: 8),
-                Text('Modelos de Mensagens Transacionais Ativas', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                Expanded(
+                  child: Text(
+                    'Modelos de Mensagens Transacionais Ativas',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 14),
