@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/floating_order_tracker.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
 
 class CustomerShellScreen extends ConsumerStatefulWidget {
@@ -46,6 +47,7 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
   Widget build(BuildContext context) {
     final selectedIndex = _calculateSelectedIndex(context);
     final cart = ref.watch(cartProvider);
+    final auth = ref.watch(authProvider);
 
     return Scaffold(
       drawer: Drawer(
@@ -73,13 +75,19 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'BoraGás Marketplace',
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+                  Text(
+                    auth.user?.name ?? 'Cliente BoraGás',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
                   ),
-                  const Text(
-                    'Troca de Perfil & Navegação',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  Text(
+                    auth.user?.phone.isNotEmpty == true
+                        ? auth.user!.phone
+                        : (auth.user?.email.isNotEmpty == true ? auth.user!.email : 'BoraGás Marketplace'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ],
               ),
@@ -155,38 +163,34 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
               },
             ),
             const Divider(),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Text(
-                'MÓDULOS OPERACIONAIS & GESTÃO',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMuted),
-              ),
-            ),
             ListTile(
-              leading: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF0D9488)),
-              title: const Text('App do Entregador'),
-              subtitle: const Text('Rotas ativas e PIN de entrega'),
-              onTap: () {
+              leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              title: const Text('Sair da Conta', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w700)),
+              onTap: () async {
+                final router = GoRouter.of(context);
                 Navigator.pop(context);
-                context.push('/courier');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.store_rounded, color: AppColors.accentFlame),
-              title: const Text('Painel da Distribuidora'),
-              subtitle: const Text('Kanban & Gateway BYOK'),
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/merchant');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF6554C0)),
-              title: const Text('Painel Super Admin'),
-              subtitle: const Text('Comissões 8% & Home Manager'),
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/admin');
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Sair da Conta'),
+                    content: const Text('Deseja realmente sair da sua conta BoraGás?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancelar'),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirm == true) {
+                  await ref.read(authProvider.notifier).logout();
+                  router.go('/login');
+                }
               },
             ),
           ],

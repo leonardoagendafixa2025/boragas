@@ -6,6 +6,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/services/remote_config_service.dart';
+import '../auth/providers/auth_provider.dart';
 
 class AnimatedSplashScreen extends ConsumerStatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -121,7 +122,25 @@ class _AnimatedSplashScreenState extends ConsumerState<AnimatedSplashScreen>
 
     await Future.delayed(const Duration(milliseconds: 600));
     if (mounted) {
-      context.go('/home');
+      final auth = ref.read(authProvider);
+      if (!auth.isAuthenticated || auth.user == null) {
+        context.go('/login');
+      } else {
+        switch (auth.user!.role) {
+          case UserRole.merchant:
+            context.go('/merchant');
+            break;
+          case UserRole.courier:
+            context.go('/courier');
+            break;
+          case UserRole.admin:
+            context.go('/admin');
+            break;
+          case UserRole.customer:
+            context.go('/home');
+            break;
+        }
+      }
     }
   }
 

@@ -16,9 +16,39 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final TextEditingController _phoneController = TextEditingController(text: '(11) 98122-3344');
-  final TextEditingController _emailController = TextEditingController(text: 'lojista@boragas.app');
-  final TextEditingController _passwordController = TextEditingController(text: '••••••••');
+
+  // Controllers - Login
+  final _loginEmailController = TextEditingController();
+  final _loginPasswordController = TextEditingController();
+  bool _obscureLoginPassword = true;
+
+  // Controllers - Login por WhatsApp / SMS
+  final _loginPhoneController = TextEditingController();
+  bool _isPhoneLoginMode = false;
+
+  // Controllers - Cadastro
+  UserRole _selectedRole = UserRole.customer;
+  final _regNameController = TextEditingController();
+  final _regEmailController = TextEditingController();
+  final _regPhoneController = TextEditingController();
+  final _regPasswordController = TextEditingController();
+  final _regConfirmPasswordController = TextEditingController();
+  bool _obscureRegPassword = true;
+
+  // Campos específicos de Lojista
+  final _regStoreNameController = TextEditingController();
+  final _regCnpjController = TextEditingController();
+  final _regStoreAddressController = TextEditingController();
+
+  // Campos específicos de Entregador
+  final _regVehicleModelController = TextEditingController();
+  final _regVehiclePlateController = TextEditingController();
+
+  // Campos específicos de Cliente
+  final _regDeliveryAddressController = TextEditingController();
+
+  final _loginFormKey = GlobalKey<FormState>();
+  final _registerFormKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -29,15 +59,89 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   @override
   void dispose() {
     _tabController.dispose();
-    _phoneController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
+    _loginEmailController.dispose();
+    _loginPasswordController.dispose();
+    _loginPhoneController.dispose();
+
+    _regNameController.dispose();
+    _regEmailController.dispose();
+    _regPhoneController.dispose();
+    _regPasswordController.dispose();
+    _regConfirmPasswordController.dispose();
+    _regStoreNameController.dispose();
+    _regCnpjController.dispose();
+    _regStoreAddressController.dispose();
+    _regVehicleModelController.dispose();
+    _regVehiclePlateController.dispose();
+    _regDeliveryAddressController.dispose();
     super.dispose();
   }
 
-  void _sendCustomerOtp() async {
-    final phone = _phoneController.text.trim();
-    if (phone.isEmpty) return;
+  void _routeAfterAuth(UserRole role) {
+    if (!mounted) return;
+    switch (role) {
+      case UserRole.merchant:
+        context.go('/merchant');
+        break;
+      case UserRole.courier:
+        context.go('/courier');
+        break;
+      case UserRole.admin:
+        context.go('/admin');
+        break;
+      case UserRole.customer:
+        context.go('/home');
+        break;
+    }
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_loginFormKey.currentState!.validate()) return;
+
+    final email = _loginEmailController.text.trim();
+    final pwd = _loginPasswordController.text.trim();
+
+    final success = await ref.read(authProvider.notifier).loginWithEmailPassword(email, pwd);
+
+    if (!mounted) return;
+
+    if (success) {
+      final user = ref.read(authProvider).user;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Bem-vindo(a), ${user?.name ?? 'ao BoraGás'}! ⚡'),
+          backgroundColor: const Color(0xFF16A34A),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      if (user != null) {
+        _routeAfterAuth(user.role);
+      } else {
+        context.go('/home');
+      }
+    } else {
+      final err = ref.read(authProvider).errorMessage ?? 'E-mail ou senha inválidos.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handlePhoneLogin() async {
+    final phone = _loginPhoneController.text.trim();
+    if (phone.isEmpty || phone.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor, informe um número de celular válido com DDD.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
 
     await ref.read(authProvider.notifier).sendPhoneOtp(phone);
     if (mounted) {
@@ -45,19 +149,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     }
   }
 
-  void _loginStaff() async {
-    final email = _emailController.text.trim().toLowerCase();
-    final pwd = _passwordController.text.trim();
+  Future<void> _handleRegister() async {
+    if (!_registerFormKey.currentState!.validate()) return;
 
-    if (email.contains('admin')) {
-      await ref.read(authProvider.notifier).loginAdmin(email, pwd);
-      if (mounted) context.go('/admin');
-    } else if (email.contains('entregador') || email.contains('courier')) {
-      await ref.read(authProvider.notifier).loginCourier(email, pwd);
-      if (mounted) context.go('/courier');
+    final pwd = _regPasswordController.text.trim();
+    final confirmPwd = _regConfirmPasswordController.text.trim();
+
+    if (pwd != confirmPwd) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('As senhas digitadas não coincidem.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final success = await ref.read(authProvider.notifier).registerUser(
+          name: _regNameController.text.trim(),
+          email: _regEmailController.text.trim(),
+          phone: _regPhoneController.text.trim(),
+          password: pwd,
+          role: _selectedRole,
+          storeName: _selectedRole == UserRole.merchant ? _regStoreNameController.text.trim() : null,
+          storeCnpj: _selectedRole == UserRole.merchant ? _regCnpjController.text.trim() : null,
+          storeAddress: _selectedRole == UserRole.merchant ? _regStoreAddressController.text.trim() : null,
+          vehicleModel: _selectedRole == UserRole.courier ? _regVehicleModelController.text.trim() : null,
+          vehiclePlate: _selectedRole == UserRole.courier ? _regVehiclePlateController.text.trim() : null,
+          deliveryAddress: _selectedRole == UserRole.customer ? _regDeliveryAddressController.text.trim() : null,
+        );
+
+    if (!mounted) return;
+
+    if (success) {
+      final user = ref.read(authProvider).user;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Conta cadastrada com sucesso! Bem-vindo(a) ${user?.name ?? ''} 🚀'),
+          backgroundColor: const Color(0xFF16A34A),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      if (user != null) {
+        _routeAfterAuth(user.role);
+      } else {
+        context.go('/home');
+      }
     } else {
-      await ref.read(authProvider.notifier).loginMerchant(email, pwd);
-      if (mounted) context.go('/merchant');
+      final err = ref.read(authProvider).errorMessage ?? 'Falha ao registrar conta. Tente novamente.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
@@ -66,185 +212,558 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
     final auth = ref.watch(authProvider);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 20),
-              const BoraGasLogo(size: 64, showText: true),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
+              const BoraGasLogo(size: 60, showText: true),
+              const SizedBox(height: 16),
               Text(
-                'Acesse sua conta',
-                style: AppTypography.displayMedium.copyWith(fontSize: 22),
+                'BoraGás Marketplace',
+                style: AppTypography.displayMedium.copyWith(fontSize: 22, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 'Gás e água mineral em minutos com o melhor preço',
                 textAlign: TextAlign.center,
-                style: AppTypography.bodySmall,
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 24),
 
-              // Tabs
+              // Abas de Acesso Real (Entrar vs Cadastrar)
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(14),
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                padding: const EdgeInsets.all(4),
                 child: TabBar(
                   controller: _tabController,
-                  indicatorColor: AppColors.primary,
-                  indicatorWeight: 3,
+                  indicator: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
                   labelColor: AppColors.primary,
-                  unselectedLabelColor: AppColors.textSecondary,
+                  unselectedLabelColor: const Color(0xFF64748B),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                   tabs: const [
-                    Tab(text: 'Cliente (Celular)'),
-                    Tab(text: 'Equipe & Lojas'),
+                    Tab(text: 'Entrar na Conta'),
+                    Tab(text: 'Criar Nova Conta'),
                   ],
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              // Tab contents
-              SizedBox(
-                height: 260,
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Tab 1: Customer Phone
-                    Column(
-                      children: [
-                        TextField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(
-                            labelText: 'Celular / WhatsApp com DDD',
-                            prefixIcon: Icon(Icons.phone_iphone_rounded, color: AppColors.primary),
-                            hintText: '(11) 98765-4321',
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        AppButton(
-                          label: 'Continuar com WhatsApp / SMS',
-                          isLoading: auth.isLoading,
-                          isFlameAccent: true,
-                          icon: Icons.chat_rounded,
-                          onPressed: _sendCustomerOtp,
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Enviaremos um código SMS ou WhatsApp com validação em 1 toque.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-                        ),
-                      ],
-                    ),
-
-                    // Tab 2: Merchant, Courier & Admin
-                    Column(
-                      children: [
-                        TextField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'E-mail corporativo / Login',
-                            prefixIcon: Icon(Icons.email_outlined, color: AppColors.primary),
-                            hintText: 'lojista@... / admin@... / entregador@...',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _passwordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Senha de acesso',
-                            prefixIcon: Icon(Icons.lock_outline, color: AppColors.primary),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        AppButton(
-                          label: 'Entrar no Painel Correspondente',
-                          isLoading: auth.isLoading,
-                          onPressed: _loginStaff,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              // Conteúdo Dinâmico (Entrar vs Cadastrar)
+              AnimatedBuilder(
+                animation: _tabController,
+                builder: (context, _) {
+                  if (_tabController.index == 0) {
+                    return _buildLoginTab(auth);
+                  } else {
+                    return _buildRegisterTab(auth);
+                  }
+                },
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              const Divider(),
-              const SizedBox(height: 10),
-
-              // Quick bypass demo profiles
-              const Text(
-                'TESTAR IMEDIATAMENTE (DEMO 4 PERFIS):',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textMuted,
-                  letterSpacing: 0.8,
+  /// ABA 1: ENTRAR NA CONTA
+  Widget _buildLoginTab(AuthState auth) {
+    if (_isPhoneLoginMode) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBBF7D0)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.chat_bubble_rounded, color: Color(0xFF16A34A), size: 24),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Entrar rápido como Cliente via código SMS ou WhatsApp.',
+                    style: TextStyle(color: Color(0xFF15803D), fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _loginPhoneController,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              labelText: 'Celular / WhatsApp com DDD',
+              hintText: '(11) 98765-4321',
+              prefixIcon: const Icon(Icons.phone_iphone_rounded, color: AppColors.primary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          AppButton(
+            label: 'Enviar Código de Acesso',
+            isLoading: auth.isLoading,
+            isFlameAccent: true,
+            icon: Icons.send_rounded,
+            onPressed: _handlePhoneLogin,
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => setState(() => _isPhoneLoginMode = false),
+            child: const Text('Voltar para login com E-mail e Senha'),
+          ),
+        ],
+      );
+    }
 
-              Row(
+    return Form(
+      key: _loginFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _loginEmailController,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'Informe seu e-mail de acesso.';
+              if (!v.contains('@')) return 'Informe um e-mail válido.';
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: 'E-mail cadastrado',
+              hintText: 'seuemail@exemplo.com',
+              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _loginPasswordController,
+            obscureText: _obscureLoginPassword,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'Informe sua senha.';
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: 'Senha',
+              prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureLoginPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  color: const Color(0xFF64748B),
+                ),
+                onPressed: () => setState(() => _obscureLoginPassword = !_obscureLoginPassword),
+              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 20),
+          AppButton(
+            label: 'Acessar BoraGás',
+            isLoading: auth.isLoading,
+            isFlameAccent: true,
+            icon: Icons.login_rounded,
+            onPressed: _handleLogin,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            icon: const Icon(Icons.chat_rounded, color: Color(0xFF16A34A), size: 18),
+            label: const Text(
+              'Acessar via WhatsApp / SMS (Cliente)',
+              style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+            onPressed: () => setState(() => _isPhoneLoginMode = true),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                _tabController.animateTo(1);
+              },
+              child: const Text(
+                'Ainda não tem conta? Cadastre-se aqui',
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ABA 2: CRIAR NOVA CONTA (CADASTRO REAL)
+  Widget _buildRegisterTab(AuthState auth) {
+    return Form(
+      key: _registerFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Seletor de Tipo de Perfil
+          const Text(
+            'Selecione o tipo de conta:',
+            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF334155)),
+          ),
+          const SizedBox(height: 8),
+
+          Row(
+            children: [
+              _buildRoleChip(
+                label: 'Cliente',
+                icon: Icons.shopping_cart_outlined,
+                role: UserRole.customer,
+              ),
+              const SizedBox(width: 6),
+              _buildRoleChip(
+                label: 'Distribuidora',
+                icon: Icons.storefront_rounded,
+                role: UserRole.merchant,
+              ),
+              const SizedBox(width: 6),
+              _buildRoleChip(
+                label: 'Entregador',
+                icon: Icons.two_wheeler_rounded,
+                role: UserRole.courier,
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Campos Comuns
+          TextFormField(
+            controller: _regNameController,
+            validator: (v) {
+              if (v == null || v.trim().length < 3) return 'Informe seu nome completo (mínimo 3 letras).';
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: _selectedRole == UserRole.merchant ? 'Nome do Responsável / Lojista' : 'Nome Completo',
+              prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.primary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          TextFormField(
+            controller: _regEmailController,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) {
+              if (v == null || v.trim().isEmpty || !v.contains('@')) return 'Informe um e-mail válido.';
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: 'E-mail para login',
+              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.primary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          TextFormField(
+            controller: _regPhoneController,
+            keyboardType: TextInputType.phone,
+            validator: (v) {
+              if (v == null || v.trim().length < 10) return 'Informe o celular com DDD.';
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: 'Celular / WhatsApp (com DDD)',
+              hintText: '(11) 98765-4321',
+              prefixIcon: const Icon(Icons.phone_iphone_rounded, color: AppColors.primary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Campos Específicos por Perfil
+          if (_selectedRole == UserRole.merchant) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFFEDD5)),
+              ),
+              child: const Row(
                 children: [
+                  Icon(Icons.storefront_rounded, color: Color(0xFFEA580C), size: 20),
+                  SizedBox(width: 8),
                   Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onPressed: () {
-                        ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
-                        context.go('/home');
-                      },
-                      child: const Text('Cliente', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onPressed: () {
-                        ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
-                        context.go('/merchant');
-                      },
-                      child: const Text('Lojista', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onPressed: () {
-                        ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
-                        context.go('/courier');
-                      },
-                      child: const Text('Entregador', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onPressed: () {
-                        ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
-                        context.go('/admin');
-                      },
-                      child: const Text('Admin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Dados da Distribuidora (Aparecerá no app para os clientes do seu raio)',
+                      style: TextStyle(color: Color(0xFF9A3412), fontSize: 11.5, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _regStoreNameController,
+              validator: (v) {
+                if (_selectedRole == UserRole.merchant && (v == null || v.trim().isEmpty)) {
+                  return 'Informe o nome da distribuidora.';
+                }
+                return null;
+              },
+              decoration: InputDecoration(
+                labelText: 'Nome da Distribuidora',
+                hintText: 'Ex: Ultragaz Paulistana Express',
+                prefixIcon: const Icon(Icons.business_rounded, color: Color(0xFFEA580C)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _regCnpjController,
+              validator: (v) {
+                if (_selectedRole == UserRole.merchant && (v == null || v.trim().length < 14)) {
+                  return 'Informe o CNPJ da empresa.';
+                }
+                return null;
+              },
+              decoration: InputDecoration(
+                labelText: 'CNPJ',
+                hintText: '00.000.000/0001-00',
+                prefixIcon: const Icon(Icons.badge_outlined, color: Color(0xFFEA580C)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _regStoreAddressController,
+              validator: (v) {
+                if (_selectedRole == UserRole.merchant && (v == null || v.trim().isEmpty)) {
+                  return 'Informe o endereço do depósito.';
+                }
+                return null;
+              },
+              decoration: InputDecoration(
+                labelText: 'Endereço Comercial / Depósito',
+                hintText: 'Rua, Número, Bairro, Cidade - SP',
+                prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFFEA580C)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (_selectedRole == UserRole.courier) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.two_wheeler_rounded, color: Color(0xFF059669), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Dados da Moto / Veículo de Entrega para Identificação do Cliente',
+                      style: TextStyle(color: Color(0xFF065F46), fontSize: 11.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextFormField(
+                    controller: _regVehicleModelController,
+                    validator: (v) {
+                      if (_selectedRole == UserRole.courier && (v == null || v.trim().isEmpty)) {
+                        return 'Informe o modelo da moto.';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Modelo da Moto',
+                      hintText: 'Honda Fan 160',
+                      prefixIcon: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF059669)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _regVehiclePlateController,
+                    validator: (v) {
+                      if (_selectedRole == UserRole.courier && (v == null || v.trim().isEmpty)) {
+                        return 'Informe a placa.';
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Placa',
+                      hintText: 'BRA-2024',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          if (_selectedRole == UserRole.customer) ...[
+            TextFormField(
+              controller: _regDeliveryAddressController,
+              decoration: InputDecoration(
+                labelText: 'Endereço de Entrega Principal (Opcional)',
+                hintText: 'Rua, Número, Apto, Bairro',
+                prefixIcon: const Icon(Icons.home_outlined, color: AppColors.primary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // Senha e Confirmação
+          TextFormField(
+            controller: _regPasswordController,
+            obscureText: _obscureRegPassword,
+            validator: (v) {
+              if (v == null || v.length < 6) return 'A senha deve ter no mínimo 6 caracteres.';
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: 'Criar Senha de Acesso',
+              prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.primary),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureRegPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                  color: const Color(0xFF64748B),
+                ),
+                onPressed: () => setState(() => _obscureRegPassword = !_obscureRegPassword),
+              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          TextFormField(
+            controller: _regConfirmPasswordController,
+            obscureText: _obscureRegPassword,
+            validator: (v) {
+              if (v == null || v.isEmpty) return 'Confirme sua senha.';
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: 'Confirmar Senha',
+              prefixIcon: const Icon(Icons.lock_reset_rounded, color: AppColors.primary),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          AppButton(
+            label: 'Finalizar Cadastro & Acessar',
+            isLoading: auth.isLoading,
+            isFlameAccent: true,
+            icon: Icons.check_circle_outline_rounded,
+            onPressed: _handleRegister,
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                _tabController.animateTo(0);
+              },
+              child: const Text(
+                'Já possui uma conta? Faça login aqui',
+                style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleChip({
+    required String label,
+    required IconData icon,
+    required UserRole role,
+  }) {
+    final isSelected = _selectedRole == role;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedRole = role),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : const Color(0xFFE2E8F0),
+              width: 1.5,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isSelected ? Colors.white : const Color(0xFF64748B),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : const Color(0xFF475569),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

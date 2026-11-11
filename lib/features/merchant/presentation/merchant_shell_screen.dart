@@ -20,14 +20,6 @@ class MerchantShellScreen extends ConsumerStatefulWidget {
 class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
   int _currentIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
-    });
-  }
-
   final List<Widget> _pages = const [
     MerchantKanbanScreen(),
     MerchantCatalogScreen(),
@@ -144,61 +136,41 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
             },
           ),
 
-          // Menu de Alternância de Módulo (Compacto, sem texto sobreposto)
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 22),
-            tooltip: 'Alternar Módulo',
-            color: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(color: Color(0xFF334155)),
-            ),
-            onSelected: (val) {
-              if (val == 'client') {
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
-                context.go('/home');
-              } else if (val == 'courier') {
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
-                context.go('/courier');
-              } else if (val == 'admin') {
-                ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
-                context.go('/admin');
+          // Sair da Loja (Logout Real)
+          IconButton(
+            tooltip: 'Sair da Loja',
+            icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
+            onPressed: () async {
+              final router = GoRouter.of(context);
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: const Color(0xFF1E293B),
+                  title: const Text('Sair do Portal do Lojista', style: TextStyle(color: Colors.white)),
+                  content: const Text(
+                    'Deseja realmente encerrar a sessão da sua distribuidora?',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await ref.read(authProvider.notifier).logout();
+                router.go('/login');
               }
             },
-            itemBuilder: (ctx) => [
-              const PopupMenuItem(
-                value: 'client',
-                child: Row(
-                  children: [
-                    Icon(Icons.shopping_bag_outlined, color: Color(0xFF38BDF8), size: 18),
-                    SizedBox(width: 10),
-                    Text('App do Cliente', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'courier',
-                child: Row(
-                  children: [
-                    Icon(Icons.two_wheeler_rounded, color: Color(0xFFFF6B00), size: 18),
-                    SizedBox(width: 10),
-                    Text('Rota do Entregador', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'admin',
-                child: Row(
-                  children: [
-                    Icon(Icons.admin_panel_settings_outlined, color: Color(0xFF10B981), size: 18),
-                    SizedBox(width: 10),
-                    Text('Super Admin Master', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-            ],
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
         ],
       ),
       body: Row(

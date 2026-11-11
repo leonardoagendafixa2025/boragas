@@ -41,9 +41,6 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
       if (mounted) setState(() {});
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authProvider.notifier).switchDemoRole(UserRole.courier);
-    });
     _initRouteAndTracking();
     _tryDetectRealLocation();
   }
@@ -566,27 +563,36 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
         ],
       ),
       actions: [
-        // Botão para voltar ao App Cliente
-        OutlinedButton(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white70,
-            side: const BorderSide(color: Color(0xFF334155)),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          onPressed: () {
-            ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
-            context.go('/home');
-          },
-          child: const Text('App Cliente', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-        ),
-        const SizedBox(width: 4),
         IconButton(
           tooltip: 'Sair da Conta',
-          icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 18),
-          onPressed: () {
-            ref.read(authProvider.notifier).logout();
-            context.go('/login');
+          icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
+          onPressed: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor: const Color(0xFF1E293B),
+                title: const Text('Encerrar Rota', style: TextStyle(color: Colors.white)),
+                content: const Text(
+                  'Deseja sair do aplicativo do entregador?',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            );
+            if (confirm == true && mounted) {
+              await ref.read(authProvider.notifier).logout();
+              if (mounted) context.go('/login');
+            }
           },
         ),
         const SizedBox(width: 8),

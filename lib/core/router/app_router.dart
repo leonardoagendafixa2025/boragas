@@ -129,7 +129,7 @@ List<RouteBase> _buildAppRoutes() {
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/home',
+    initialLocation: '/splash',
     routes: _buildAppRoutes(),
   );
 });
@@ -137,6 +137,6 @@ final routerProvider = Provider<GoRouter>((ref) {
 /// Roteador estático legado
 final appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/home',
+  initialLocation: '/splash',
   routes: _buildAppRoutes(),
 );

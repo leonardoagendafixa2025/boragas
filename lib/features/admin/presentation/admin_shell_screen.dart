@@ -18,14 +18,6 @@ class AdminShellScreen extends ConsumerStatefulWidget {
 class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
   int _currentIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(authProvider.notifier).switchDemoRole(UserRole.admin);
-    });
-  }
-
   final List<Widget> _pages = const [
     AdminDashboardScreen(),
     AdminStoresScreen(),
@@ -74,28 +66,38 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
             label: const Text('WhatsApp QR', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
           const SizedBox(width: 8),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6B00),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onPressed: () {
-              ref.read(authProvider.notifier).switchDemoRole(UserRole.merchant);
-              context.go('/merchant');
+          IconButton(
+            tooltip: 'Sair do Super Admin',
+            icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
+            onPressed: () async {
+              final router = GoRouter.of(context);
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: const Color(0xFF1E293B),
+                  title: const Text('Sair do Super Admin', style: TextStyle(color: Colors.white)),
+                  content: const Text(
+                    'Deseja realmente encerrar a sessão administrativa?',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Sair', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await ref.read(authProvider.notifier).logout();
+                router.go('/login');
+              }
             },
-            icon: const Icon(Icons.storefront_rounded, size: 16),
-            label: const Text('Portal do Lojista', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: () {
-              ref.read(authProvider.notifier).switchDemoRole(UserRole.customer);
-              context.go('/home');
-            },
-            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 16),
-            label: const Text('App do Cliente', style: TextStyle(color: Colors.white, fontSize: 12)),
           ),
           const SizedBox(width: 8),
         ],
