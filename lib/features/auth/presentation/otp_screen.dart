@@ -51,20 +51,20 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: const Color(0xFF25D366).withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.mark_email_read_rounded, color: AppColors.primary, size: 40),
+              child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF16A34A), size: 40),
             ),
             const SizedBox(height: 20),
             Text(
-              'Código enviado por SMS / WhatsApp',
+              'Código enviado no seu WhatsApp',
               textAlign: TextAlign.center,
               style: AppTypography.titleLarge.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 6),
             Text(
-              'Digite o código de 6 dígitos enviado para ${widget.phone}:',
+              'Digite o código de 6 dígitos enviado para seu WhatsApp no número ${widget.phone}:',
               textAlign: TextAlign.center,
               style: AppTypography.bodySmall,
             ),

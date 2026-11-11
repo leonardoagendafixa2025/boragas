@@ -22,7 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
   final _loginPasswordController = TextEditingController();
   bool _obscureLoginPassword = true;
 
-  // Controllers - Login por WhatsApp / SMS
+  // Controllers - Login por WhatsApp Oficial
   final _loginPhoneController = TextEditingController();
   bool _isPhoneLoginMode = false;
 
@@ -305,7 +305,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                 SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Entrar rápido como Cliente via código SMS ou WhatsApp.',
+                    'Entrar rápido como Cliente com código enviado diretamente no seu WhatsApp.',
                     style: TextStyle(color: Color(0xFF15803D), fontSize: 12, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -325,10 +325,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
           ),
           const SizedBox(height: 16),
           AppButton(
-            label: 'Enviar Código de Acesso',
+            label: 'Enviar Código no WhatsApp',
             isLoading: auth.isLoading,
             isFlameAccent: true,
-            icon: Icons.send_rounded,
+            icon: Icons.chat_rounded,
             onPressed: _handlePhoneLogin,
           ),
           const SizedBox(height: 12),
@@ -398,7 +398,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
             ),
             icon: const Icon(Icons.chat_rounded, color: Color(0xFF16A34A), size: 18),
             label: const Text(
-              'Acessar via WhatsApp / SMS (Cliente)',
+              'Acessar via WhatsApp Oficial (Cliente)',
               style: TextStyle(color: Color(0xFF16A34A), fontWeight: FontWeight.w700, fontSize: 13),
             ),
             onPressed: () => setState(() => _isPhoneLoginMode = true),
