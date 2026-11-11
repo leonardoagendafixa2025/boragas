@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
@@ -118,9 +119,10 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
       if (activeOrder != null) {
         final trackingState = ref.read(courierTrackingNotifierProvider);
         if (!trackingState.isTrackingActive) {
+          final courierId = ref.read(authProvider).user?.id ?? 'courier-01';
           ref.read(courierTrackingNotifierProvider.notifier).startTrackingForDelivery(
                 deliveryId: activeOrder.id,
-                courierId: 'courier-marcos-01',
+                courierId: courierId,
                 vehicleType: VehicleType.motorcycleWithGasRack,
                 initialPos: _courierStartCoords,
               );
@@ -273,9 +275,10 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
   }
 
   void _notifyCustomerArrival(OrderModel order) {
+    final courierId = ref.read(authProvider).user?.id ?? 'courier-01';
     ref.read(courierTrackingNotifierProvider.notifier).notifyArrival(
           deliveryId: order.id,
-          courierId: 'courier-marcos-01',
+          courierId: courierId,
           position: _destinationCoords,
         );
 
@@ -357,11 +360,45 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
     );
   }
 
+  ({double totalEarnings, int totalDelivered, double averageFee, List<OrderModel> deliveredOrders}) _calculateEarningsToday(List<OrderModel> orders) {
+    final now = DateTime.now();
+    var delivered = orders.where((o) {
+      if (o.status != OrderStatus.delivered) return false;
+      final date = o.deliveredAt ?? o.createdAt;
+      return date.year == now.year && date.month == now.month && date.day == now.day;
+    }).toList();
+
+    if (delivered.isEmpty && orders.any((o) => o.status == OrderStatus.delivered)) {
+      delivered = orders.where((o) => o.status == OrderStatus.delivered).toList();
+    }
+
+    final totalEarnings = delivered.fold<double>(0.0, (sum, o) => sum + o.deliveryFee);
+    final totalDelivered = delivered.length;
+    final averageFee = totalDelivered > 0 ? (totalEarnings / totalDelivered) : 0.0;
+    return (
+      totalEarnings: totalEarnings,
+      totalDelivered: totalDelivered,
+      averageFee: averageFee,
+      deliveredOrders: delivered,
+    );
+  }
+
   /// Barra de Perfil e Cockpit do Condutor (Ergonômica, Compacta e Visual Tático)
   Widget _buildDriverProfileBar(CourierTrackingState trackingState) {
     final authUser = ref.watch(authProvider).user;
-    final vehicleModel = authUser?.vehicleModel ?? 'Honda Fan 160';
-    final vehiclePlate = authUser?.vehiclePlate ?? 'BRA-2024';
+    final vehicleModel = (authUser?.vehicleModel != null && authUser!.vehicleModel!.isNotEmpty)
+        ? authUser.vehicleModel!
+        : 'Honda Fan 160';
+    final vehiclePlate = (authUser?.vehiclePlate != null && authUser!.vehiclePlate!.isNotEmpty)
+        ? authUser.vehiclePlate!
+        : 'BRA-2024';
+    final driverName = (authUser?.name != null && authUser!.name.isNotEmpty)
+        ? authUser.name
+        : 'Marcos Oliveira';
+
+    final orders = ref.watch(ordersProvider);
+    final earnings = _calculateEarningsToday(orders);
+    final formattedEarnings = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(earnings.totalEarnings);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 4, 16, 6),
@@ -409,12 +446,12 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Flexible(
+                    Flexible(
                       child: Text(
-                        'Marcos Oliveira',
+                        driverName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 13.5,
@@ -495,20 +532,20 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'R\$ 148,00',
-                  style: TextStyle(
+                  formattedEarnings,
+                  style: const TextStyle(
                     color: Color(0xFF34D399),
                     fontSize: 14.5,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                SizedBox(height: 1),
-                Text(
+                const SizedBox(height: 1),
+                const Text(
                   'Ganhos Hoje (Taxas)',
                   style: TextStyle(
                     color: Color(0xFF6EE7B7),
@@ -1186,9 +1223,10 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                   ref.read(ordersProvider.notifier).update(
                         (list) => list.map((o) => o.id == order.id ? updated : o).toList(),
                       );
+                  final courierId = ref.read(authProvider).user?.id ?? 'courier-01';
                   ref.read(courierTrackingNotifierProvider.notifier).startTrackingForDelivery(
                         deliveryId: order.id,
-                        courierId: 'courier-marcos-01',
+                        courierId: courierId,
                         vehicleType: VehicleType.motorcycleWithGasRack,
                         initialPos: _courierStartCoords,
                       );
@@ -1207,9 +1245,20 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
   /// ABA 3: PERFIL, GANHOS E TELEMETRIA
   Widget _buildDriverWalletTab(CourierTrackingState trackingState) {
     final authUser = ref.watch(authProvider).user;
-    final vehicleModel = authUser?.vehicleModel ?? 'Honda Fan 160';
-    final vehiclePlate = authUser?.vehiclePlate ?? 'BRA-2024';
-    final driverName = authUser?.name ?? 'Marcos Oliveira';
+    final vehicleModel = (authUser?.vehicleModel != null && authUser!.vehicleModel!.isNotEmpty)
+        ? authUser.vehicleModel!
+        : 'Honda Fan 160';
+    final vehiclePlate = (authUser?.vehiclePlate != null && authUser!.vehiclePlate!.isNotEmpty)
+        ? authUser.vehiclePlate!
+        : 'BRA-2024';
+    final driverName = (authUser?.name != null && authUser!.name.isNotEmpty)
+        ? authUser.name
+        : 'Marcos Oliveira';
+
+    final orders = ref.watch(ordersProvider);
+    final earnings = _calculateEarningsToday(orders);
+    final totalEarningsFormatted = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(earnings.totalEarnings);
+    final averageFeeFormatted = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(earnings.averageFee);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -1347,18 +1396,78 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                   ],
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'R\$ 148,00',
-                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
+                Text(
+                  totalEarningsFormatted,
+                  style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Total de 11 entregas realizadas hoje • Média R\$ 13,45/entrega',
-                  style: TextStyle(color: Color(0xFFA7F3D0), fontSize: 12),
+                Text(
+                  earnings.totalDelivered > 0
+                      ? 'Total de ${earnings.totalDelivered} ${earnings.totalDelivered == 1 ? "entrega realizada" : "entregas realizadas"} hoje • Média $averageFeeFormatted/entrega'
+                      : 'Nenhuma entrega finalizada hoje • Média R\$ 0,00/entrega',
+                  style: const TextStyle(color: Color(0xFFA7F3D0), fontSize: 12),
                 ),
               ],
             ),
           ),
+
+          if (earnings.deliveredOrders.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'HISTÓRICO DE ENTREGAS FINALIZADAS',
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+            ),
+            const SizedBox(height: 10),
+            ...earnings.deliveredOrders.map((order) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF334155)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              order.orderNumber,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+                            ),
+                            Text(
+                              NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(order.deliveryFee),
+                              style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w900, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${order.storeName} • ${order.deliveryAddress}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
 
           const SizedBox(height: 16),
 
