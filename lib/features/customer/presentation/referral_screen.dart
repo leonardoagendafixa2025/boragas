@@ -25,103 +25,75 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
     );
   }
 
-  void _shareViaWhatsApp(String code) {
+  Future<void> _shareViaWhatsApp(String code) async {
+    HapticFeedback.lightImpact();
     final message =
         '🔥 Vizinho(a), comprei gás de cozinha pelo BoraGás e chegou super rápido! '
         'Baixe o app e use meu código $code para ganhar R\$ 10,00 de desconto no seu primeiro pedido: '
         'https://boragas.app/indique/$code';
 
-    Clipboard.setData(ClipboardData(text: message));
+    // Copia preventivamente para a área de transferência
+    await Clipboard.setData(ClipboardData(text: message));
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        title: const Row(
+    final encodedMessage = Uri.encodeComponent(message);
+    final nativeUri = Uri.parse('whatsapp://send?text=$encodedMessage');
+    final webUri = Uri.parse('https://api.whatsapp.com/send?text=$encodedMessage');
+    final waMeUri = Uri.parse('https://wa.me/?text=$encodedMessage');
+
+    bool opened = false;
+
+    // 1. Tenta abrir via esquema nativo do app WhatsApp (Android / iOS)
+    try {
+      if (await canLaunchUrl(nativeUri)) {
+        opened = await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+
+    // 2. Se não abriu, tenta via api.whatsapp.com (abre app ou web)
+    if (!opened) {
+      try {
+        if (await canLaunchUrl(webUri)) {
+          opened = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+        }
+      } catch (_) {}
+    }
+
+    // 3. Fallback via wa.me
+    if (!opened) {
+      try {
+        opened = await launchUrl(waMeUri, mode: LaunchMode.externalApplication);
+      } catch (_) {}
+    }
+
+    // 4. Último fallback padrão
+    if (!opened) {
+      try {
+        opened = await launchUrl(waMeUri);
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
           children: [
-            Icon(Icons.share_rounded, color: Color(0xFF25D366), size: 24),
-            SizedBox(width: 10),
+            const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Compartilhar no WhatsApp',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
-                ),
+                opened
+                    ? 'Abrindo WhatsApp com mensagem pronta...'
+                    : 'Texto copiado! Abra o WhatsApp e cole na conversa.',
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'A mensagem personalizada foi copiada para sua área de transferência!',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                message,
-                style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, fontStyle: FontStyle.italic),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Dica: Cole no grupo do condomínio ou envie diretamente para seus vizinhos de portão.',
-              style: AppTypography.bodySmall,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              final whatsappUrl = Uri.parse(
-                'https://api.whatsapp.com/send?text=${Uri.encodeComponent(message)}',
-              );
-              try {
-                if (await canLaunchUrl(whatsappUrl)) {
-                  await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-                } else {
-                  await launchUrl(whatsappUrl);
-                }
-              } catch (_) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Mensagem copiada! Abra o WhatsApp e cole para enviar.'),
-                      backgroundColor: Color(0xFF25D366),
-                    ),
-                  );
-                }
-              }
-            },
-            icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Abrir WhatsApp', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
+        backgroundColor: const Color(0xFF25D366),
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
