@@ -5,36 +5,85 @@ import '../../../core/models/product_model.dart';
 import '../../../core/models/store_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../data/mock_database.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 
 // Currently logged in merchant store (Vinculada à loja real do comerciante)
 class CurrentMerchantStoreNotifier extends Notifier<StoreModel> {
+  String? _selectedStoreId;
+  bool _localIsOpen = false;
+
   @override
   StoreModel build() {
     final stores = ref.watch(storesProvider);
+    final auth = ref.watch(authProvider);
+    final userStoreId = auth.user?.storeId;
+
     if (stores.isEmpty) {
-      return const StoreModel(
-        id: '',
-        name: 'Minha Distribuidora',
-        cnpj: '',
-        phone: '',
+      return StoreModel(
+        id: userStoreId ?? 'store-merchant-1',
+        name: auth.user?.name.isNotEmpty == true && auth.user?.name != 'Usuário BoraGás'
+            ? auth.user!.name
+            : 'Minha Distribuidora',
+        cnpj: '00.000.000/0001-00',
+        phone: auth.user?.phone.isNotEmpty == true ? auth.user!.phone : '(11) 98765-4321',
         logoUrl: 'assets/images/app_icon.png',
         coverUrl: 'assets/images/brand_lockup.png',
-        address: 'Nenhum endereço cadastrado',
-        distanceKm: 0.0,
+        address: auth.user?.address ?? 'São Paulo - SP',
+        distanceKm: 2.0,
         rating: 5.0,
-        reviewsCount: 0,
+        reviewsCount: 1,
         estimatedTimeMin: 25,
         deliveryFee: 0.0,
-        isVerified: false,
-        isOpen: false,
+        isVerified: true,
+        isOpen: _localIsOpen,
         commissionRate: 8.0,
       );
     }
-    return stores.first;
+
+    final targetId = _selectedStoreId ?? userStoreId;
+    final found = stores.firstWhere(
+      (s) => s.id == targetId,
+      orElse: () => stores.first,
+    );
+    return found;
   }
 
-  void set(StoreModel s) => state = s;
+  void set(StoreModel s) {
+    _selectedStoreId = s.id;
+    _localIsOpen = s.isOpen;
+    state = s;
+  }
+
+  bool toggleOpen() {
+    final newStatus = !state.isOpen;
+    _localIsOpen = newStatus;
+    final updated = state.copyWith(isOpen: newStatus);
+    state = updated;
+
+    // Sincroniza em storesProvider para que toda a aplicação veja
+    ref.read(storesProvider.notifier).update((stores) {
+      if (stores.any((s) => s.id == updated.id)) {
+        return stores.map((s) => s.id == updated.id ? updated : s).toList();
+      } else {
+        return [updated, ...stores];
+      }
+    });
+
+    // Sincroniza no Supabase em background se configurado
+    if (SupabaseService.isConfigured && SupabaseService.isInitialized && updated.id.isNotEmpty) {
+      SupabaseService.client
+          .from('stores')
+          .upsert({
+            'id': updated.id,
+            'name': updated.name,
+            'is_open': newStatus,
+          })
+          .catchError((_) {});
+    }
+
+    return newStatus;
+  }
 }
 
 final currentMerchantStoreProvider =

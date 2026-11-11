@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/services/audio_alert_service.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
@@ -44,8 +43,17 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
         .where((o) => o.storeId == currentStore.id && (o.status == OrderStatus.pending || o.status == OrderStatus.accepted))
         .length;
 
-    return Scaffold(
-      backgroundColor: AppColors.merchantCanvas,
+    return Theme(
+      data: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: AppColors.merchantCanvas,
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.primary,
+          secondary: AppColors.accentFlame,
+          surface: AppColors.merchantCard,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.merchantCanvas,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F172A),
         foregroundColor: Colors.white,
@@ -146,19 +154,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
           InkWell(
             onTap: () {
               HapticFeedback.mediumImpact();
-              final newStatus = !currentStore.isOpen;
-              final updated = currentStore.copyWith(isOpen: newStatus);
-              ref.read(currentMerchantStoreProvider.notifier).set(updated);
-              ref.read(storesProvider.notifier).update((stores) =>
-                  stores.map((s) => s.id == currentStore.id ? updated : s).toList());
-
-              if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
-                SupabaseService.client
-                    .from('stores')
-                    .update({'is_open': newStatus})
-                    .eq('id', currentStore.id)
-                    .catchError((_) {});
-              }
+              final newStatus = ref.read(currentMerchantStoreProvider.notifier).toggleOpen();
 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -348,6 +344,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                 ),
               ),
             ),
+      ),
     );
   }
 }

@@ -9,6 +9,8 @@ class BoraEmptyState extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onButtonPressed;
   final Color? iconColor;
+  final Color? titleColor;
+  final Color? descriptionColor;
 
   const BoraEmptyState({
     super.key,
@@ -18,6 +20,8 @@ class BoraEmptyState extends StatelessWidget {
     this.buttonText,
     this.onButtonPressed,
     this.iconColor,
+    this.titleColor,
+    this.descriptionColor,
   });
 
   @override
@@ -58,7 +62,7 @@ class BoraEmptyState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16.5,
                 fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : AppColors.textPrimary,
+                color: titleColor ?? (isDark ? Colors.white : AppColors.textPrimary),
                 letterSpacing: -0.2,
               ),
             ),
@@ -69,7 +73,7 @@ class BoraEmptyState extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                color: descriptionColor ?? (isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary),
                 height: 1.4,
               ),
             ),

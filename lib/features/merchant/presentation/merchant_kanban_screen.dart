@@ -455,7 +455,9 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
         icon: Icons.radar_rounded,
         iconColor: AppColors.accentFlame,
         title: 'Radar de Vendas Ativo',
+        titleColor: Colors.white,
         description: 'Sua distribuidora está aberta e recebendo pedidos normalmente. Quando um cliente fizer um pedido, o alerta sonoro tocará aqui.',
+        descriptionColor: Color(0xFF94A3B8),
       );
     }
 
