@@ -150,9 +150,12 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header + Period Selector
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Header + Period Selector (Wrap Responsivo para evitar sobreposição mobile)
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 10,
             children: [
               const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,6 +183,7 @@ class _SalesChartWidgetState extends State<SalesChartWidget> {
                 ),
                 padding: const EdgeInsets.all(4),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     _buildPeriodBtn('7D', 0),
                     _buildPeriodBtn('15D', 1),

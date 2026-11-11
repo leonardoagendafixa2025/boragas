@@ -20,7 +20,7 @@ class BoraKpiCard extends StatelessWidget {
     this.subtitle,
     this.valueColor,
     this.onTap,
-    this.width = 180,
+    this.width = 195,
   });
 
   @override
@@ -63,7 +63,7 @@ class BoraKpiCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 11,
