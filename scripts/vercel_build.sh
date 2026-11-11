@@ -29,6 +29,7 @@ flutter pub get
 # 5. Compila Flutter Web com CanvasKit / Wasm e injeção de credenciais Supabase
 echo "⚙️ Compilando Flutter Web em modo release..."
 flutter build web --release \
+  --no-tree-shake-icons \
   --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
   --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
 

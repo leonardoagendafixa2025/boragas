@@ -37,26 +37,63 @@ class HomeHeader extends ConsumerWidget {
             children: [
               // Botão do Menu Lateral (Drawer)
               Builder(
-                builder: (ctx) => IconButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    if (onMenuPressed != null) {
-                      onMenuPressed!();
-                    } else {
-                      Scaffold.of(ctx).openDrawer();
-                    }
-                  },
-                  tooltip: 'Menu e Portais',
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    shape: RoundedRectangleBorder(
+                builder: (ctx) => Tooltip(
+                  message: 'Menu e Portais',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        if (onMenuPressed != null) {
+                          onMenuPressed!();
+                        } else {
+                          Scaffold.of(ctx).openDrawer();
+                        }
+                      },
                       borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 2.4,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(height: 3.5),
+                              Container(
+                                width: 20,
+                                height: 2.4,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(height: 3.5),
+                              Container(
+                                width: 20,
+                                height: 2.4,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  icon: const Icon(
-                    Icons.menu_rounded,
-                    color: AppColors.primary,
-                    size: 22,
                   ),
                 ),
               ),
