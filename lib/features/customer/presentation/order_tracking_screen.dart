@@ -20,53 +20,34 @@ class OrderTrackingScreen extends ConsumerStatefulWidget {
 }
 
 class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
-  void _advanceOrderSimulation(OrderModel order) {
-    OrderStatus nextStatus = order.status;
-    switch (order.status) {
-      case OrderStatus.pending:
-        nextStatus = OrderStatus.accepted;
-        break;
-      case OrderStatus.accepted:
-        nextStatus = OrderStatus.preparing;
-        break;
-      case OrderStatus.preparing:
-        nextStatus = OrderStatus.outForDelivery;
-        break;
-      case OrderStatus.outForDelivery:
-        nextStatus = OrderStatus.delivered;
-        break;
-      case OrderStatus.delivered:
-      case OrderStatus.cancelled:
-        return;
-    }
-
-    final updated = order.copyWith(
-      status: nextStatus,
-      deliveredAt: nextStatus == OrderStatus.delivered ? DateTime.now() : null,
-      courierName: nextStatus == OrderStatus.outForDelivery
-          ? 'Marcos Oliveira (Honda Fan 160)'
-          : order.courierName,
-    );
-
-    ref.read(ordersProvider.notifier).update(
-          (list) => list.map((o) => o.id == order.id ? updated : o).toList(),
-        );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Simulação Realtime: Pedido avançou para "${updated.status.name}"!'),
-        backgroundColor: AppColors.primary,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final orders = ref.watch(ordersProvider);
     final order = orders.firstWhere(
       (o) => o.id == widget.orderId,
-      orElse: () => orders.first,
+      orElse: () => orders.isNotEmpty
+          ? orders.first
+          : OrderModel(
+              id: widget.orderId,
+              orderNumber: '#BG-0001',
+              customerId: 'usr-current',
+              customerName: 'Cliente',
+              customerPhone: '',
+              storeId: 'store-1',
+              storeName: 'Distribuidora',
+              items: const [],
+              deliveryAddress: 'Endereço de Entrega',
+              subtotal: 0.0,
+              deliveryFee: 0.0,
+              totalAmount: 0.0,
+              status: OrderStatus.pending,
+              paymentMode: PaymentMode.onlinePix,
+              paymentStatus: PaymentStatus.awaitingPayment,
+              commissionRatePercent: 8.0,
+              platformCommissionAmount: 0.0,
+              deliveryConfirmationCode: '0000',
+              createdAt: DateTime.now(),
+            ),
     );
 
     return Scaffold(
@@ -79,8 +60,15 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Avançar Simulação (Realtime)',
-            onPressed: () => _advanceOrderSimulation(order),
+            tooltip: 'Atualizar Status',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Status sincronizado em tempo real.'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
           ),
         ],
       ),

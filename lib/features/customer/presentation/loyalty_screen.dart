@@ -247,48 +247,6 @@ class LoyaltyScreen extends ConsumerWidget {
                 },
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Test Simulation Tool
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Simulador de Gamificação (Demonstração)',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Simule a entrega de um novo botijão para pontuar mais 1 selo no cartão:',
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 10),
-                  AppButton(
-                    label: 'Simular Entrega Concluída (+1 Selo) ⚡',
-                    isSecondary: true,
-                    height: 40,
-                    onPressed: () {
-                      final nextNum = '#BGR-${9000 + loyalty.currentStamps}';
-                      ref.read(loyaltyCardProvider.notifier).addStamp(nextNum);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('🎉 Pedido $nextNum finalizado! +1 Selo computado com sucesso!'),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 24),
           ],
         ),

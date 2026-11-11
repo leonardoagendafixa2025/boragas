@@ -15,16 +15,16 @@ class StorePaymentConfigModel {
   const StorePaymentConfigModel({
     required this.storeId,
     this.gatewayProvider = 'mercadopago',
-    this.publicKey = 'APP_USR-782193-mock-key',
-    this.accessToken = 'APP_USR-782193-mock-token-live',
-    this.webhookSecret = 'whsec_mock_boragas_secret',
+    this.publicKey = '',
+    this.accessToken = '',
+    this.webhookSecret = '',
     this.posTerminalProvider = 'Mercado Pago Point Smart',
-    this.posDeviceSerialId = 'MP-POINT-98721',
+    this.posDeviceSerialId = '',
     this.acceptsOnlinePix = true,
     this.acceptsOnlineCard = true,
     this.acceptsPosOnDelivery = true,
     this.acceptsCashOnDelivery = true,
-    this.isGatewayConnected = true,
+    this.isGatewayConnected = false,
   });
 
   StorePaymentConfigModel copyWith({

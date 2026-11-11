@@ -68,7 +68,7 @@ class MerchantFinancesScreen extends ConsumerWidget {
                 ),
               );
             },
-            child: const Text('Simular Pagamento Concluído'),
+            child: const Text('Confirmar Pagamento Realizado'),
           ),
         ],
       ),

@@ -316,7 +316,11 @@ class MockDatabase {
     ),
   ];
 
-  static final List<OrderModel> initialOrders = [
+  // Pedidos em produção iniciam vazios e são persistidos no Supabase
+  static final List<OrderModel> initialOrders = const <OrderModel>[];
+
+  // Pedidos de teste/amostra exclusivos para testes unitários ou de widget
+  static final List<OrderModel> sampleOrdersForTesting = [
     OrderModel(
       id: 'ord-101',
       orderNumber: '#BG-8842',
@@ -350,95 +354,22 @@ class MockDatabase {
       courierName: 'Marcos Oliveira (Moto Fan 160)',
       courierPhone: '(11) 97722-1199',
     ),
-    OrderModel(
-      id: 'ord-102',
-      orderNumber: '#BG-8843',
-      customerId: 'usr-002',
-      customerName: 'Mariana Duarte',
-      customerPhone: '(11) 99344-5566',
-      storeId: 'store-1',
-      storeName: 'Ultragaz Paulistana Express',
-      items: const [
-        OrderItemModel(
-          productId: 'prod-1',
-          productName: 'Botijão P13 (13kg) - Troca',
-          quantity: 1,
-          isRefillOnly: true,
-          unitPrice: 104.90,
-          totalPrice: 104.90,
-        ),
-        OrderItemModel(
-          productId: 'prod-2',
-          productName: 'Galão Água Mineral 20L - Troca',
-          quantity: 2,
-          isRefillOnly: true,
-          unitPrice: 18.00,
-          totalPrice: 36.00,
-        ),
-      ],
-      status: OrderStatus.preparing,
-      paymentMode: PaymentMode.posOnDelivery,
-      paymentStatus: PaymentStatus.awaitingPayment,
-      deliveryAddress: 'Rua Bela Cintra, 980 - Jardins',
-      subtotal: 140.90,
-      deliveryFee: 0.0,
-      totalAmount: 140.90,
-      commissionRatePercent: 8.0,
-      platformCommissionAmount: 11.27,
-      deliveryConfirmationCode: '8310',
-      createdAt: DateTime.now().subtract(const Duration(minutes: 8)),
-      courierName: 'Lucas Ferreira',
-      courierPhone: '(11) 98833-2211',
-    ),
-    OrderModel(
-      id: 'ord-100',
-      orderNumber: '#BG-8799',
-      customerId: 'usr-001',
-      customerName: 'Carlos Eduardo Silva',
-      customerPhone: '(11) 98122-3344',
-      storeId: 'store-2',
-      storeName: 'Liquigás Central do Gás',
-      items: const [
-        OrderItemModel(
-          productId: 'prod-4',
-          productName: 'Botijão P13 Liquigás - Troca',
-          quantity: 1,
-          isRefillOnly: true,
-          unitPrice: 99.90,
-          totalPrice: 99.90,
-        ),
-      ],
-      status: OrderStatus.delivered,
-      paymentMode: PaymentMode.cashOnDelivery,
-      paymentStatus: PaymentStatus.paidDirectlyToStore,
-      deliveryAddress: 'Av. Brigadeiro Luís Antônio, 2344 - Apto 82',
-      subtotal: 99.90,
-      deliveryFee: 5.0,
-      totalAmount: 104.90,
-      changeForAmount: 120.0,
-      commissionRatePercent: 8.0,
-      platformCommissionAmount: 8.39,
-      deliveryConfirmationCode: '1728',
-      createdAt: DateTime.now().subtract(const Duration(days: 4)),
-      deliveredAt: DateTime.now().subtract(const Duration(days: 4, hours: -1)),
-      courierName: 'Renato Silva',
-    ),
   ];
 
   static final StorePaymentConfigModel initialPaymentConfig =
       const StorePaymentConfigModel(
     storeId: 'store-1',
     gatewayProvider: 'mercadopago',
-    publicKey: 'APP_USR-893721-398271-XKY',
-    accessToken: 'APP_USR-782193-mock-token-live',
-    webhookSecret: 'whsec_boragas_live_948',
+    publicKey: '',
+    accessToken: '',
+    webhookSecret: '',
     posTerminalProvider: 'Mercado Pago Point Smart',
-    posDeviceSerialId: 'MP-SMART-84920',
+    posDeviceSerialId: '',
     acceptsOnlinePix: true,
     acceptsOnlineCard: true,
     acceptsPosOnDelivery: true,
     acceptsCashOnDelivery: true,
-    isGatewayConnected: true,
+    isGatewayConnected: false,
   );
 
   static final List<CommissionInvoiceModel> initialInvoices = [

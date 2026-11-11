@@ -5,6 +5,17 @@ import 'package:boragas/core/widgets/slide_to_action.dart';
 import 'package:boragas/core/widgets/floating_order_tracker.dart';
 import 'package:boragas/core/widgets/shimmer_loading.dart';
 import 'package:boragas/core/widgets/interactive_scale_button.dart';
+import 'package:boragas/core/models/order_model.dart';
+import 'package:boragas/data/mock_database.dart';
+import 'package:boragas/features/customer/providers/customer_providers.dart';
+
+class _TestOrdersNotifier extends OrdersNotifier {
+  final List<OrderModel> _initial;
+  _TestOrdersNotifier(this._initial);
+
+  @override
+  List<OrderModel> build() => _initial;
+}
 
 void main() {
   testWidgets('SlideToActionWidget renders label and responds to drag gesture', (WidgetTester tester) async {
@@ -44,9 +55,13 @@ void main() {
   });
 
   testWidgets('FloatingOrderTracker renders active order live activity capsule', (WidgetTester tester) async {
+    final sampleOrder = MockDatabase.sampleOrdersForTesting.first;
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [
+          ordersProvider.overrideWith(() => _TestOrdersNotifier([sampleOrder])),
+        ],
+        child: const MaterialApp(
           home: Scaffold(
             body: FloatingOrderTracker(),
           ),

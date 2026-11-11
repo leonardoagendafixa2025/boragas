@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_typography.dart';
-import '../../../core/widgets/app_button.dart';
 import '../providers/marketing_providers.dart';
 
 class ReferralScreen extends ConsumerStatefulWidget {
@@ -299,46 +298,6 @@ class _ReferralScreenState extends ConsumerState<ReferralScreen> {
             ),
 
             const SizedBox(height: 24),
-
-            // Simulated Action for Testing
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Simulação de Teste (Demonstração)',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Simule que um vizinho acabou de concluir o 1º pedido para ver o saldo aumentar em tempo real:',
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 10),
-                  AppButton(
-                    label: 'Simular Vizinho Pediu (+R\$ 10,00) ⚡',
-                    isSecondary: true,
-                    height: 42,
-                    onPressed: () {
-                      ref.read(referralWalletProvider.notifier).simulateFriendJoined();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('🎉 Novo vizinho concluiu pedido! +R\$ 10,00 adicionados ao seu saldo!'),
-                          backgroundColor: Color(0xFF10B981),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
           ],
         ),
       ),

@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/models/product_model.dart';
 import '../../../core/models/store_model.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import 'customer_providers.dart';
 
@@ -253,6 +255,33 @@ class CartNotifier extends Notifier<CartState> {
     );
 
     ref.read(ordersProvider.notifier).update((orders) => [newOrder, ...orders]);
+
+    if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
+      SupabaseService.client.from('orders').insert({
+        'id': newOrder.id,
+        'order_number': newOrder.orderNumber,
+        'customer_id': customerId,
+        'customer_name': customerName,
+        'customer_phone': customerPhone,
+        'store_id': store.id,
+        'store_name': store.name,
+        'status': 'accepted',
+        'payment_mode': newOrder.paymentMode.name,
+        'payment_status': newOrder.paymentStatus.name,
+        'delivery_address': deliveryAddress,
+        'subtotal': newOrder.subtotal,
+        'delivery_fee': newOrder.deliveryFee,
+        'discount': newOrder.discount,
+        'total_amount': newOrder.totalAmount,
+        'commission_rate_percent': commissionPercent,
+        'platform_commission_amount': commissionAmount,
+        'delivery_confirmation_code': newOrder.deliveryConfirmationCode,
+        'created_at': DateTime.now().toIso8601String(),
+      }).catchError((err) {
+        debugPrint('Aviso ao sincronizar pedido no Supabase: $err');
+      });
+    }
+
     clearCart();
     return newOrder;
   }

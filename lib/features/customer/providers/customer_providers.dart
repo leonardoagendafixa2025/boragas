@@ -5,6 +5,7 @@ import '../../../core/models/product_model.dart';
 import '../../../core/models/store_model.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../data/mock_database.dart';
+import '../../auth/providers/auth_provider.dart';
 
 enum HomeViewMode { stores, items }
 
@@ -34,32 +35,38 @@ class AddressModel {
   String get formatted => '$street, $number - $neighborhood, $city';
 }
 
-// 1. Saved Addresses
+// 1. Saved Addresses (Vinculado ao endereço real do cliente logado)
 class SavedAddressesNotifier extends Notifier<List<AddressModel>> {
   @override
   List<AddressModel> build() {
+    final auth = ref.watch(authProvider);
+    final userAddr = auth.user?.address;
+    if (userAddr != null && userAddr.trim().isNotEmpty) {
+      return [
+        AddressModel(
+          id: 'addr-user',
+          label: 'Meu Endereço de Entrega',
+          street: userAddr.trim(),
+          number: '',
+          neighborhood: '',
+          city: 'São Paulo',
+          state: 'SP',
+          cep: '',
+          isDefault: true,
+        ),
+      ];
+    }
     return const [
       AddressModel(
-        id: 'addr-1',
-        label: 'Casa',
-        street: 'Av. Brigadeiro Luís Antônio',
-        number: '2344, Apto 82',
-        neighborhood: 'Jardim Paulista',
+        id: 'addr-default',
+        label: 'Endereço Principal',
+        street: 'Toque para selecionar seu endereço de entrega',
+        number: '',
+        neighborhood: '',
         city: 'São Paulo',
         state: 'SP',
-        cep: '01402-000',
+        cep: '',
         isDefault: true,
-      ),
-      AddressModel(
-        id: 'addr-2',
-        label: 'Trabalho',
-        street: 'Av. Paulista',
-        number: '1000, 14º Andar',
-        neighborhood: 'Bela Vista',
-        city: 'São Paulo',
-        state: 'SP',
-        cep: '01310-100',
-        isDefault: false,
       ),
     ];
   }
@@ -165,10 +172,51 @@ class StoresNotifier extends Notifier<List<StoreModel>> {
 final storesProvider =
     NotifierProvider<StoresNotifier, List<StoreModel>>(StoresNotifier.new);
 
-// 7. Master Products
+// 7. Master Products (Sincronizado com o banco Supabase)
 class ProductsNotifier extends Notifier<List<ProductModel>> {
   @override
-  List<ProductModel> build() => List.from(MockDatabase.initialProducts);
+  List<ProductModel> build() {
+    _loadProductsFromSupabase();
+    return List.from(MockDatabase.initialProducts);
+  }
+
+  Future<void> _loadProductsFromSupabase() async {
+    if (!SupabaseService.isConfigured || !SupabaseService.isInitialized) return;
+    try {
+      final res = await SupabaseService.client.from('products').select('*');
+      if (res.isNotEmpty) {
+        final list = res.map((item) => ProductModel(
+          id: item['id'].toString(),
+          storeId: item['store_id']?.toString() ?? 'store-1',
+          storeName: item['store_name'] ?? 'Distribuidora',
+          category: _mapSlugToCategory(item['category_slug'] ?? 'p13'),
+          name: item['name'] ?? 'Botijão P13',
+          brandName: item['brand_name'] ?? 'Marca Certificada',
+          description: item['description'] ?? '',
+          refillPrice: (item['refill_price'] as num?)?.toDouble() ?? 104.90,
+          shellPrice: (item['shell_price'] as num?)?.toDouble() ?? 280.0,
+          imageUrl: item['image_url'] ?? 'assets/images/app_icon.png',
+          rating: (item['rating'] as num?)?.toDouble() ?? 5.0,
+        )).toList();
+        state = list;
+      }
+    } catch (_) {}
+  }
+
+  static ProductCategory _mapSlugToCategory(String slug) {
+    switch (slug) {
+      case 'p13':
+        return ProductCategory.p13;
+      case 'p20':
+        return ProductCategory.p20;
+      case 'p45':
+        return ProductCategory.p45;
+      case 'water20l':
+        return ProductCategory.water20l;
+      default:
+        return ProductCategory.accessories;
+    }
+  }
 
   void set(List<ProductModel> prods) => state = prods;
   void update(List<ProductModel> Function(List<ProductModel>) fn) => state = fn(state);
@@ -177,10 +225,34 @@ class ProductsNotifier extends Notifier<List<ProductModel>> {
 final productsProvider =
     NotifierProvider<ProductsNotifier, List<ProductModel>>(ProductsNotifier.new);
 
-// 8. Banners
+// 8. Banners (Sincronizado com o banco Supabase)
 class HomeBannersNotifier extends Notifier<List<HomeBannerModel>> {
   @override
-  List<HomeBannerModel> build() => List.from(MockDatabase.initialBanners);
+  List<HomeBannerModel> build() {
+    _loadBannersFromSupabase();
+    return List.from(MockDatabase.initialBanners);
+  }
+
+  Future<void> _loadBannersFromSupabase() async {
+    if (!SupabaseService.isConfigured || !SupabaseService.isInitialized) return;
+    try {
+      final res = await SupabaseService.client.from('home_banners').select('*').order('sort_order');
+      if (res.isNotEmpty) {
+        final list = res.map((b) => HomeBannerModel(
+          id: b['id'].toString(),
+          title: b['title'] ?? '',
+          subtitle: b['subtitle'] ?? '',
+          badgeText: b['badge_text'] ?? 'DESTAQUE',
+          imageUrl: b['image_url'] ?? 'assets/images/app_icon.png',
+          actionType: b['action_type'] ?? 'promo_code',
+          actionTarget: b['action_target'] ?? 'BORAGAS10',
+          isActive: b['is_active'] == true,
+          sortOrder: (b['sort_order'] as num?)?.toInt() ?? 1,
+        )).toList();
+        state = list;
+      }
+    } catch (_) {}
+  }
 
   void set(List<HomeBannerModel> banners) => state = banners;
   void update(List<HomeBannerModel> Function(List<HomeBannerModel>) fn) => state = fn(state);
@@ -201,10 +273,26 @@ class HomeCategoriesNotifier extends Notifier<List<HomeCategoryModel>> {
 final homeCategoriesProvider =
     NotifierProvider<HomeCategoriesNotifier, List<HomeCategoryModel>>(HomeCategoriesNotifier.new);
 
-// 10. Orders
+// 10. Orders (Persistidos e Sincronizados com Supabase)
 class OrdersNotifier extends Notifier<List<OrderModel>> {
   @override
-  List<OrderModel> build() => List.from(MockDatabase.initialOrders);
+  List<OrderModel> build() {
+    _loadOrdersFromSupabase();
+    return List.from(MockDatabase.initialOrders);
+  }
+
+  Future<void> _loadOrdersFromSupabase() async {
+    if (!SupabaseService.isConfigured || !SupabaseService.isInitialized) return;
+    try {
+      final res = await SupabaseService.client
+          .from('orders')
+          .select('*')
+          .order('created_at', ascending: false);
+      if (res.isNotEmpty) {
+        state = res.map((row) => OrderModel.fromJson(row)).toList();
+      }
+    } catch (_) {}
+  }
 
   void set(List<OrderModel> orders) => state = orders;
   void update(List<OrderModel> Function(List<OrderModel>) fn) => state = fn(state);

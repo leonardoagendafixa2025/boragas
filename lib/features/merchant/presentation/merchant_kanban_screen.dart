@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/models/order_model.dart';
-import '../../../core/services/audio_alert_service.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
@@ -86,50 +85,6 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
         content: Text('Pedido ${order.orderNumber} atualizado para "${next.name}"!'),
         backgroundColor: const Color(0xFF10B981),
         duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _simulateNewOrder(String storeId, String storeName) {
-    final randNum = 8844 + (DateTime.now().millisecondsSinceEpoch % 100);
-    final simulatedOrder = OrderModel(
-      id: 'ord-sim-$randNum',
-      orderNumber: '#BG-$randNum',
-      customerId: 'usr-sim-02',
-      customerName: 'Fernanda Lima',
-      customerPhone: '(11) 98765-4321',
-      storeId: storeId,
-      storeName: storeName,
-      items: const [
-        OrderItemModel(
-          productId: 'prod-1',
-          productName: 'Botijão P13 (13kg) - Troca de Vasilhame',
-          quantity: 1,
-          isRefillOnly: true,
-          unitPrice: 104.90,
-          totalPrice: 104.90,
-        ),
-      ],
-      deliveryAddress: 'Alameda Santos, 1200 - Cerqueira César, São Paulo - SP',
-      subtotal: 104.90,
-      deliveryFee: 0.0,
-      totalAmount: 104.90,
-      status: OrderStatus.accepted,
-      paymentMode: PaymentMode.onlinePix,
-      paymentStatus: PaymentStatus.paidDirectlyToStore,
-      commissionRatePercent: 8.0,
-      platformCommissionAmount: 8.39,
-      deliveryConfirmationCode: '7281',
-      createdAt: DateTime.now(),
-    );
-
-    ref.read(ordersProvider.notifier).update((list) => [simulatedOrder, ...list]);
-    AudioAlertService.playNewOrderAlert();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🔔 Novo pedido #BG-$randNum recebido na distribuidora!'),
-        backgroundColor: const Color(0xFFFF6B00),
       ),
     );
   }
@@ -476,24 +431,6 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
                   'Sua distribuidora está aberta e visível no raio de até 8 km. Novos pedidos via App ou WhatsApp acionarão o alarme sonoro instantaneamente.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5, height: 1.4),
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Botão para simular pedido e testar o fluxo de ponta a ponta
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E293B),
-                  foregroundColor: const Color(0xFFFF6B00),
-                  side: const BorderSide(color: Color(0xFFFF6B00)),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () => _simulateNewOrder(storeId, storeName),
-                icon: const Icon(Icons.add_shopping_cart_rounded, size: 16),
-                label: const Text(
-                  'Simular Novo Pedido (Teste)',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
                 ),
               ),
             ],
