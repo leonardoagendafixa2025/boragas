@@ -53,6 +53,7 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
   }
 
   Future<void> _submitOrder() async {
+    if (_isProcessing) return; // Trava imediata anti-duplo clique
     final cart = ref.read(cartProvider);
     if (cart.isEmpty || cart.store == null) return;
 

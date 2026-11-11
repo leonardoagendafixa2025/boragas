@@ -100,6 +100,10 @@ class CartNotifier extends Notifier<CartState> {
     required int quantity,
     required bool isRefillOnly,
   }) {
+    if (quantity <= 0 || !product.inStock) {
+      return false; // Bloqueio de segurança: impede adicionar produto sem estoque ou quantidade <= 0
+    }
+
     if (state.store != null &&
         state.store!.id != store.id &&
         state.items.isNotEmpty) {
