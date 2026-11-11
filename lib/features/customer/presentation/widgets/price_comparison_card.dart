@@ -86,6 +86,7 @@ class PriceComparisonCard extends ConsumerWidget {
                       ),
                       child: ProductImagePreview(
                         imageUrl: prod.imageUrl,
+                        productName: prod.name,
                         width: 72,
                         height: 72,
                         borderRadius: 14,

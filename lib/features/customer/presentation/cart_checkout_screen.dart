@@ -296,6 +296,7 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                   children: [
                     ProductImagePreview(
                       imageUrl: item.product.imageUrl,
+                      productName: item.product.name,
                       width: 50,
                       height: 50,
                       borderRadius: 10,

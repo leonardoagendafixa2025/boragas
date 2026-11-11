@@ -406,6 +406,7 @@ class _StoreDetailsScreenState extends ConsumerState<StoreDetailsScreen> {
             children: [
               ProductImagePreview(
                 imageUrl: prod.imageUrl,
+                productName: prod.name,
                 width: 80,
                 height: 80,
                 borderRadius: 12,

@@ -24,7 +24,7 @@ class MockDatabase {
       title: 'Entrega Flash em 25 min ⚡',
       subtitle: 'Botijões P13 lacrados e testados na sua porta',
       badgeText: 'ULTRA RÁPIDO',
-      imageUrl: 'assets/images/app_icon.png',
+      imageUrl: 'assets/images/products/gas_13kg_gold.png',
       actionType: 'open_category',
       actionTarget: 'p13',
       isActive: true,
@@ -150,7 +150,7 @@ class MockDatabase {
       refillPrice: 104.90,
       shellPrice: 289.00,
       inStock: true,
-      imageUrl: 'assets/images/app_icon.png',
+      imageUrl: 'assets/images/products/gas_13kg_gold.png',
       rating: 4.9,
     ),
   ];

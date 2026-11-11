@@ -52,17 +52,22 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
 
     ProductCategory selectedCategory = productToEdit?.category ?? ProductCategory.p13;
     bool inStock = productToEdit?.inStock ?? true;
-    String selectedImage = productToEdit?.imageUrl ?? 'assets/images/app_icon.png';
+    String selectedImage = productToEdit?.imageUrl ?? 'assets/images/products/gas_13kg_gold.png';
     bool showPhotoPicker = true;
     final customUrlController = TextEditingController(text: selectedImage.startsWith('http') ? selectedImage : '');
 
     final photoPresets = [
-      {'title': 'Ultragaz (Azul)', 'category': 'Botijão P13', 'url': 'assets/images/app_icon.png'},
-      {'title': 'Liquigás (Verde)', 'category': 'Botijão P13', 'url': 'assets/images/app_icon_v2.png'},
-      {'title': 'Supergasbras', 'category': 'Botijão P13', 'url': 'assets/images/brand_lockup.png'},
-      {'title': 'Água Mineral 20L', 'category': 'Galão 20L', 'url': 'assets/images/app_icon_v2.png'},
-      {'title': 'Cilindro P45', 'category': 'Cilindro 45kg', 'url': 'assets/images/app_icon.png'},
-      {'title': 'Regulador & Válvula', 'category': 'Acessórios', 'url': 'assets/images/brand_lockup.png'},
+      {'title': '13kg Dourado', 'category': 'Botijão P13', 'url': 'assets/images/products/gas_13kg_gold.png'},
+      {'title': '13kg Prata', 'category': 'Botijão P13', 'url': 'assets/images/products/gas_13kg_silver.png'},
+      {'title': '13kg Verde', 'category': 'Botijão P13', 'url': 'assets/images/products/gas_13kg_green.png'},
+      {'title': '20kg Dourado', 'category': 'Cilindro P20', 'url': 'assets/images/products/gas_20kg_gold.png'},
+      {'title': '20kg Prata', 'category': 'Cilindro P20', 'url': 'assets/images/products/gas_20kg_silver.png'},
+      {'title': '20kg Verde', 'category': 'Cilindro P20', 'url': 'assets/images/products/gas_20kg_green.png'},
+      {'title': '45kg Dourado', 'category': 'Cilindro P45', 'url': 'assets/images/products/gas_45kg_gold.png'},
+      {'title': '45kg Prata', 'category': 'Cilindro P45', 'url': 'assets/images/products/gas_45kg_silver.png'},
+      {'title': '45kg Verde', 'category': 'Cilindro P45', 'url': 'assets/images/products/gas_45kg_green.png'},
+      {'title': 'Água 20L', 'category': 'Galão 20L', 'url': 'assets/images/products/agua_20l.png'},
+      {'title': 'Kit Gás', 'category': 'Acessórios', 'url': 'assets/images/products/kit_gas.png'},
     ];
 
     showModalBottomSheet(
@@ -751,6 +756,7 @@ class _MerchantCatalogScreenState extends ConsumerState<MerchantCatalogScreen> {
                   children: [
                     ProductImagePreview(
                       imageUrl: prod.imageUrl,
+                      productName: prod.name,
                       width: 68,
                       height: 68,
                       borderRadius: 14,

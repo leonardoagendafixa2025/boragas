@@ -156,6 +156,7 @@ class _ProductBottomSheetState extends ConsumerState<ProductBottomSheet> {
                       children: [
                         ProductImagePreview(
                           imageUrl: widget.product.imageUrl,
+                          productName: widget.product.name,
                           width: 80,
                           height: 80,
                           borderRadius: 14,

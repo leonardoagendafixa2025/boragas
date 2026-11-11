@@ -4,6 +4,7 @@ import '../../../core/models/order_model.dart';
 import '../../../core/models/product_model.dart';
 import '../../../core/models/store_model.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/widgets/product_image_preview.dart';
 import '../../../data/mock_database.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -198,19 +199,27 @@ class ProductsNotifier extends Notifier<List<ProductModel>> {
       final res = await SupabaseService.client.from('products').select('*');
       if (res.isNotEmpty) {
         final realProducts = res.where((item) => !demoProductIds.contains(item['id'].toString()));
-        final list = realProducts.map((item) => ProductModel(
-          id: item['id'].toString(),
-          storeId: item['store_id']?.toString() ?? 'store-1',
-          storeName: item['store_name'] ?? 'Distribuidora',
-          category: _mapSlugToCategory(item['category_slug'] ?? 'p13'),
-          name: item['name'] ?? 'Botijão P13',
-          brandName: item['brand_name'] ?? 'Marca Certificada',
-          description: item['description'] ?? '',
-          refillPrice: (item['refill_price'] as num?)?.toDouble() ?? 104.90,
-          shellPrice: (item['shell_price'] as num?)?.toDouble() ?? 280.0,
-          imageUrl: item['image_url'] ?? 'assets/images/app_icon.png',
-          rating: (item['rating'] as num?)?.toDouble() ?? 5.0,
-        )).toList();
+        final list = realProducts.map((item) {
+          final cat = _mapSlugToCategory(item['category_slug'] ?? 'p13');
+          final name = item['name'] as String? ?? 'Botijão P13';
+          final brand = item['brand_name'] as String? ?? 'Marca Certificada';
+          final rawImg = item['image_url'] as String? ?? '';
+          final resolvedImg = ProductImagePreview.resolveAsset(rawImg, productName: '$name $brand');
+
+          return ProductModel(
+            id: item['id'].toString(),
+            storeId: item['store_id']?.toString() ?? 'store-1',
+            storeName: item['store_name'] ?? 'Distribuidora',
+            category: cat,
+            name: name,
+            brandName: brand,
+            description: item['description'] ?? '',
+            refillPrice: (item['refill_price'] as num?)?.toDouble() ?? 104.90,
+            shellPrice: (item['shell_price'] as num?)?.toDouble() ?? 280.0,
+            imageUrl: resolvedImg,
+            rating: (item['rating'] as num?)?.toDouble() ?? 5.0,
+          );
+        }).toList();
         state = list;
       }
     } catch (_) {}
