@@ -54,12 +54,16 @@ class AdminHomeManagerScreen extends ConsumerWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary, size: 22),
-                        SizedBox(width: 10),
-                        Text('Publicar Novo Banner', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
-                      ],
+                    const Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary, size: 22),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text('Publicar Novo Banner', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
@@ -165,86 +169,87 @@ class AdminHomeManagerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final banners = ref.watch(homeBannersProvider);
     final categories = ref.watch(homeCategoriesProvider);
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddBannerDialog(context, ref),
+        icon: const Icon(Icons.add_photo_alternate_rounded, color: Colors.white, size: 20),
+        label: const Text(
+          'Novo Banner',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+        ),
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 40),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header com Botão "Novo Banner" (Responsivo Mobile-First)
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final isMobile = constraints.maxWidth < 600;
-                if (isMobile) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Gestão de Banners & Vitrine',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.textPrimary,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Banners do carrossel e categorias em destaque na Home',
-                        style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: BoraButton.flame(
-                          text: 'Publicar Novo Banner',
-                          icon: Icons.add_photo_alternate_rounded,
-                          height: 44,
-                          borderRadius: 12,
-                          onPressed: () => _showAddBannerDialog(context, ref),
-                        ),
-                      ),
-                    ],
-                  );
-                }
-
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Gestão de Banners & Vitrine',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: AppColors.textPrimary,
-                              letterSpacing: -0.3,
-                            ),
+            if (isMobile) ...[
+              const Text(
+                'Gestão de Banners & Vitrine',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Banners do carrossel e categorias em destaque na Home',
+                style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: BoraButton.flame(
+                  text: 'Publicar Novo Banner',
+                  icon: Icons.add_photo_alternate_rounded,
+                  height: 46,
+                  borderRadius: 14,
+                  onPressed: () => _showAddBannerDialog(context, ref),
+                ),
+              ),
+            ] else ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Gestão de Banners & Vitrine',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textPrimary,
+                            letterSpacing: -0.3,
                           ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Banners do carrossel e categorias em destaque na Home',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Banners do carrossel e categorias em destaque na Home',
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        ),
+                      ],
                     ),
-                    BoraButton.flame(
-                      text: 'Novo Banner',
-                      icon: Icons.add_photo_alternate_rounded,
-                      height: 42,
-                      borderRadius: 12,
-                      onPressed: () => _showAddBannerDialog(context, ref),
-                    ),
-                  ],
-                );
-              },
-            ),
+                  ),
+                  BoraButton.flame(
+                    text: 'Novo Banner',
+                    icon: Icons.add_photo_alternate_rounded,
+                    height: 42,
+                    borderRadius: 12,
+                    onPressed: () => _showAddBannerDialog(context, ref),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 18),
 
             const Text(
