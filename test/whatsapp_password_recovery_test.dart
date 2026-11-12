@@ -89,11 +89,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Etapa 1
-      expect(find.text('Esqueceu a senha?'), findsOneWidget);
+      expect(find.text('Recuperar Senha'), findsOneWidget);
       expect(find.text('Receba seu código de validação no WhatsApp para redefinir'), findsOneWidget);
-      expect(find.text('E-mail ou WhatsApp'), findsOneWidget);
-      expect(find.text('Enviar código no WhatsApp'), findsOneWidget);
-      expect(find.text('Seu código de redefinição será enviado diretamente no seu WhatsApp.'), findsOneWidget);
+      expect(find.text('WhatsApp com DDD (ex: 31973149306)'), findsOneWidget);
+      expect(find.text('Enviar Código no WhatsApp'), findsOneWidget);
+      expect(find.text('Recuperação por WhatsApp'), findsOneWidget);
     });
   });
 }

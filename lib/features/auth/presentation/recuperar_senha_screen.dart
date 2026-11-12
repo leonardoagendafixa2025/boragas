@@ -26,8 +26,9 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
     duration: const Duration(milliseconds: 1800),
   )..forward();
 
-  // Etapa do fluxo: 1 = Pedir WhatsApp/Email, 2 = Digitar Código & Nova Senha, 3 = Sucesso
+  // Etapa do fluxo: 1 = WhatsApp/Email, 2 = Código OTP & Nova Senha, 3 = Sucesso
   int _etapa = 1;
+  bool _modoEmail = false;
 
   final _identifierController = TextEditingController();
   final _codeController = TextEditingController();
@@ -66,7 +67,7 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
   bool get _identifierValido {
     final text = _identifierController.text.trim();
     if (text.isEmpty) return false;
-    if (emailValido(text)) return true;
+    if (_modoEmail) return emailValido(text);
     final digits = text.replaceAll(RegExp(r'\D'), '');
     return digits.length >= 10;
   }
@@ -205,7 +206,7 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
 
   /// Abre o WhatsApp para suporte caso necessário
   Future<void> _abrirWhatsAppSuporte() async {
-    final phone = '5531973149306';
+    const phone = '5531973149306';
     final msg = Uri.encodeComponent(
       'Olá BoraGás! Preciso de ajuda para redefinir minha senha de acesso.',
     );
@@ -251,7 +252,7 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
   }
 
   // ===========================================================================
-  // ETAPA 1: Formulário de Solicitação WhatsApp
+  // ETAPA 1: Formulário Principal - WhatsApp em Destaque
   // ===========================================================================
   Widget _buildEtapa1() => Column(
         key: const ValueKey('etapa1'),
@@ -260,28 +261,49 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xFF10B981).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                color: const Color(0xFF10B981).withValues(alpha: 0.35),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(
-                  Icons.chat_bubble_outline_rounded,
-                  color: Color(0xFF10B981),
-                  size: 22,
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.chat_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Seu código de redefinição será enviado diretamente no seu WhatsApp.',
-                    style: TextStyle(
-                      color: Color(0xFF065F46),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Recuperação por WhatsApp',
+                        style: TextStyle(
+                          color: Color(0xFF065F46),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Seu código de 6 dígitos será enviado instantaneamente no seu WhatsApp.',
+                        style: TextStyle(
+                          color: Color(0xFF047857),
+                          fontSize: 11.5,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -292,10 +314,10 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
             controller: _intro,
             start: 0.3,
             child: AnimatedField(
-              label: 'E-mail ou WhatsApp',
-              icon: Icons.contact_mail_outlined,
+              label: _modoEmail ? 'E-mail cadastrado' : 'WhatsApp com DDD (ex: 31973149306)',
+              icon: _modoEmail ? Icons.mail_outline_rounded : Icons.phone_iphone_rounded,
               controller: _identifierController,
-              keyboardType: TextInputType.emailAddress,
+              keyboardType: _modoEmail ? TextInputType.emailAddress : TextInputType.phone,
               textInputAction: TextInputAction.done,
               onSubmitted: (_) {
                 if (_identifierValido && _estado == ButtonState.idle) {
@@ -316,10 +338,32 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
                 child: IgnorePointer(
                   ignoring: !_identifierValido,
                   child: MorphButton(
-                    label: 'Enviar código no WhatsApp',
+                    label: _modoEmail ? 'Buscar WhatsApp da Conta' : 'Enviar Código no WhatsApp',
                     state: _estado,
                     onTap: _solicitarCodigoWhatsApp,
                   ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _modoEmail = !_modoEmail;
+                  _identifierController.clear();
+                  _erro = null;
+                });
+              },
+              child: Text(
+                _modoEmail
+                    ? 'Prefiro digitar meu WhatsApp direto'
+                    : 'Não lembra o número? Buscar por e-mail',
+                style: const TextStyle(
+                  color: AppCores.roxo,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -576,8 +620,8 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
     String subtituloHeader;
 
     if (_etapa == 1) {
-      iconeHeader = Icons.lock_reset_rounded;
-      tituloHeader = 'Esqueceu a senha?';
+      iconeHeader = Icons.chat_rounded;
+      tituloHeader = 'Recuperar Senha';
       subtituloHeader = 'Receba seu código de validação no WhatsApp para redefinir';
     } else if (_etapa == 2) {
       iconeHeader = Icons.sms_outlined;
