@@ -74,9 +74,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.text('Esqueceu a senha?'), findsOneWidget);
-      expect(find.text('Sem problemas! Enviaremos um link para redefinir'), findsOneWidget);
-      expect(find.text('E-mail'), findsOneWidget);
-      expect(find.text('Enviar link'), findsOneWidget);
+      expect(find.text('Receba seu código de validação no WhatsApp para redefinir'), findsOneWidget);
+      expect(find.text('E-mail ou WhatsApp'), findsOneWidget);
+      expect(find.text('Enviar código no WhatsApp'), findsOneWidget);
     });
 
     testWidgets('4. BemVindoScreen renderiza chama animada, saudação e CTA dinâmico', (tester) async {
