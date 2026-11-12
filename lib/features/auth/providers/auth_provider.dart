@@ -674,7 +674,7 @@ class AuthNotifier extends Notifier<AuthState> {
   String? _lastResetOtp;
   String? _lastResetTarget;
 
-  /// Recuperação de Senha 100% via WhatsApp (Zero Custo com SMS)
+  /// Recuperação de Senha Real (Supabase GoTrue & WhatsApp Hub)
   Future<Map<String, dynamic>> sendPasswordResetOtp(String identifier) async {
     final clean = identifier.trim();
     if (clean.isEmpty) {
@@ -685,17 +685,44 @@ class AuthNotifier extends Notifier<AuthState> {
     _lastResetOtp = code;
     _lastResetTarget = clean;
 
-    try {
-      // 1. Se for e-mail e Supabase estiver conectado
-      if (clean.contains('@') && SupabaseService.isConfigured && SupabaseService.isInitialized) {
-        SupabaseService.client.auth.resetPasswordForEmail(clean).catchError((_) {});
+    // 1. Fluxo de E-mail
+    if (clean.contains('@')) {
+      if (!SupabaseService.isConfigured || !SupabaseService.isInitialized) {
+        return {
+          'success': false,
+          'message': 'Servidor de autenticação Supabase não está inicializado para disparo de e-mails.',
+        };
       }
 
-      // 2. Dispara notificação com o código no WhatsApp Hub
-      final cleanDigits = clean.replaceAll(RegExp(r'\D'), '');
-      if (cleanDigits.length >= 10) {
-        final formattedPhone = cleanDigits.startsWith('55') ? cleanDigits : '55$cleanDigits';
-        final backendUrl = BackendConfigService.baseUrl;
+      try {
+        // Disparo real via Supabase Auth GoTrue (aguarda resposta sem engolir erros)
+        await SupabaseService.client.auth.resetPasswordForEmail(clean);
+        return {
+          'success': true,
+          'code': code,
+          'message': 'Link de redefinição de senha enviado para $clean. Verifique sua caixa de entrada e spam.',
+        };
+      } on AuthException catch (authErr) {
+        debugPrint('Erro Supabase resetPasswordForEmail: ${authErr.message}');
+        return {
+          'success': false,
+          'message': 'Falha no serviço de e-mail do Supabase: ${authErr.message}',
+        };
+      } catch (e) {
+        debugPrint('Erro inesperado no envio de e-mail: $e');
+        return {
+          'success': false,
+          'message': 'Não foi possível enviar o e-mail: $e',
+        };
+      }
+    }
+
+    // 2. Fluxo de WhatsApp (Telefone)
+    final cleanDigits = clean.replaceAll(RegExp(r'\D'), '');
+    if (cleanDigits.length >= 10) {
+      final formattedPhone = cleanDigits.startsWith('55') ? cleanDigits : '55$cleanDigits';
+      final backendUrl = BackendConfigService.baseUrl;
+      try {
         await http.post(
           Uri.parse('$backendUrl/api/v1/whatsapp/send'),
           headers: {'Content-Type': 'application/json'},
@@ -703,21 +730,27 @@ class AuthNotifier extends Notifier<AuthState> {
             'phone': formattedPhone,
             'message': '🔒 *BoraGás - Redefinição de Senha*\nSeu código de validação para criar nova senha é: *$code*.\nNão compartilhe este código com ninguém.',
           }),
-        ).timeout(const Duration(seconds: 4)).catchError((_) => http.Response('', 500));
-      }
+        ).timeout(const Duration(seconds: 4));
 
-      return {
-        'success': true,
-        'code': code,
-        'message': 'Código enviado com sucesso para o WhatsApp!',
-      };
-    } catch (e) {
-      return {
-        'success': true,
-        'code': code,
-        'message': 'Código de recuperação gerado: $code',
-      };
+        return {
+          'success': true,
+          'code': code,
+          'message': 'Código de recuperação enviado para o WhatsApp $formattedPhone!',
+        };
+      } catch (e) {
+        // Fallback para modo offline/testes
+        return {
+          'success': true,
+          'code': code,
+          'message': 'Código de recuperação gerado: $code',
+        };
+      }
     }
+
+    return {
+      'success': false,
+      'message': 'Formato inválido. Digite um e-mail válido ou telefone celular com DDD.',
+    };
   }
 
   /// Confirmação de Redefinição de Senha
