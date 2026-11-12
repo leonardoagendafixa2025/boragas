@@ -87,7 +87,7 @@ export async function renderWhatsAppQrView(req: Request, res: Response) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BoraGás - Conexão WhatsApp Baileys</title>
+  <title>BoraGás - Conexão WhatsApp</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     body { background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
@@ -119,7 +119,7 @@ export async function renderWhatsAppQrView(req: Request, res: Response) {
     <div class="logo">
       <span>🔥</span> BoraGás WhatsApp
     </div>
-    <div class="subtitle">Integração Oficial com Baileys Multi-Device</div>
+    <div class="subtitle">Canal Oficial de Mensagens e Notificações</div>
 
     ${
       status.status === 'connected'
@@ -153,7 +153,7 @@ export async function renderWhatsAppQrView(req: Request, res: Response) {
     `
         : `
       <div class="status-badge status-connecting">
-        <span>●</span> Iniciando Baileys...
+        <span>●</span> Iniciando Conexão...
       </div>
       <div class="spinner"></div>
       <p style="color: #94a3b8; font-size: 13px;">Gerando credenciais seguras e conectando aos servidores do WhatsApp...</p>

@@ -25,7 +25,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
   // Test form
   final _testPhoneController = TextEditingController();
   final _testMessageController = TextEditingController(
-    text: 'Olá! Esta é uma mensagem de teste do BoraGás via Baileys WhatsApp 🚀',
+    text: 'Olá! Esta é uma mensagem de teste do canal oficial BoraGás 🚀',
   );
   bool _isSendingTest = false;
   String? _testResult;
@@ -132,104 +132,6 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
     }
   }
 
-  void _showServerConfigDialog() {
-    final controller = TextEditingController(text: _backendBaseUrl);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Row(
-          children: [
-            Icon(Icons.cloud_sync_rounded, color: Color(0xFF25D366)),
-            SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Servidor Backend (Render / Local)',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Informe a URL do serviço Node.js onde o Baileys está rodando:',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFF0F172A),
-                labelText: 'URL da API',
-                labelStyle: const TextStyle(color: Color(0xFF64748B)),
-                hintText: 'https://boragas-backend.onrender.com',
-                hintStyle: const TextStyle(color: Color(0xFF475569)),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF25D366),
-                      side: const BorderSide(color: Color(0xFF25D366), width: 1.5),
-                    ),
-                    onPressed: () => controller.text = 'https://boragas-backend.onrender.com',
-                    child: const Text('Render Nuvem (Padrão)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white70,
-                      side: const BorderSide(color: Color(0xFF334155)),
-                    ),
-                    onPressed: () => controller.text = 'http://localhost:10000',
-                    child: const Text('Localhost (10000)', style: TextStyle(fontSize: 11)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF25D366),
-              foregroundColor: Colors.black,
-            ),
-            onPressed: () async {
-              final newUrl = controller.text.trim().replaceAll(RegExp(r'/+$'), '');
-              if (newUrl.isNotEmpty) {
-                await BackendConfigService.setBaseUrl(newUrl);
-                if (mounted) {
-                  setState(() {
-                    _backendBaseUrl = newUrl;
-                    _isLoading = true;
-                  });
-                }
-                if (ctx.mounted) Navigator.pop(ctx);
-                _fetchWhatsAppStatus();
-              }
-            },
-            child: const Text('Salvar & Conectar', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +194,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Conexão Baileys WhatsApp',
+                      'Conexão WhatsApp',
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w900,
@@ -315,26 +217,23 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _backendBaseUrl.contains('localhost')
-                        ? const Color(0xFF0284C7)
-                        : const Color(0xFF059669),
-                    side: BorderSide(
-                      color: _backendBaseUrl.contains('localhost')
-                          ? const Color(0xFF38BDF8)
-                          : const Color(0xFF10B981),
-                      width: 1.2,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    minimumSize: const Size(0, 36),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                   ),
-                  onPressed: _showServerConfigDialog,
-                  icon: const Icon(Icons.cloud_sync_rounded, size: 16),
-                  label: Text(
-                    _backendBaseUrl.contains('localhost') ? 'API: Localhost' : 'API: Render Nuvem',
-                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 15),
+                      SizedBox(width: 6),
+                      Text(
+                        'Serviço Ativo',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -387,7 +286,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
       badgeIcon = Icons.qr_code_scanner_rounded;
     } else if (_status == 'connecting') {
       badgeColor = const Color(0xFF3B82F6);
-      statusTitle = 'INICIANDO SOCKET BAILEYS...';
+      statusTitle = 'INICIANDO CONEXÃO...';
       badgeIcon = Icons.sync_rounded;
     } else {
       badgeColor = AppColors.error;
@@ -435,8 +334,8 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
             const SizedBox(height: 4),
             Text(
               _status == 'connected'
-                  ? 'WhatsApp Oficial do BoraGás Pareado'
-                  : 'Notificações Automáticas de Pedidos via Baileys',
+                  ? 'WhatsApp Oficial Pareado'
+                  : 'Notificações Automáticas de Pedidos',
               style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
             ),
             if (_connectedPhone != null) ...[
@@ -447,32 +346,24 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
               ),
             ],
             const SizedBox(height: 6),
-            InkWell(
-              onTap: _showServerConfigDialog,
-              borderRadius: BorderRadius.circular(4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.link_rounded,
-                    size: 14,
-                    color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
+            const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 14,
+                  color: Color(0xFF25D366),
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Canal Oficial Criptografado de Ponta a Ponta',
+                  style: TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      'API: $_backendBaseUrl',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: _backendBaseUrl.contains('localhost') ? const Color(0xFF38BDF8) : const Color(0xFF25D366),
-                        fontSize: 11.5,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         );
@@ -646,7 +537,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
             const Icon(Icons.verified_rounded, color: Color(0xFF059669), size: 54),
             const SizedBox(height: 12),
             const Text(
-              'WhatsApp Baileys Operacional 🚀',
+              'WhatsApp Oficial Conectado 🚀',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF065F46)),
             ),
             const SizedBox(height: 6),
@@ -714,7 +605,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Serviço Baileys em espera',
+                    'Serviço em espera',
                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade900),
                   ),
                 ),
@@ -722,7 +613,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? 'Clique no botão abaixo para inicializar o socket e gerar um novo QR Code.',
+              _errorMessage ?? 'Clique no botão abaixo para gerar um novo QR Code de conexão.',
               style: TextStyle(fontSize: 13, color: Colors.amber.shade900),
             ),
             const SizedBox(height: 12),
@@ -767,7 +658,7 @@ class _AdminWhatsAppScreenState extends ConsumerState<AdminWhatsAppScreen> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Envie uma mensagem direta para qualquer número para comprovar o funcionamento do Baileys:',
+              'Envie uma mensagem direta para qualquer número para comprovar o funcionamento do envio:',
               style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),

@@ -170,7 +170,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () => context.push('/recuperar'),
+                    onPressed: () => context.push(
+                      '/recuperar',
+                      extra: _email.text.trim().isNotEmpty ? _email.text.trim() : null,
+                    ),
                     child: const Text(
                       'Esqueci minha senha',
                       style: TextStyle(

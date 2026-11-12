@@ -52,9 +52,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verifica Header e status do OneSignal
+      // Verifica Header e status do serviço de push
       expect(find.text('Central de Push & Marketing'), findsOneWidget);
-      expect(find.text('OneSignal Conectado & Operante'), findsOneWidget);
+      expect(find.text('Push Notificações Ativo & Operante'), findsOneWidget);
       expect(find.text(PushNotificationService.defaultAppId), findsOneWidget);
 
       // Verifica Campos do Formulário

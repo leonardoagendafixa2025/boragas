@@ -180,7 +180,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Helpdesk & Suporte'), findsOneWidget);
-      expect(find.text('Baileys Hub'), findsOneWidget);
+      expect(find.text('WhatsApp Oficial'), findsOneWidget);
       expect(find.text('Total Chamados'), findsOneWidget);
       expect(find.text('Dúvida desconto 5%'), findsWidgets);
     });

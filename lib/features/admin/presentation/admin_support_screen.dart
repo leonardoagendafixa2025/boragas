@@ -182,7 +182,7 @@ class _AdminSupportScreenState extends ConsumerState<AdminSupportScreen> {
                           Icon(Icons.chat_rounded, color: Color(0xFF25D366), size: 14),
                           SizedBox(width: 6),
                           Text(
-                            'Baileys Hub',
+                            'WhatsApp Oficial',
                             style: TextStyle(
                               color: Color(0xFF25D366),
                               fontSize: 11,

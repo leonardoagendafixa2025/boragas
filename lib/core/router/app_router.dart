@@ -51,7 +51,10 @@ List<RouteBase> _buildAppRoutes() {
     GoRoute(
       path: '/recuperar',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const RecuperarSenhaScreen(),
+      builder: (context, state) {
+        final initial = state.extra as String?;
+        return RecuperarSenhaScreen(initialIdentifier: initial);
+      },
     ),
     GoRoute(
       path: '/bem-vindo',

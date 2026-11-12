@@ -13,7 +13,9 @@ import 'widgets/morph_button.dart';
 import 'widgets/shake.dart';
 
 class RecuperarSenhaScreen extends ConsumerStatefulWidget {
-  const RecuperarSenhaScreen({super.key});
+  final String? initialIdentifier;
+
+  const RecuperarSenhaScreen({super.key, this.initialIdentifier});
 
   @override
   ConsumerState<RecuperarSenhaScreen> createState() => _RecuperarSenhaScreenState();
@@ -47,6 +49,12 @@ class _RecuperarSenhaScreenState extends ConsumerState<RecuperarSenhaScreen>
   @override
   void initState() {
     super.initState();
+    if (widget.initialIdentifier != null && widget.initialIdentifier!.trim().isNotEmpty) {
+      _identifierController.text = widget.initialIdentifier!.trim();
+      if (widget.initialIdentifier!.contains('@')) {
+        _modoEmail = true;
+      }
+    }
     _identifierController.addListener(() => setState(() {}));
     _codeController.addListener(() => setState(() {}));
     _newPasswordController.addListener(() => setState(() {}));

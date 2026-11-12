@@ -60,7 +60,7 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
       icon: Icons.tune_rounded,
     ),
     (
-      title: 'WhatsApp & Baileys',
+      title: 'WhatsApp Oficial',
       subtitle: 'Conexão QR e disparo de mensagens',
       icon: Icons.chat_rounded,
     ),

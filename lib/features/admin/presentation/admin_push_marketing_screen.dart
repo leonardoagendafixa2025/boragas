@@ -163,7 +163,7 @@ class _AdminPushMarketingScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Esta notificação push será transmitida via OneSignal para TODOS os celulares Android e navegadores PWA inscritos na plataforma BoraGás.',
+              'Esta notificação push será transmitida instantaneamente para TODOS os celulares Android e navegadores PWA inscritos na plataforma BoraGás.',
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
             const SizedBox(height: 12),
@@ -257,7 +257,7 @@ class _AdminPushMarketingScreenState
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '✅ Notificação push disparada com sucesso via OneSignal! (ID: ${result.notificationId})',
+                  '✅ Notificação push disparada com sucesso! (ID: ${result.notificationId})',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -271,7 +271,7 @@ class _AdminPushMarketingScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              result.errorMessage ?? 'Falha ao conectar com OneSignal.'),
+              result.errorMessage ?? 'Falha no envio da notificação push.'),
           backgroundColor: AppColors.error,
           duration: const Duration(seconds: 4),
         ),
@@ -355,7 +355,7 @@ class _AdminPushMarketingScreenState
                           color: AppColors.success, size: 14),
                       SizedBox(width: 6),
                       Text(
-                        'OneSignal Conectado & Operante',
+                        'Push Notificações Ativo & Operante',
                         style: TextStyle(
                           color: AppColors.success,
                           fontWeight: FontWeight.bold,
@@ -395,7 +395,7 @@ class _AdminPushMarketingScreenState
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'OneSignal App ID Oficial Ativo',
+                          'Identificador Oficial de Notificações',
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -424,7 +424,7 @@ class _AdminPushMarketingScreenState
                           SnackBar(
                             content: Text(
                               granted
-                                  ? '✅ Permissão concedida! Este aparelho foi inscrito no OneSignal.'
+                                  ? '✅ Permissão concedida! Este aparelho receberá as notificações do BoraGás.'
                                   : 'ℹ️ Clique em "Permitir" na notificação do seu navegador para se inscrever.',
                             ),
                             backgroundColor: granted ? AppColors.success : AppColors.primary,
@@ -705,7 +705,7 @@ class _AdminPushMarketingScreenState
             width: double.infinity,
             child: BoraButton.flame(
               text: _isSending
-                  ? 'Disparando via OneSignal...'
+                  ? 'Disparando Notificação...'
                   : 'Disparar Push Notification em Massa',
               icon: Icons.send_rounded,
               isLoading: _isSending,

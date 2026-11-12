@@ -40,7 +40,7 @@ class _AdminStoresScreenState extends ConsumerState<AdminStoresScreen> {
           children: [
             const Text(
               'Deseja zerar todos os dados demo locais para deixar o sistema 100% limpo para operação comercial?\n\n'
-              'Para limpar também as linhas de teste do seu banco Supabase na nuvem, execute o comando abaixo no SQL Editor do Supabase:',
+              'Para sincronizar e limpar também as linhas de teste do banco de dados na nuvem, utilize o comando:',
               style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
             ),
             const SizedBox(height: 12),
