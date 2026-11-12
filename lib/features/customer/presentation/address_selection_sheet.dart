@@ -54,12 +54,39 @@ class _AddressSelectionSheetState extends ConsumerState<AddressSelectionSheet> {
       }
     }
 
+    String street = query;
+    String number = 'S/N';
+    String neighborhood = 'Centro';
+
+    if (query.contains('-')) {
+      final parts = query.split('-');
+      neighborhood = parts.last.trim();
+      street = parts.first.trim();
+    } else if (query.contains(',')) {
+      final parts = query.split(',');
+      street = parts[0].trim();
+      if (parts.length > 1) {
+        final sec = parts[1].trim();
+        final matchNum = RegExp(r'^\d+').firstMatch(sec);
+        if (matchNum != null) {
+          number = matchNum.group(0)!;
+          final remaining = sec.substring(number.length).trim();
+          if (remaining.isNotEmpty) neighborhood = remaining;
+        } else {
+          neighborhood = sec;
+        }
+      }
+      if (parts.length > 2) {
+        neighborhood = parts[2].trim();
+      }
+    }
+
     final newAddr = AddressModel(
       id: 'addr-${DateTime.now().millisecondsSinceEpoch}',
-      label: 'Novo Endereço',
-      street: query,
-      number: '100',
-      neighborhood: 'Bairro',
+      label: neighborhood.isNotEmpty ? neighborhood : 'Meu Endereço',
+      street: street,
+      number: number,
+      neighborhood: neighborhood.isNotEmpty ? neighborhood : 'Centro',
       city: 'São Paulo',
       state: 'SP',
       cep: '01000-000',

@@ -46,6 +46,7 @@ class CartState {
   final PaymentMode selectedPaymentMode;
   final double? changeForAmount;
   final String? notes;
+  final DeliveryFeeResult? deliveryFeeResult;
 
   const CartState({
     this.store,
@@ -56,12 +57,22 @@ class CartState {
     this.selectedPaymentMode = PaymentMode.onlinePix,
     this.changeForAmount,
     this.notes,
+    this.deliveryFeeResult,
   });
 
   double get subtotal =>
       items.fold(0.0, (sum, item) => sum + item.totalPrice);
 
-  double get deliveryFee => store?.deliveryFee ?? 0.0;
+  /// Taxa de entrega calculada de acordo com as regras reais da distribuidora (Bairro, KM ou Frete Grátis)
+  double get deliveryFee =>
+      deliveryFeeResult?.fee ?? store?.deliveryFee ?? 0.0;
+
+  bool get isOutOfDeliveryRange =>
+      deliveryFeeResult?.isOutOfRange ?? false;
+
+  String get deliveryFeeDescription =>
+      deliveryFeeResult?.description ??
+      (deliveryFee == 0.0 ? 'Frete Grátis' : 'Taxa de Entrega');
 
   /// 5% de desconto garantido para membros ativos do Clube BoraGás
   double get clubDiscount => isClubMember ? (subtotal * 0.05) : 0.0;
@@ -85,6 +96,7 @@ class CartState {
     PaymentMode? selectedPaymentMode,
     double? changeForAmount,
     String? notes,
+    DeliveryFeeResult? deliveryFeeResult,
     bool clearCoupon = false,
   }) {
     return CartState(
@@ -96,6 +108,7 @@ class CartState {
       selectedPaymentMode: selectedPaymentMode ?? this.selectedPaymentMode,
       changeForAmount: changeForAmount ?? this.changeForAmount,
       notes: notes ?? this.notes,
+      deliveryFeeResult: deliveryFeeResult ?? this.deliveryFeeResult,
     );
   }
 }
@@ -110,8 +123,28 @@ class CartNotifier extends Notifier<CartState> {
       }
     });
 
+    ref.listen(currentAddressProvider, (previous, next) {
+      if (state.store != null && state.items.isNotEmpty) {
+        final feeResult = state.store!.calculateDeliveryFee(
+          neighborhood: next.neighborhood.isNotEmpty ? next.neighborhood : null,
+          clientDistanceKm: state.store!.distanceKm,
+          subtotal: state.subtotal,
+        );
+        state = state.copyWith(deliveryFeeResult: feeResult);
+      }
+    });
+
     final initialSub = ref.read(subscriptionProvider);
     return CartState(isClubMember: initialSub?.isActive ?? false);
+  }
+
+  DeliveryFeeResult _calculateFee(StoreModel store, double subtotal) {
+    final address = ref.read(currentAddressProvider);
+    return store.calculateDeliveryFee(
+      neighborhood: address.neighborhood.isNotEmpty ? address.neighborhood : null,
+      clientDistanceKm: store.distanceKm,
+      subtotal: subtotal,
+    );
   }
 
   bool addItem({
@@ -149,9 +182,14 @@ class CartNotifier extends Notifier<CartState> {
       );
     }
 
+    final newSubtotal =
+        updatedItems.fold(0.0, (sum, item) => sum + item.totalPrice);
+    final feeResult = _calculateFee(store, newSubtotal);
+
     state = state.copyWith(
       store: store,
       items: updatedItems,
+      deliveryFeeResult: feeResult,
     );
     return true;
   }
@@ -164,7 +202,18 @@ class CartNotifier extends Notifier<CartState> {
 
     final updatedItems = List<CartItem>.from(state.items);
     updatedItems[index] = updatedItems[index].copyWith(quantity: newQuantity);
-    state = state.copyWith(items: updatedItems);
+
+    final newSubtotal =
+        updatedItems.fold(0.0, (sum, item) => sum + item.totalPrice);
+    DeliveryFeeResult? feeResult;
+    if (state.store != null) {
+      feeResult = _calculateFee(state.store!, newSubtotal);
+    }
+
+    state = state.copyWith(
+      items: updatedItems,
+      deliveryFeeResult: feeResult,
+    );
   }
 
   void removeItem(int index) {
@@ -174,7 +223,17 @@ class CartNotifier extends Notifier<CartState> {
     if (updatedItems.isEmpty) {
       state = CartState(isClubMember: state.isClubMember);
     } else {
-      state = state.copyWith(items: updatedItems);
+      final newSubtotal =
+          updatedItems.fold(0.0, (sum, item) => sum + item.totalPrice);
+      DeliveryFeeResult? feeResult;
+      if (state.store != null) {
+        feeResult = _calculateFee(state.store!, newSubtotal);
+      }
+
+      state = state.copyWith(
+        items: updatedItems,
+        deliveryFeeResult: feeResult,
+      );
     }
   }
 
@@ -227,6 +286,8 @@ class CartNotifier extends Notifier<CartState> {
     final customerName = currentCustomer?.name ?? 'Cliente BoraGás';
     final customerPhone = currentCustomer?.phone ?? '(11) 98122-3344';
 
+    final calculatedFee = state.deliveryFee;
+
     final newOrder = OrderModel(
       id: 'ord-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
       orderNumber: '#BG-${(1000 + (DateTime.now().millisecond * 7) % 9000)}',
@@ -254,7 +315,7 @@ class CartNotifier extends Notifier<CartState> {
           : PaymentStatus.awaitingPayment,
       deliveryAddress: deliveryAddress,
       subtotal: state.subtotal,
-      deliveryFee: state.deliveryFee,
+      deliveryFee: calculatedFee,
       discount: state.totalDiscount,
       totalAmount: state.total,
       changeForAmount: state.changeForAmount,

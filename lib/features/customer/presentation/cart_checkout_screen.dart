@@ -57,6 +57,17 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
     final cart = ref.read(cartProvider);
     if (cart.isEmpty || cart.store == null) return;
 
+    if (cart.isOutOfDeliveryRange) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('⚠️ ${cart.deliveryFeeDescription}'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     final address = ref.read(currentAddressProvider);
 
     setState(() => _isProcessing = true);
@@ -535,6 +546,37 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                     cart.deliveryFee,
                     isFree: cart.deliveryFee == 0,
                   ),
+                  // Detalhamento da regra de frete da distribuidora
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 2),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          cart.isOutOfDeliveryRange
+                              ? Icons.warning_amber_rounded
+                              : Icons.info_outline_rounded,
+                          size: 14,
+                          color: cart.isOutOfDeliveryRange
+                              ? AppColors.error
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            cart.deliveryFeeDescription,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: cart.isOutOfDeliveryRange
+                                  ? AppColors.error
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   if (cart.discount > 0) ...[
                     const SizedBox(height: 8),
                     _buildSummaryRow('Desconto do Cupom', -cart.discount, isDiscount: true),
@@ -563,6 +605,33 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                 ],
               ),
             ),
+
+            if (cart.isOutOfDeliveryRange) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_off_rounded, color: AppColors.error, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Endereço fora da área de atendimento desta distribuidora. Altere o endereço ou selecione outra distribuidora parceira para prosseguir.',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             const SizedBox(height: 24),
 

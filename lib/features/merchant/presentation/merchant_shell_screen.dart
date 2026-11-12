@@ -13,6 +13,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
 import '../providers/merchant_providers.dart';
 import 'merchant_catalog_screen.dart';
+import 'merchant_delivery_config_screen.dart';
 import 'merchant_finances_screen.dart';
 import 'merchant_kanban_screen.dart';
 import 'merchant_payment_config_screen.dart';
@@ -33,6 +34,7 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
     MerchantKanbanScreen(),
     MerchantCatalogScreen(),
     MerchantPaymentConfigScreen(),
+    MerchantDeliveryConfigScreen(),
     MerchantFinancesScreen(),
   ];
 
@@ -51,6 +53,11 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
       title: 'Maquininha & Pagamentos',
       subtitle: 'Configurações de Pix, Cartão e POS na entrega',
       icon: Icons.payments_rounded,
+    ),
+    (
+      title: 'Regras de Frete & Bairros',
+      subtitle: 'Taxas por KM, raio máximo e bairros atendidos',
+      icon: Icons.local_shipping_rounded,
     ),
     (
       title: 'Extrato & Finanças',
@@ -362,6 +369,11 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                         icon: Icon(Icons.payments_outlined),
                         selectedIcon: Icon(Icons.payments_rounded),
                         label: 'Pagamentos',
+                      ),
+                      const NavigationDestination(
+                        icon: Icon(Icons.local_shipping_outlined),
+                        selectedIcon: Icon(Icons.local_shipping_rounded),
+                        label: 'Frete',
                       ),
                       const NavigationDestination(
                         icon: Icon(Icons.account_balance_wallet_outlined),

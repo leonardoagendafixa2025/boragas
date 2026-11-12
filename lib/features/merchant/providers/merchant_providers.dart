@@ -88,6 +88,59 @@ class CurrentMerchantStoreNotifier extends Notifier<StoreModel> {
 
     return newStatus;
   }
+
+  /// Atualiza as configurações de frete decididas pela distribuidora (Base, KM, Raio Máx, Isenção e Bairros)
+  Future<bool> updateDeliveryConfig({
+    required double baseDeliveryFee,
+    required double feePerKm,
+    required double maxDeliveryRadiusKm,
+    required double? freeDeliveryThreshold,
+    required Map<String, double> neighborhoodFees,
+    required bool isNeighborhoodPricingEnabled,
+  }) async {
+    final updated = state.copyWith(
+      deliveryFee: baseDeliveryFee,
+      feePerKm: feePerKm,
+      maxDeliveryRadiusKm: maxDeliveryRadiusKm,
+      freeDeliveryThreshold: freeDeliveryThreshold,
+      clearFreeDeliveryThreshold: freeDeliveryThreshold == null,
+      neighborhoodFees: neighborhoodFees,
+      isNeighborhoodPricingEnabled: isNeighborhoodPricingEnabled,
+    );
+
+    _selectedStoreId = updated.id;
+    state = updated;
+
+    // Sincroniza imediatamente em storesProvider para todo o ecossistema (cliente, checkout, etc.)
+    ref.read(storesProvider.notifier).update((stores) {
+      if (stores.any((s) => s.id == updated.id)) {
+        return stores.map((s) => s.id == updated.id ? updated : s).toList();
+      } else {
+        return [updated, ...stores];
+      }
+    });
+
+    // Persistência em banco de dados Supabase real
+    if (SupabaseService.isConfigured && SupabaseService.isInitialized && updated.id.isNotEmpty) {
+      try {
+        await SupabaseService.client.from('stores').update({
+          'base_delivery_fee': baseDeliveryFee,
+          'fee_per_km': feePerKm,
+          'max_delivery_radius_km': maxDeliveryRadiusKm,
+          'free_delivery_threshold': freeDeliveryThreshold,
+          'neighborhood_fees': neighborhoodFees,
+          'is_neighborhood_pricing_enabled': isNeighborhoodPricingEnabled,
+          'updated_at': DateTime.now().toIso8601String(),
+        }).eq('id', updated.id);
+        return true;
+      } catch (err) {
+        // Fallback resiliente
+        return false;
+      }
+    }
+
+    return true;
+  }
 }
 
 final currentMerchantStoreProvider =

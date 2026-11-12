@@ -149,26 +149,42 @@ class StoresNotifier extends Notifier<List<StoreModel>> {
 
       if (res.isNotEmpty) {
         final realStores = res.where((item) => !demoStoreIds.contains(item['id'].toString()));
-        final list = realStores.map((item) => StoreModel(
-          id: item['id'].toString(),
-          name: item['name'] as String? ?? 'Distribuidora',
-          cnpj: item['cnpj'] as String? ?? '00.000.000/0001-00',
-          phone: item['phone'] as String? ?? '',
-          logoUrl: item['logo_url'] as String? ?? 'assets/images/app_icon.png',
-          coverUrl: item['cover_url'] as String? ?? 'assets/images/brand_lockup.png',
-          address: item['address'] as String? ?? 'São Paulo - SP',
-          distanceKm: (item['distance_km'] as num?)?.toDouble() ?? 2.5,
-          rating: (item['rating'] as num?)?.toDouble() ?? 5.0,
-          reviewsCount: (item['reviews_count'] as num?)?.toInt() ?? 12,
-          estimatedTimeMin: (item['estimated_time_min'] as num?)?.toInt() ?? 25,
-          deliveryFee: (item['base_delivery_fee'] as num?)?.toDouble() ?? 0.0,
-          isVerified: item['is_verified'] == true,
-          isOpen: item['is_open'] == true,
-          commissionRate: (item['commission_rate_percent'] as num?)?.toDouble() ??
-              (item['commission_rate'] as num?)?.toDouble() ??
-              8.0,
-          isSuspendedForNonPayment: item['status'] == 'suspended',
-        )).toList();
+        final list = realStores.map((item) {
+          final Map<String, double> parsedNeighborhoods = {};
+          final rawNeighborhoods = item['neighborhood_fees'];
+          if (rawNeighborhoods is Map) {
+            rawNeighborhoods.forEach((k, v) {
+              final fee = (v as num?)?.toDouble() ?? 0.0;
+              parsedNeighborhoods[k.toString()] = fee;
+            });
+          }
+
+          return StoreModel(
+            id: item['id'].toString(),
+            name: item['name'] as String? ?? 'Distribuidora',
+            cnpj: item['cnpj'] as String? ?? '00.000.000/0001-00',
+            phone: item['phone'] as String? ?? '',
+            logoUrl: item['logo_url'] as String? ?? 'assets/images/app_icon.png',
+            coverUrl: item['cover_url'] as String? ?? 'assets/images/brand_lockup.png',
+            address: item['address'] as String? ?? 'São Paulo - SP',
+            distanceKm: (item['distance_km'] as num?)?.toDouble() ?? 2.5,
+            rating: (item['rating'] as num?)?.toDouble() ?? 5.0,
+            reviewsCount: (item['reviews_count'] as num?)?.toInt() ?? 12,
+            estimatedTimeMin: (item['estimated_time_min'] as num?)?.toInt() ?? 25,
+            deliveryFee: (item['base_delivery_fee'] as num?)?.toDouble() ?? 0.0,
+            isVerified: item['is_verified'] == true,
+            isOpen: item['is_open'] == true,
+            commissionRate: (item['commission_rate_percent'] as num?)?.toDouble() ??
+                (item['commission_rate'] as num?)?.toDouble() ??
+                8.0,
+            isSuspendedForNonPayment: item['status'] == 'suspended',
+            feePerKm: (item['fee_per_km'] as num?)?.toDouble() ?? 0.0,
+            maxDeliveryRadiusKm: (item['max_delivery_radius_km'] as num?)?.toDouble() ?? 15.0,
+            freeDeliveryThreshold: (item['free_delivery_threshold'] as num?)?.toDouble(),
+            neighborhoodFees: parsedNeighborhoods,
+            isNeighborhoodPricingEnabled: item['is_neighborhood_pricing_enabled'] != false,
+          );
+        }).toList();
         state = list;
       }
     } catch (_) {}
