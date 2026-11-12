@@ -4,6 +4,7 @@ import { orderRoutes } from './order.routes.js';
 import { webhookRoutes } from './webhook.routes.js';
 import { invoiceRoutes } from './invoice.routes.js';
 import { whatsappRoutes } from './whatsapp.routes.js';
+import { supportRoutes } from './support.routes.js';
 
 export const apiRouter = Router();
 
@@ -12,3 +13,4 @@ apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/webhooks', webhookRoutes);
 apiRouter.use('/invoices', invoiceRoutes);
 apiRouter.use('/whatsapp', whatsappRoutes);
+apiRouter.use('/support', supportRoutes);

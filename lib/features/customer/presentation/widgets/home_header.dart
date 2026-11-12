@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
+import '../../../../core/services/push_notification_service.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/widgets/change_password_dialog.dart';
 import '../../../auth/providers/auth_provider.dart';
@@ -482,6 +483,28 @@ class HomeHeader extends ConsumerWidget {
                     ChangePasswordDialog.show(context);
                   },
                 ),
+              _buildProfileOption(
+                icon: Icons.notifications_active_rounded,
+                iconColor: const Color(0xFF10B981),
+                title: 'Notificações no Celular',
+                subtitle: 'Receber status do botijão e promoções em tempo real',
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final granted = await PushNotificationService.requestPermission();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          granted
+                              ? '✅ Notificações ativadas! Você receberá atualizações em tempo real.'
+                              : 'ℹ️ Notificações solicitadas! Verifique se seu navegador/celular permite.',
+                        ),
+                        backgroundColor: granted ? AppColors.success : AppColors.primary,
+                      ),
+                    );
+                  }
+                },
+              ),
 
               const SizedBox(height: 10),
               const Divider(color: Color(0xFFF1F5F9)),

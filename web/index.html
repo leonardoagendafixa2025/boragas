@@ -44,17 +44,42 @@
         serviceWorkerPath: "OneSignalSDKWorker.js",
         safari_web_id: "web.onesignal.auto.boragas",
         notifyButton: {
-          enable: false,
+          enable: true,
+          position: "bottom-right",
+          theme: "default",
+          size: "medium",
+          displayPredicate: function() {
+            return true;
+          },
+          text: {
+            'tip.state.unsubscribed': 'Receber notificações de status e promoções BoraGás',
+            'tip.state.subscribed': "Você está inscrito para receber notificações!",
+            'tip.state.blocked': "Você bloqueou as notificações",
+            'message.prenotify': 'Clique para receber alertas do seu gás em tempo real',
+            'message.action.subscribed': "Obrigado por se inscrever!",
+            'dialog.main.title': 'Notificações BoraGás',
+            'dialog.main.button.subscribe': 'Permitir',
+            'dialog.main.button.unsubscribe': 'Cancelar'
+          }
         },
         allowLocalhostAsSecureOrigin: true,
       });
 
       console.log("✅ OneSignal BoraGás PWA inicializado com sucesso!");
+
+      // Solicita permissão suavemente após carregamento inicial
+      setTimeout(async () => {
+        try {
+          if (OneSignal.Notifications && !OneSignal.Notifications.permission) {
+            await OneSignal.Slidedown.promptPush();
+          }
+        } catch (_) {}
+      }, 3500);
     });
 
     // Helpers globais para comunicação bidirecional com o Flutter
     window.boragasPushRequestPermission = async function() {
-      if (window.OneSignal) {
+      if (window.OneSignal && window.OneSignal.Notifications) {
         return await window.OneSignal.Notifications.requestPermission();
       }
       return false;

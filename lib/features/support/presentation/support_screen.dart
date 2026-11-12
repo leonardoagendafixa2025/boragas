@@ -9,11 +9,24 @@ import '../../auth/providers/auth_provider.dart';
 import '../providers/support_providers.dart';
 import 'new_ticket_dialog.dart';
 
-class SupportScreen extends ConsumerWidget {
+class SupportScreen extends ConsumerStatefulWidget {
   const SupportScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SupportScreen> createState() => _SupportScreenState();
+}
+
+class _SupportScreenState extends ConsumerState<SupportScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(supportTicketsProvider.notifier).refreshTickets();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tickets = ref.watch(supportTicketsProvider);
     final auth = ref.watch(authProvider);
     final currentUser = auth.user;
@@ -28,6 +41,16 @@ class SupportScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Central de Ajuda & Suporte', style: TextStyle(fontWeight: FontWeight.w800)),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Atualizar Chamados',
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              ref.read(supportTicketsProvider.notifier).refreshTickets();
+            },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppColors.primary,
@@ -42,9 +65,14 @@ class SupportScreen extends ConsumerWidget {
           );
         },
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(supportTicketsProvider.notifier).refreshTickets();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Card WhatsApp Oficial de Atendimento com o Admin
@@ -303,6 +331,7 @@ class SupportScreen extends ConsumerWidget {
             const SizedBox(height: 80),
           ],
         ),
+      ),
       ),
     );
   }

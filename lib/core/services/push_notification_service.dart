@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/models/order_model.dart';
 import 'supabase_service.dart';
+import 'web_push_interop.dart';
 
 class PushBroadcastResult {
   final bool success;
@@ -62,13 +63,27 @@ class PushNotificationService {
     } catch (_) {}
   }
 
+  /// Solicita permissão de notificações nativas (Android 13+) ou Web Push (PWA)
+  static Future<bool> requestPermission() async {
+    try {
+      if (kIsWeb) {
+        final granted = await webRequestPushPermission();
+        debugPrint('🔔 Permissão Web Push OneSignal: $granted');
+        return granted;
+      }
+      return true;
+    } catch (e) {
+      debugPrint('Aviso ao solicitar permissão de push: $e');
+      return false;
+    }
+  }
+
   /// Vincula o ID do cliente logado no OneSignal (compatível com PWA e Android)
   static Future<void> loginUser(String userId, {String? name, String? role}) async {
     if (userId.isEmpty) return;
     try {
       if (kIsWeb) {
-        // Na Web/PWA invoca a ponte JS definida em index.html
-        _callWebOneSignalLogin(userId);
+        webLoginPush(userId);
       }
 
       // Registra no banco de dados Supabase para auditoria de dispositivos
@@ -89,7 +104,7 @@ class PushNotificationService {
   static Future<void> logoutUser() async {
     try {
       if (kIsWeb) {
-        _callWebOneSignalLogout();
+        webLogoutPush();
       }
     } catch (_) {}
   }
@@ -174,7 +189,19 @@ class PushNotificationService {
       final res = await _executeOneSignalPost(payload);
       final body = jsonDecode(res.body) as Map<String, dynamic>;
 
-      if (res.statusCode == 200 && body['id'] != null) {
+      final rawErrors = body['errors'];
+      final List<String> errorsList = [];
+      if (rawErrors is List) {
+        errorsList.addAll(rawErrors.map((e) => e.toString()));
+      } else if (rawErrors is Map) {
+        errorsList.addAll(rawErrors.values.map((e) => e.toString()));
+      } else if (rawErrors != null) {
+        errorsList.add(rawErrors.toString());
+      }
+
+      final idStr = body['id']?.toString() ?? '';
+
+      if (res.statusCode == 200 && idStr.isNotEmpty && errorsList.isEmpty) {
         final recipients = (body['recipients'] as num?)?.toInt() ?? 1;
 
         // Salva histórico real da campanha no banco de dados Supabase
@@ -185,7 +212,7 @@ class PushNotificationService {
             'coupon_code': couponCode,
             'target_audience': targetAudience,
             'recipients_count': recipients,
-            'onesignal_id': body['id'].toString(),
+            'onesignal_id': idStr,
             'status': 'sent',
             'created_at': DateTime.now().toIso8601String(),
           }).catchError((err) {
@@ -195,14 +222,18 @@ class PushNotificationService {
 
         return PushBroadcastResult(
           success: true,
-          notificationId: body['id'].toString(),
+          notificationId: idStr,
           recipientsCount: recipients,
         );
       } else {
-        final err = body['errors']?.toString() ?? res.body;
+        final joined = errorsList.isNotEmpty ? errorsList.join('; ') : (body['errors']?.toString() ?? res.body);
+        String helpful = joined;
+        if (joined.contains('not subscribed') || joined.contains('All included players are not subscribed')) {
+          helpful = 'Nenhum dispositivo ou navegador está inscrito no OneSignal ainda. É necessário abrir o app/PWA no smartphone ou navegador e permitir as notificações.';
+        }
         return PushBroadcastResult(
           success: false,
-          errorMessage: 'Erro OneSignal ($res.statusCode): $err',
+          errorMessage: 'Erro OneSignal: $helpful',
         );
       }
     } catch (e) {
@@ -216,11 +247,14 @@ class PushNotificationService {
   static Future<bool> _dispatchToOneSignalApi(Map<String, dynamic> payload) async {
     try {
       final res = await _executeOneSignalPost(payload);
-      if (res.statusCode == 200) {
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final rawErrors = body['errors'];
+      final hasErrors = (rawErrors is List && rawErrors.isNotEmpty) || (rawErrors is Map && rawErrors.isNotEmpty);
+
+      if (res.statusCode == 200 && !hasErrors && (body['id']?.toString().isNotEmpty ?? false)) {
         debugPrint('✅ Push OneSignal disparado com sucesso: ${res.body}');
         return true;
       } else {
-        // Fallback resiliente: se der erro por external_id não encontrado ainda, tenta broadcast com filtro
         debugPrint('⚠️ Resposta OneSignal API: ${res.statusCode} - ${res.body}');
         return false;
       }
@@ -286,20 +320,5 @@ class PushNotificationService {
       default:
         return null;
     }
-  }
-
-  // Métodos auxiliares Web/PWA
-  static void _callWebOneSignalLogin(String userId) {
-    try {
-      // ignore: avoid_dynamic_calls
-      // js.context.callMethod('boragasPushLogin', [userId]);
-    } catch (_) {}
-  }
-
-  static void _callWebOneSignalLogout() {
-    try {
-      // ignore: avoid_dynamic_calls
-      // js.context.callMethod('boragasPushLogout');
-    } catch (_) {}
   }
 }

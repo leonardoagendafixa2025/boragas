@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,9 +20,24 @@ class _AdminSupportScreenState extends ConsumerState<AdminSupportScreen> {
   final TextEditingController _adminReplyController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
   bool _isSendingReply = false;
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(supportTicketsProvider.notifier).refreshTickets();
+    });
+    _refreshTimer = Timer.periodic(const Duration(seconds: 8), (_) {
+      if (mounted) {
+        ref.read(supportTicketsProvider.notifier).refreshTickets();
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _adminReplyController.dispose();
     _chatScrollController.dispose();
     super.dispose();

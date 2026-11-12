@@ -21,16 +21,26 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
 
   @override
   List<SupportTicketModel> build() {
+    ref.listen(authProvider, (prev, next) {
+      if (prev?.user?.id != next.user?.id || prev?.user?.role != next.user?.role) {
+        _loadTickets();
+      }
+    });
     _loadTickets();
     return const [];
   }
 
-  /// Carrega os chamados do cache local e sincroniza com o Supabase
+  /// Método público para recarregar chamados do backend/Supabase em tempo real
+  Future<void> refreshTickets() async {
+    await _loadTickets();
+  }
+
+  /// Carrega os chamados do cache local, sincroniza com o Backend centralizado e com o Supabase
   Future<void> _loadTickets() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cachedJson = prefs.getString(_prefKeyTickets);
-      if (cachedJson != null && cachedJson.isNotEmpty) {
+      if (cachedJson != null && cachedJson.isNotEmpty && state.isEmpty) {
         final rawList = jsonDecode(cachedJson) as List;
         final list = rawList
             .map((item) => SupportTicketModel.fromJson(Map<String, dynamic>.from(item as Map)))
@@ -38,17 +48,78 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
         state = list;
       }
 
-      // Tenta sincronizar com o Supabase se disponível
+      final auth = ref.read(authProvider);
+      final currentUser = auth.user;
+      final isAdmin = currentUser?.role == UserRole.admin;
+
+      // 1. Sincroniza com o Backend Centralizado BoraGás (Render)
+      try {
+        final backendUrl = BackendConfigService.baseUrl;
+        final queryParam = isAdmin
+            ? 'role=admin'
+            : (currentUser != null
+                ? 'requester_id=${currentUser.id}&role=${currentUser.role.name}'
+                : '');
+        final uri = Uri.parse('$backendUrl/api/v1/support/tickets${queryParam.isNotEmpty ? "?$queryParam" : ""}');
+        final res = await http.get(uri).timeout(const Duration(seconds: 4));
+
+        if (res.statusCode == 200) {
+          final body = jsonDecode(res.body);
+          if (body['success'] == true && body['data'] is List) {
+            final rawBackendList = body['data'] as List;
+            if (rawBackendList.isNotEmpty) {
+              final backendTickets = rawBackendList.map((item) {
+                final map = Map<String, dynamic>.from(item as Map);
+                return SupportTicketModel(
+                  id: map['id']?.toString() ?? '',
+                  ticketNumber: map['ticketNumber']?.toString() ?? '#SUP-0000',
+                  requesterId: map['requesterId']?.toString() ?? '',
+                  requesterName: map['requesterName']?.toString() ?? 'Cliente BoraGás',
+                  requesterPhone: map['requesterPhone']?.toString(),
+                  requesterEmail: map['requesterEmail']?.toString(),
+                  requesterRole: map['requesterRole']?.toString() ?? 'customer',
+                  category: map['category']?.toString() ?? 'Outros',
+                  subject: map['subject']?.toString() ?? 'Suporte',
+                  status: TicketStatus.values.firstWhere(
+                    (s) => s.name == map['status']?.toString(),
+                    orElse: () => TicketStatus.open,
+                  ),
+                  relatedOrderId: map['relatedOrderId']?.toString(),
+                  createdAt: DateTime.tryParse(map['createdAt']?.toString() ?? '') ?? DateTime.now(),
+                  updatedAt: DateTime.tryParse(map['updatedAt']?.toString() ?? '') ?? DateTime.now(),
+                  messages: (map['messages'] as List? ?? []).map((m) {
+                    final msgMap = Map<String, dynamic>.from(m as Map);
+                    return SupportMessageModel(
+                      id: msgMap['id']?.toString() ?? '',
+                      ticketId: map['id']?.toString() ?? '',
+                      senderId: msgMap['senderId']?.toString() ?? '',
+                      senderName: msgMap['senderName']?.toString() ?? 'Usuário',
+                      senderRole: msgMap['senderRole']?.toString() ?? 'customer',
+                      content: msgMap['content']?.toString() ?? '',
+                      sentAt: DateTime.tryParse(msgMap['sentAt']?.toString() ?? '') ?? DateTime.now(),
+                    );
+                  }).toList(),
+                );
+              }).toList();
+
+              _mergeTicketsPreservingLocal(backendTickets);
+              return;
+            }
+          }
+        }
+      } catch (backendErr) {
+        debugPrint('Aviso ao sincronizar tickets com backend central: $backendErr');
+      }
+
+      // 2. Tenta sincronizar com o Supabase se disponível
       if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
-        final auth = ref.read(authProvider);
-        final currentUser = auth.user;
         if (currentUser != null) {
           var query = SupabaseService.client
               .from('support_tickets')
               .select('*, support_messages(*)');
 
           // Clientes e Lojistas veem apenas os seus chamados; Admins veem todos
-          if (currentUser.role != UserRole.admin) {
+          if (!isAdmin) {
             query = query.eq('requester_id', currentUser.id);
           }
 
@@ -66,14 +137,30 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
               return SupportTicketModel.fromJson(map);
             }).toList();
 
-            state = remoteTickets;
-            await _persistTickets(remoteTickets);
+            _mergeTicketsPreservingLocal(remoteTickets);
           }
         }
       }
     } catch (e) {
       debugPrint('Aviso ao carregar chamados de suporte: $e');
     }
+  }
+
+  void _mergeTicketsPreservingLocal(List<SupportTicketModel> incoming) {
+    final merged = <String, SupportTicketModel>{};
+    for (final t in incoming) {
+      merged[t.id] = t;
+    }
+    for (final local in state) {
+      final remote = merged[local.id];
+      if (remote == null || local.messages.length >= remote.messages.length) {
+        merged[local.id] = local;
+      }
+    }
+    final result = merged.values.toList();
+    result.sort((a, b) => (b.updatedAt ?? b.createdAt).compareTo(a.updatedAt ?? a.createdAt));
+    state = result;
+    _persistTickets(result);
   }
 
   Future<void> _persistTickets(List<SupportTicketModel> tickets) async {
@@ -178,16 +265,63 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
       messages: [initialMsg],
     );
 
-    // 1. Atualiza estado e persiste localmente imediatamente
-    state = [newTicket, ...state];
+    SupportTicketModel finalTicket = newTicket;
+
+    // 1. Tenta criar no Backend Centralizado (Render) para visibilidade instantânea do Admin
+    try {
+      final backendUrl = BackendConfigService.baseUrl;
+      final res = await http.post(
+        Uri.parse('$backendUrl/api/v1/support/tickets'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'category': category,
+          'subject': subject,
+          'initialMessage': initialMessage,
+          'requesterId': requesterId,
+          'requesterName': requesterName,
+          'requesterPhone': requesterPhone,
+          'requesterEmail': requesterEmail,
+          'requesterRole': requesterRole,
+          'relatedOrderId': relatedOrderId,
+        }),
+      ).timeout(const Duration(seconds: 4));
+
+      if (res.statusCode == 201 || res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['success'] == true && body['data'] != null) {
+          final m = Map<String, dynamic>.from(body['data'] as Map);
+          finalTicket = SupportTicketModel(
+            id: m['id']?.toString() ?? ticketId,
+            ticketNumber: m['ticketNumber']?.toString() ?? protocol,
+            requesterId: m['requesterId']?.toString() ?? requesterId,
+            requesterName: m['requesterName']?.toString() ?? requesterName,
+            requesterPhone: m['requesterPhone']?.toString() ?? requesterPhone,
+            requesterEmail: m['requesterEmail']?.toString() ?? requesterEmail,
+            requesterRole: m['requesterRole']?.toString() ?? requesterRole,
+            category: m['category']?.toString() ?? category,
+            subject: m['subject']?.toString() ?? subject,
+            status: TicketStatus.open,
+            relatedOrderId: m['relatedOrderId']?.toString() ?? relatedOrderId,
+            createdAt: now,
+            updatedAt: now,
+            messages: [initialMsg],
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Aviso backend ao criar ticket: $e');
+    }
+
+    // 2. Atualiza estado e persiste localmente imediatamente
+    state = [finalTicket, ...state];
     await _persistTickets(state);
 
-    // 2. Persiste no Supabase se conectado
+    // 3. Persiste no Supabase se conectado
     if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
       try {
         await SupabaseService.client.from('support_tickets').insert({
-          'id': ticketId,
-          'ticket_number': protocol,
+          'id': finalTicket.id,
+          'ticket_number': finalTicket.ticketNumber,
           'requester_id': requesterId,
           'requester_name': requesterName,
           'requester_phone': requesterPhone,
@@ -202,7 +336,7 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
 
         await SupabaseService.client.from('support_messages').insert({
           'id': initialMsg.id,
-          'ticket_id': ticketId,
+          'ticket_id': finalTicket.id,
           'sender_id': requesterId,
           'sender_name': requesterName,
           'sender_role': requesterRole,
@@ -214,13 +348,13 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
       }
     }
 
-    // 3. Dispara aviso real no WhatsApp do Admin conectado ao Baileys Hub
+    // 4. Dispara aviso real no WhatsApp do Admin conectado ao Baileys Hub
     _notifyAdminOnWhatsApp(
-      ticket: newTicket,
+      ticket: finalTicket,
       messageText: initialMessage,
     );
 
-    return newTicket;
+    return finalTicket;
   }
 
   /// ENVIO DE NOVA MENSAGEM NO CHAT DE SUPORTE (CLIENTE OU ADMIN)
@@ -272,6 +406,23 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
 
     await _persistTickets(state);
 
+    // Envia ao Backend Centralizado (Render)
+    try {
+      final backendUrl = BackendConfigService.baseUrl;
+      await http.post(
+        Uri.parse('$backendUrl/api/v1/support/tickets/$ticketId/messages'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'content': cleanContent,
+          'senderId': senderId,
+          'senderName': newMsg.senderName,
+          'senderRole': senderRole,
+        }),
+      ).timeout(const Duration(seconds: 4));
+    } catch (e) {
+      debugPrint('Aviso backend ao adicionar mensagem: $e');
+    }
+
     // Persiste no Supabase
     if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
       try {
@@ -316,6 +467,16 @@ class SupportTicketsNotifier extends Notifier<List<SupportTicketModel>> {
     }).toList();
 
     await _persistTickets(state);
+
+    // Atualiza no Backend Centralizado (Render)
+    try {
+      final backendUrl = BackendConfigService.baseUrl;
+      await http.patch(
+        Uri.parse('$backendUrl/api/v1/support/tickets/$ticketId/status'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'status': newStatus.name}),
+      ).timeout(const Duration(seconds: 4));
+    } catch (_) {}
 
     if (SupabaseService.isConfigured && SupabaseService.isInitialized) {
       try {
