@@ -10,6 +10,7 @@ import '../../../core/models/order_model.dart';
 import '../../../core/models/tracking_models.dart';
 import '../../../core/providers/tracking_providers.dart';
 import '../../../core/services/external_navigation_service.dart';
+import '../../../core/widgets/change_password_dialog.dart';
 import '../../../core/widgets/map/boragas_interactive_map.dart';
 import '../../../core/widgets/slide_to_action.dart';
 import '../../../core/widgets/status_badge.dart';
@@ -615,6 +616,16 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
         ],
       ),
       actions: [
+        IconButton(
+          tooltip: 'Alterar Senha do Entregador',
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          icon: const Icon(Icons.lock_reset_rounded, color: Color(0xFFF59E0B), size: 19),
+          onPressed: () => ChangePasswordDialog.show(context),
+        ),
+        const SizedBox(width: 4),
         IconButton(
           tooltip: 'Sair da Conta',
           icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
@@ -1363,6 +1374,58 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                   onPressed: () => _openEditVehicleModal(context, vehicleModel, vehiclePlate),
                   icon: const Icon(Icons.edit, size: 14),
                   label: const Text('Editar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Card de Segurança & Alteração de Senha do Entregador
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF334155)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.lock_reset_rounded, color: Color(0xFFF59E0B), size: 24),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Segurança da Conta',
+                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Alterar senha de acesso do entregador',
+                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF59E0B),
+                    foregroundColor: const Color(0xFF0F172A),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () => ChangePasswordDialog.show(context),
+                  icon: const Icon(Icons.vpn_key_rounded, size: 14),
+                  label: const Text('Alterar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
                 ),
               ],
             ),

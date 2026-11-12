@@ -4,11 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/models/support_ticket_model.dart';
+import '../../../core/widgets/change_password_dialog.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../support/providers/support_providers.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_home_manager_screen.dart';
 import 'admin_remote_config_screen.dart';
 import 'admin_stores_screen.dart';
+import 'admin_support_screen.dart';
 import 'admin_whatsapp_screen.dart';
 
 class AdminShellScreen extends ConsumerStatefulWidget {
@@ -29,6 +33,7 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
     AdminHomeManagerScreen(),
     AdminRemoteConfigScreen(),
     AdminWhatsAppScreen(),
+    AdminSupportScreen(),
   ];
 
   static const List<({String title, String subtitle, IconData icon})> _menuItems = [
@@ -56,6 +61,11 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
       title: 'WhatsApp & Baileys',
       subtitle: 'Conexão QR e disparo de mensagens',
       icon: Icons.chat_rounded,
+    ),
+    (
+      title: 'Helpdesk & Suporte',
+      subtitle: 'Chamados reais e atendimento direto',
+      icon: Icons.headset_mic_rounded,
     ),
   ];
 
@@ -189,6 +199,21 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
           ],
         ),
         actions: [
+          // Atalho rápido Helpdesk & Chamados
+          IconButton(
+            tooltip: 'Helpdesk & Chamados de Suporte',
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFF8B5CF6).withValues(alpha: 0.14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.headset_mic_rounded, size: 18, color: Color(0xFF8B5CF6)),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              setState(() => _currentIndex = 5);
+            },
+          ),
+          const SizedBox(width: 6),
+
           // Atalho rápido WhatsApp QR
           IconButton(
             tooltip: 'WhatsApp QR & Instância',
@@ -201,6 +226,18 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
               HapticFeedback.selectionClick();
               setState(() => _currentIndex = 4);
             },
+          ),
+          const SizedBox(width: 6),
+
+          // Alterar Senha Master
+          IconButton(
+            tooltip: 'Alterar Senha Master',
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.lock_reset_rounded, size: 18, color: Color(0xFFF59E0B)),
+            onPressed: () => ChangePasswordDialog.show(context),
           ),
           const SizedBox(width: 6),
 
@@ -430,6 +467,25 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
               ),
               child: Column(
                 children: [
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFF1E293B),
+                      side: const BorderSide(color: Color(0xFF334155)),
+                      minimumSize: const Size.fromHeight(42),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ChangePasswordDialog.show(context);
+                    },
+                    icon: const Icon(Icons.lock_reset_rounded, size: 18, color: Color(0xFFF59E0B)),
+                    label: const Text(
+                      'Alterar Senha Master',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFEF4444),
@@ -507,6 +563,13 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
             subtitle: 'Rotas e telemetria',
             onTap: () => context.push('/courier'),
           ),
+          _buildQuickAccessTile(
+            icon: Icons.lock_reset_rounded,
+            iconColor: const Color(0xFFF59E0B),
+            title: 'Alterar Senha Master',
+            subtitle: 'Segurança da conta',
+            onTap: () => ChangePasswordDialog.show(context),
+          ),
         ],
       ),
     );
@@ -559,16 +622,47 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
             fontSize: 10.5,
           ),
         ),
-        trailing: isSelected
-            ? Container(
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (index == 5) ...[
+              Consumer(
+                builder: (context, ref, _) {
+                  final openCount = ref
+                      .watch(supportTicketsProvider)
+                      .where((t) => t.status == TicketStatus.open)
+                      .length;
+                  if (openCount == 0) return const SizedBox.shrink();
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$openCount',
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 6),
+            ],
+            if (isSelected)
+              Container(
                 width: 6,
                 height: 6,
                 decoration: const BoxDecoration(
                   color: Color(0xFF8B5CF6),
                   shape: BoxShape.circle,
                 ),
-              )
-            : null,
+              ),
+          ],
+        ),
         onTap: onTap,
       ),
     );

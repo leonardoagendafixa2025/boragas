@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/models/order_model.dart';
 import '../../../core/models/store_model.dart';
 import '../../../core/services/audio_alert_service.dart';
+import '../../../core/widgets/change_password_dialog.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../customer/providers/customer_providers.dart';
@@ -265,6 +266,18 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                 context.go('/home');
               },
             ),
+
+            // Alterar Senha de Acesso
+            IconButton(
+              tooltip: 'Alterar Senha do Lojista',
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.lock_reset_rounded, color: Color(0xFFF59E0B), size: 18),
+              onPressed: () => ChangePasswordDialog.show(context),
+            ),
+            const SizedBox(width: 4),
 
             // Desligar / Sair da Sessão
             IconButton(
@@ -668,6 +681,25 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFF1E293B),
+                      side: const BorderSide(color: Color(0xFF334155)),
+                      minimumSize: const Size.fromHeight(40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ChangePasswordDialog.show(context);
+                    },
+                    icon: const Icon(Icons.lock_reset_rounded, size: 18, color: Color(0xFFF59E0B)),
+                    label: const Text(
+                      'Alterar Senha do Lojista',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFFEF4444),
@@ -899,16 +931,32 @@ class _MerchantShellScreenState extends ConsumerState<MerchantShellScreen> {
             decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: Color(0xFF1E293B))),
             ),
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFEF4444),
-                side: const BorderSide(color: Color(0xFFEF4444)),
-                minimumSize: const Size.fromHeight(36),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () => _confirmLogout(context),
-              icon: const Icon(Icons.power_settings_new_rounded, size: 16),
-              label: const Text('Desligar Sessão', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            child: Column(
+              children: [
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFF59E0B),
+                    side: const BorderSide(color: Color(0xFFF59E0B)),
+                    minimumSize: const Size.fromHeight(36),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => ChangePasswordDialog.show(context),
+                  icon: const Icon(Icons.lock_reset_rounded, size: 16),
+                  label: const Text('Alterar Senha', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFEF4444),
+                    side: const BorderSide(color: Color(0xFFEF4444)),
+                    minimumSize: const Size.fromHeight(36),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () => _confirmLogout(context),
+                  icon: const Icon(Icons.power_settings_new_rounded, size: 16),
+                  label: const Text('Desligar Sessão', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
           ),
         ],

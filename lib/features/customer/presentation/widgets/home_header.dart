@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_typography.dart';
 import '../../../../core/services/remote_config_service.dart';
+import '../../../../core/widgets/change_password_dialog.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/customer_providers.dart';
 import '../address_selection_sheet.dart';
@@ -470,6 +471,17 @@ class HomeHeader extends ConsumerWidget {
                   context.push('/support');
                 },
               ),
+              if (isAuthenticated)
+                _buildProfileOption(
+                  icon: Icons.lock_reset_rounded,
+                  iconColor: const Color(0xFFF59E0B),
+                  title: 'Alterar Senha',
+                  subtitle: 'Atualizar senha de acesso da sua conta',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    ChangePasswordDialog.show(context);
+                  },
+                ),
 
               const SizedBox(height: 10),
               const Divider(color: Color(0xFFF1F5F9)),

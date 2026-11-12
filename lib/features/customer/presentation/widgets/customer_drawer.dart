@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/change_password_dialog.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../address_selection_sheet.dart';
@@ -345,6 +346,19 @@ class CustomerDrawer extends ConsumerWidget {
                       context.push('/support');
                     },
                   ),
+
+                  // Alterar Senha (Disponível quando autenticado)
+                  if (isAuthenticated)
+                    _buildMenuItem(
+                      icon: Icons.lock_reset_rounded,
+                      title: 'Alterar Senha',
+                      subtitle: 'Atualizar senha de acesso',
+                      accentColor: const Color(0xFFF59E0B),
+                      onTap: () {
+                        Navigator.pop(context);
+                        ChangePasswordDialog.show(context);
+                      },
+                    ),
 
                   // Portais Administrativos / Lojista / Entregador (RBAC)
                   if (isAuthenticated &&
