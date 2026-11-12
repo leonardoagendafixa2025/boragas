@@ -42,5 +42,8 @@ fi
 if [ -f "web/BoraGas-release.apk" ]; then
   cp web/BoraGas-release.apk build/web/BoraGas-release.apk
 fi
+if [ -f "web/OneSignalSDKWorker.js" ]; then
+  cp web/OneSignalSDKWorker.js build/web/OneSignalSDKWorker.js
+fi
 
 echo "✅ Compilação concluída com sucesso! Saída gerada em build/web"

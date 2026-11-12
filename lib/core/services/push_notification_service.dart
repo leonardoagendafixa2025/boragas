@@ -165,7 +165,7 @@ class PushNotificationService {
   }) async {
     final payload = <String, dynamic>{
       'app_id': _currentAppId,
-      'included_segments': ['Subscribed Users'], // Envia para toda a base inscrita
+      'included_segments': ['Total Subscriptions', 'Subscribed Users'], // Envia para toda a base inscrita
       'headings': {'pt': title, 'en': title},
       'contents': {'pt': message, 'en': message},
       'priority': 10,
@@ -229,17 +229,17 @@ class PushNotificationService {
         final joined = errorsList.isNotEmpty ? errorsList.join('; ') : (body['errors']?.toString() ?? res.body);
         String helpful = joined;
         if (joined.contains('not subscribed') || joined.contains('All included players are not subscribed')) {
-          helpful = 'Nenhum dispositivo ou navegador está inscrito no OneSignal ainda. É necessário abrir o app/PWA no smartphone ou navegador e permitir as notificações.';
+          helpful = 'Nenhum dispositivo ou navegador está inscrito para receber notificações ainda. É necessário permitir as notificações no celular ou navegador.';
         }
         return PushBroadcastResult(
           success: false,
-          errorMessage: 'Erro OneSignal: $helpful',
+          errorMessage: helpful,
         );
       }
     } catch (e) {
       return PushBroadcastResult(
         success: false,
-        errorMessage: 'Falha de conexão com OneSignal: $e',
+        errorMessage: 'Falha de conexão com o serviço de push: $e',
       );
     }
   }
