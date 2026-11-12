@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/services/apk_download_service.dart';
 import '../../../core/widgets/floating_order_tracker.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../providers/cart_provider.dart';
@@ -261,6 +262,38 @@ class _CustomerShellScreenState extends ConsumerState<CustomerShellScreen> {
                 if (context.mounted) {
                   context.go('/login');
                 }
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.android_rounded, color: Color(0xFF10B981), size: 20),
+              ),
+              title: const Text('Baixar App Android (APK)', style: TextStyle(fontWeight: FontWeight.w700)),
+              subtitle: const Text('Instalar aplicativo nativo no celular'),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'OFICIAL',
+                  style: TextStyle(
+                    color: Color(0xFF10B981),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                ApkDownloadService.downloadApk(context);
               },
             ),
             const Divider(),

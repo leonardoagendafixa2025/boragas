@@ -10,6 +10,7 @@ import '../providers/customer_providers.dart';
 import '../providers/marketing_providers.dart';
 import '../providers/subscription_provider.dart';
 import '../../../core/widgets/interactive_scale_button.dart';
+import 'widgets/app_footer.dart';
 import 'widgets/banner_carousel.dart';
 import 'widgets/category_horizontal_bar.dart';
 import 'widgets/customer_drawer.dart';
@@ -439,9 +440,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                   ],
 
-                  // Bottom padding for scroll
+                  // Rodapé do Aplicativo com Opção de Download do APK Oficial Android
                   const SliverToBoxAdapter(
-                    child: SizedBox(height: 90),
+                    child: AppFooter(),
                   ),
                 ],
               ),

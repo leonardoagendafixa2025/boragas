@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/services/apk_download_service.dart';
 import '../../../../core/widgets/change_password_dialog.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -347,6 +348,19 @@ class CustomerDrawer extends ConsumerWidget {
                     },
                   ),
 
+                  // Baixar Aplicativo Android (APK)
+                  _buildMenuItem(
+                    icon: Icons.android_rounded,
+                    title: 'Baixar App Android (APK)',
+                    subtitle: 'Instale o app oficial no celular',
+                    accentColor: const Color(0xFF10B981),
+                    badgeText: 'OFICIAL',
+                    onTap: () {
+                      Navigator.pop(context);
+                      ApkDownloadService.downloadApk(context);
+                    },
+                  ),
+
                   // Alterar Senha (Disponível quando autenticado)
                   if (isAuthenticated)
                     _buildMenuItem(
@@ -449,6 +463,46 @@ class CustomerDrawer extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                   ],
+                  // Botão rápido de baixar o APK no rodapé do drawer
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                      ApkDownloadService.downloadApk(context);
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.35),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.download_rounded, color: Color(0xFF10B981), size: 16),
+                          SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Baixar APK Android (v1.0.0)',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Color(0xFF10B981),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const Text(
                     'BoraGás • Versão 1.0.0 Oficial',
                     style: TextStyle(color: Color(0xFF475569), fontSize: 10.5),

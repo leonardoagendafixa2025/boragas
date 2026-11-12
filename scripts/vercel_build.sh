@@ -33,4 +33,14 @@ flutter build web --release \
   --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
   --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
 
+# 6. Garante que os arquivos APK de download estejam presentes no build estático final
+echo "📦 Copiando instalador APK para o diretório público de distribuição..."
+mkdir -p build/web/downloads
+if [ -f "web/downloads/BoraGas-release.apk" ]; then
+  cp web/downloads/BoraGas-release.apk build/web/downloads/BoraGas-release.apk
+fi
+if [ -f "web/BoraGas-release.apk" ]; then
+  cp web/BoraGas-release.apk build/web/BoraGas-release.apk
+fi
+
 echo "✅ Compilação concluída com sucesso! Saída gerada em build/web"
