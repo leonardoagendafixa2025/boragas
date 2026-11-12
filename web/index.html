@@ -32,6 +32,58 @@
 
   <title>BoraGás - Delivery de Gás e Água</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- OneSignal Web Push & PWA SDK (v16) Oficial -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+      await OneSignal.init({
+        appId: "a9c40927-f12c-4baa-8f01-bb5a9f4bd059",
+        serviceWorkerParam: { scope: "/" },
+        serviceWorkerPath: "OneSignalSDKWorker.js",
+        safari_web_id: "web.onesignal.auto.boragas",
+        notifyButton: {
+          enable: false,
+        },
+        allowLocalhostAsSecureOrigin: true,
+      });
+
+      console.log("✅ OneSignal BoraGás PWA inicializado com sucesso!");
+    });
+
+    // Helpers globais para comunicação bidirecional com o Flutter
+    window.boragasPushRequestPermission = async function() {
+      if (window.OneSignal) {
+        return await window.OneSignal.Notifications.requestPermission();
+      }
+      return false;
+    };
+
+    window.boragasPushLogin = async function(userId) {
+      if (window.OneSignal && userId) {
+        await window.OneSignal.login(userId);
+        console.log("✅ OneSignal vinculado ao usuário:", userId);
+        return true;
+      }
+      return false;
+    };
+
+    window.boragasPushLogout = async function() {
+      if (window.OneSignal) {
+        await window.OneSignal.logout();
+        return true;
+      }
+      return false;
+    };
+
+    window.boragasGetSubscriptionId = function() {
+      if (window.OneSignal && window.OneSignal.User && window.OneSignal.User.pushSubscription) {
+        return window.OneSignal.User.pushSubscription.id || null;
+      }
+      return null;
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

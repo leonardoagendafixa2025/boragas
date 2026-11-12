@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/order_model.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/widgets/status_badge.dart';
 import '../../../core/widgets/ui/bora_button.dart';
 import '../../../core/widgets/ui/bora_card.dart';
@@ -89,6 +90,15 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
           (list) => list.map((o) => o.id == order.id ? updated : o).toList(),
         );
 
+    // Disparo de notificação push real nativa e PWA via OneSignal no celular do cliente
+    PushNotificationService.sendOrderStatusNotification(
+      customerId: order.customerId,
+      orderNumber: order.orderNumber,
+      status: next,
+      storeName: order.storeName,
+      orderId: order.id,
+    );
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -139,6 +149,16 @@ class _MerchantKanbanScreenState extends ConsumerState<MerchantKanbanScreen>
       ref.read(ordersProvider.notifier).update(
             (list) => list.map((o) => o.id == order.id ? updated : o).toList(),
           );
+
+      // Dispara push de cancelamento para o cliente
+      PushNotificationService.sendOrderStatusNotification(
+        customerId: order.customerId,
+        orderNumber: order.orderNumber,
+        status: OrderStatus.cancelled,
+        storeName: order.storeName,
+        orderId: order.id,
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

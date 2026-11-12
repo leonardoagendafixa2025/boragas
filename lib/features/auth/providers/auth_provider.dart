@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/backend_config_service.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/services/supabase_service.dart';
 
 enum UserRole { customer, merchant, courier, admin }
@@ -187,6 +188,8 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       debugPrint('Erro ao persistir sessão: $e');
     }
+    // Vincula o usuário ao OneSignal para recebimento de Push Notifications nativas e PWA
+    PushNotificationService.loginUser(profile.id, name: profile.name, role: profile.role.name);
   }
 
   /// CADASTRO REAL DE USUÁRIO (Cliente, Lojista ou Entregador)
@@ -534,6 +537,9 @@ class AuthNotifier extends Notifier<AuthState> {
     } catch (e) {
       debugPrint('Aviso ao sair da conta: $e');
     }
+
+    // Desvincula OneSignal
+    PushNotificationService.logoutUser();
 
     state = const AuthState(isAuthenticated: false, user: null, isSessionChecked: true);
   }

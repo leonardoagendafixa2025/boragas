@@ -10,6 +10,7 @@ import '../../../core/models/order_model.dart';
 import '../../../core/models/tracking_models.dart';
 import '../../../core/providers/tracking_providers.dart';
 import '../../../core/services/external_navigation_service.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../../../core/widgets/change_password_dialog.dart';
 import '../../../core/widgets/map/boragas_interactive_map.dart';
 import '../../../core/widgets/slide_to_action.dart';
@@ -234,6 +235,15 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                   ref.read(ordersProvider.notifier).update(
                         (list) => list.map((o) => o.id == order.id ? updated : o).toList(),
                       );
+
+                  // Notifica o cliente via push notification (celular bloqueado / PWA)
+                  PushNotificationService.sendOrderStatusNotification(
+                    customerId: order.customerId,
+                    orderNumber: order.orderNumber,
+                    status: OrderStatus.delivered,
+                    storeName: order.storeName,
+                    orderId: order.id,
+                  );
 
                   // Interrompe transmissão GPS automaticamente após finalização
                   await ref.read(courierTrackingNotifierProvider.notifier).stopTracking();
@@ -1234,6 +1244,15 @@ class _CourierScreenState extends ConsumerState<CourierScreen>
                   ref.read(ordersProvider.notifier).update(
                         (list) => list.map((o) => o.id == order.id ? updated : o).toList(),
                       );
+
+                  // Notifica o cliente via push notification (celular bloqueado / PWA)
+                  PushNotificationService.sendOrderStatusNotification(
+                    customerId: order.customerId,
+                    orderNumber: order.orderNumber,
+                    status: OrderStatus.outForDelivery,
+                    storeName: order.storeName,
+                    orderId: order.id,
+                  );
                   final courierId = ref.read(authProvider).user?.id ?? 'courier-01';
                   ref.read(courierTrackingNotifierProvider.notifier).startTrackingForDelivery(
                         deliveryId: order.id,

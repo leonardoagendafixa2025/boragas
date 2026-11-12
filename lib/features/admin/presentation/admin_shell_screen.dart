@@ -10,6 +10,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../support/providers/support_providers.dart';
 import 'admin_dashboard_screen.dart';
 import 'admin_home_manager_screen.dart';
+import 'admin_push_marketing_screen.dart';
 import 'admin_remote_config_screen.dart';
 import 'admin_stores_screen.dart';
 import 'admin_support_screen.dart';
@@ -34,6 +35,7 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
     AdminRemoteConfigScreen(),
     AdminWhatsAppScreen(),
     AdminSupportScreen(),
+    AdminPushMarketingScreen(),
   ];
 
   static const List<({String title, String subtitle, IconData icon})> _menuItems = [
@@ -66,6 +68,11 @@ class _AdminShellScreenState extends ConsumerState<AdminShellScreen> {
       title: 'Helpdesk & Suporte',
       subtitle: 'Chamados reais e atendimento direto',
       icon: Icons.headset_mic_rounded,
+    ),
+    (
+      title: 'Marketing & Push',
+      subtitle: 'Disparo de notificações nativas e PWA',
+      icon: Icons.campaign_rounded,
     ),
   ];
 
